@@ -175,25 +175,7 @@ const Login: React.FC = () => {
               />
               Google
             </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              color="secondary"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              onClick={() => alert("Instagram Login")}
-            >
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/1024px-Instagram_icon.png"
-                alt="Instagram"
-                width={20}
-                style={{ marginRight: "8px" }}
-              />
-              Instagram
-            </Button>
+           
           </Box>
 
           <Typography variant="body2" mt={3}>
