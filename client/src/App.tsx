@@ -1,11 +1,19 @@
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LoginPage, RegisterPage, HomePage } from "./pages";
 
-function App() {
-
+const App: React.FC = () => {
   return (
-    <>
-      <h1 className="text-3xl bg-blue-600 p-2 w-full text-center text-white font-sans h-screen">Hello</h1>
-    </>
-  )
-}
+    <BrowserRouter>
+      <div className="h-screen">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+};
 
-export default App
+export default App;
