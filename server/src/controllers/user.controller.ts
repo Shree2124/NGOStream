@@ -5,7 +5,8 @@ import {
   smtpPort,
   smtpUser,
 } from "../config/envConfig";
-import { IUser, User } from "../models/user.model";
+import { User } from "../models/user.model";
+import { IUser } from "../types/user.types";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
 import { asyncHandler } from "../utils/asyncHandler";

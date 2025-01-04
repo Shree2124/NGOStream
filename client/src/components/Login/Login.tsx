@@ -29,7 +29,6 @@ const Login: React.FC = () => {
     } else {
       setPasswordError("");
     }
-
     return isValid;
   };
 
@@ -175,7 +174,6 @@ const Login: React.FC = () => {
               />
               Google
             </Button>
-           
           </Box>
 
           <Typography variant="body2" mt={3}>
