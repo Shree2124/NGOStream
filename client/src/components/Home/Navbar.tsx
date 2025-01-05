@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
         sx={{
           zIndex: 50,
           position: "fixed",
-          bgcolor: "blue",
+          bgcolor: "transparent",
           boxShadow: "none",
         }}
       >
@@ -63,7 +63,8 @@ const Navbar: React.FC = () => {
           ) : (
             <Box
               sx={{
-                bgcolor: "blue",
+                // bgcolor: "blue",
+                color: "white",
                 display: "flex",
                 justifyContent: "space-between",
                 width: "100%",
@@ -76,7 +77,7 @@ const Navbar: React.FC = () => {
                     sx={{
                       color: "white",
                       "&:hover": {
-                        color: "blue",
+                        bgcolor: "gray",
                       },
                     }}
                     key={item.text}
@@ -97,7 +98,7 @@ const Navbar: React.FC = () => {
         onClose={toggleDrawer(false)}
         sx={{
           "& .MuiDrawer-paper": {
-            bgcolor: "blue",
+            bgcolor: "gray",
             color: "white",
           },
         }}
@@ -122,7 +123,7 @@ const Navbar: React.FC = () => {
                   <ListItemText
                     primary={item.text}
                     sx={{
-                      "&:hover": { color: "blue" },
+                      "&:hover": { color: "gray" },
                     }}
                   />
                 </ListItem>
