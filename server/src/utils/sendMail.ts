@@ -6,10 +6,13 @@ const sendMail = async (email: any, subject: any, data: any) => {
     host: "smtp.gmail.com",
     port: 465,
     auth: {
-      user: process.env.NEXT_PUBLIC_EMAIL_ADDRESS!,
-      pass: process.env.NEXT_PUBLIC_EMAIL_PASSWORD!,
+      user: process.env.EMAIL_ADDRESS,
+      pass: process.env.EMAIL_PASSWORD,
     },
   });
+
+  console.log(process.env.EMAIL_PASSWORD, process.env.EMAIL_ADDRESS);
+  
 
   const html = `<!DOCTYPE html>
 <html lang="en">

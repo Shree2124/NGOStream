@@ -1,7 +1,7 @@
 import { accessTokenSecret } from "../config/envConfig";
-import { User } from "../Models/user.model";
-import { ErrorResponse } from "../Utils/errorResponse";
-import { asyncHandler } from "../Utils/asyncHandler";
+import { User } from "../models/user.model";
+import { ErrorResponse } from "../utils/errorResponse";
+import { asyncHandler } from "../utils/asyncHandler";
 import { Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
