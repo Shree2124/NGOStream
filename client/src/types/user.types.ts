@@ -1,5 +1,7 @@
 export interface IUser {
-  userName: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  FetchedUser?: any | null;
+  username: string;
   fullName: string;
   OauthId:string,
   email: string;

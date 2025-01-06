@@ -1,6 +1,6 @@
 import { Box, Button, Grid, Modal, TextField, Typography } from "@mui/material";
 import { useState, ChangeEvent, FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import register from "../../assets/register.jpg";
 import { api } from "../../api/api";
 
@@ -14,14 +14,24 @@ const Register: React.FC = () => {
   const [otp, setOtp] = useState<string>("");
   const [modal, setModal] = useState<boolean>(false);
 
+  const navigate = useNavigate();
+
   const handleClose = () => setModal(false);
 
   const handleOtp = async () => {
     console.log(otp);
-    const res = await api.post("/users/verify-user", { activationToken, otp });
-    console.log(res.data);
-    if(res.data.statusCode === 200){
-      handleClose()
+    try {
+      const res = await api.post("/users/verify-user", {
+        activationToken,
+        otp,
+      });
+      console.log(res.data);
+      if (res.data.statusCode === 200) {
+        handleClose();
+        navigate("/login");
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -32,7 +42,9 @@ const Register: React.FC = () => {
     const fullNameRegex = /^[a-zA-Z\s]{3,}$/;
 
     if (!fullNameRegex.test(fullName)) {
-      setError("Full name must be at least 3 characters and contain only letters and spaces.");
+      setError(
+        "Full name must be at least 3 characters and contain only letters and spaces."
+      );
       return false;
     }
     if (!emailRegex.test(email)) {
@@ -56,10 +68,19 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      const res = await api.post("/users/register", { fullName, username, password, email });
-      console.log(res.data.data);
-      setActivationToken(res.data.data);
-      setModal(true);
+      try {
+        const res = await api.post("/users/register", {
+          fullName,
+          username,
+          password,
+          email,
+        });
+        console.log(res.data.data);
+        setActivationToken(res.data.data);
+        setModal(true);
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 

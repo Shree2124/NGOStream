@@ -10,6 +10,6 @@ router.route("/login").post(loginUser)
 
 router.use(verifyJWT)
 router.route("/logout").post(logoutUser)
-router.route("/current-user").post(getUser)
+router.route("/current-user").get(getUser)
 
 export default router

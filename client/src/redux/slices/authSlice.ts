@@ -48,7 +48,7 @@ export const fetchUser = () => async (dispatch: AppDispatch): Promise<void> => {
   try {
     const res = await api.get<{ data: IUser }>("/users/current-user");
     console.log(res.data.data);
-    dispatch(setUser(res.data.data));
+    dispatch(setUser(res.data.data.FetchedUser));
     dispatch(setAuth(true));
     dispatch(setLoading(false));
     dispatch(setError(null));

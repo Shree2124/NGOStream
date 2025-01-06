@@ -142,13 +142,13 @@ const verifyUser = asyncHandler(async (req, res) => {
 
 {/* Function to check the user credentials and perform the login operation */}
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
-  const { userName, password } = req.body;
+  const { username, password } = req.body;
 
-  if ([userName, password].some((value) => value.trim() === "")) {
+  if ([username, password].some((value) => value?.trim() === "")) {
     throw new ErrorResponse(401, "All fields are necessary!");
   }
 
-  const user = await User.findOne({ userName: userName });
+  const user = await User.findOne({ username: username });
 
   if (!user) {
     throw new ErrorResponse(401, "user does not exist!");
