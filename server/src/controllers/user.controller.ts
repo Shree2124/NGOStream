@@ -5,7 +5,8 @@ import {
   smtpPort,
   smtpUser,
 } from "../config/envConfig";
-import { IUser, User } from "../models/user.model";
+import { User } from "../models/user.model";
+import { IUser } from "../types/user.types";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -53,16 +54,16 @@ const generateAccessAndRefreshToken = async (userId: any) => {
 
 {/* Function to register the user */}
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
-  const { userName, fullName, email, password } = req.body;
+  const { username, fullName, email, password } = req.body;
 
   if (
-    [userName, fullName, email, password].some((value) => value?.trim() === "")
+    [username, fullName, email, password].some((value) => value?.trim() === "")
   ) {
     throw new ErrorResponse(401, "All fields are necessary!");
   }
 
   const userExists = await User.findOne({
-    $or: [{ userName }, { email }],
+    $or: [{ username }, { email }],
   });
 
   if (userExists) {
@@ -71,7 +72,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
   const user = {
     fullName,
-    userName,
+    username,
     email,
     password,
   };
@@ -92,7 +93,10 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
   );
 
   const data = {
-    userName,
+    email,
+    fullName,
+    username,
+    password,
     otp,
   };
 
@@ -127,7 +131,7 @@ const verifyUser = asyncHandler(async (req, res) => {
     });
 
   await User.create({
-    userName: verify.user.userName,
+    userName: verify.user.username,
     email: verify.user.email,
     fullName: verify.user.fullName,
     password: verify.user.password,
@@ -138,13 +142,13 @@ const verifyUser = asyncHandler(async (req, res) => {
 
 {/* Function to check the user credentials and perform the login operation */}
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
-  const { userName, password } = req.body;
+  const { username, password } = req.body;
 
-  if ([userName, password].some((value) => value.trim() === "")) {
+  if ([username, password].some((value) => value?.trim() === "")) {
     throw new ErrorResponse(401, "All fields are necessary!");
   }
 
-  const user = await User.findOne({ userName: userName });
+  const user = await User.findOne({ username: username });
 
   if (!user) {
     throw new ErrorResponse(401, "user does not exist!");

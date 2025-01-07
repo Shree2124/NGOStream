@@ -1,13 +1,26 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import { PORT } from "./config/envConfig";
+import { corsOrigin, PORT } from "./config/envConfig";
+import { connectDatabase } from "./database/db";
+
+connectDatabase().then(()=>{
+  console.log("Connected");
+})
 
 const app = express();
 
 dotenv.config({ path: "./.env" });
 
-app.use(cors({ origin: "*", credentials: true }));
+app.use(
+  cors({
+    origin: corsOrigin || "*",
+    credentials: true,
+  })
+);
+
+console.log(corsOrigin);
+
 
 app.use(express.json());
 
@@ -21,3 +34,6 @@ app.listen(PORT || 5000 , () => {
 app.get("/", (req, res) => {
   res.send("Hello");
 });
+
+import userRouter from "./routes/user.routes"
+app.use("/api/v1/users", userRouter)

@@ -1,69 +1,15 @@
-import { Router } from "express";
-import {
+import { Router } from "express"
+import { getSystemUsers, getUser, loginUser, logoutUser, registerUser, verifyUser } from "../controllers/user.controller"
+import { verifyJWT } from "../middlewares/auth.middleware"
 
-    getSystemUsers,
-  getUser,
-  loginUser,
-  logoutUser,
-  refreshAccessToken,
-  registerUser,
-  resetPassword,
-  sendEmail,
-  setAccessToken,
-  setOauthCookies,
-  updateAccountDetails,
-  updatePassword,
-  uploadAvatar,
-  verifyUser,
-} from "../controllers/user.controller";
-import { verifyJWT } from "../middlewares/auth.middleware";
-import passport from "passport";
-import { upload } from "../middlewares/multer.middleware";
-import { getSystemErrorMap } from "util";
+const router = Router()
 
-const userRouter = Router();
+router.route("/register").post(registerUser)
+router.route("/verify-user").post(verifyUser)
+router.route("/login").post(loginUser)
 
-/* Register route */
-userRouter.route("/register").post(registerUser);
-userRouter.post("/verify", verifyUser);
+router.use(verifyJWT)
+router.route("/logout").post(logoutUser)
+router.route("/current-user").get(getUser)
 
-/* Login route */
-userRouter.route("/login").post(loginUser);
-userRouter.route("/forgot-password").post(sendEmail);
-userRouter.route("/reset-password").put(resetPassword);
-userRouter.route("/refresh-token").post(refreshAccessToken)
-
-/* Oauth routes */
-userRouter.route("/oauth/google").get(
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    session: false,
-  }),
-  setOauthCookies
-);
-userRouter.route("/oauth/github").get(
-  passport.authenticate("github", {
-    scope: ["profile", "email"],
-    session: false,
-  }),
-  setOauthCookies
-);
-
-
-userRouter.route("/set-access-token").get(setAccessToken);
-
-/* Auth Middleware to check if person is authenticated or not */
-userRouter.use(verifyJWT);  
-
-/* Protected routes */
-userRouter.route("/get-user").get(getUser);
-userRouter.route("/logout").get(logoutUser);
-userRouter.route("/get-all-users").get(getSystemUsers)
-userRouter.route("/update-password").put(updatePassword);
-userRouter
-  .route("/upload-avatar")
-  .put(upload.single("avatar"), uploadAvatar);
-userRouter.route("/update-profile").put(upload.single("avatar"),updateAccountDetails);
-
-
-export default userRouter;
+export default router

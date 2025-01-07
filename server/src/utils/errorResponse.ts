@@ -1,9 +1,12 @@
 class ErrorResponse extends Error {
     statusCode: number;
-    data: any;
+    message: string;
+    errors: any;
+    stack?: string | undefined;
+    data?: any;
     success: boolean;
-    errors: any[];
-  
+
+
     constructor(
       statusCode: number,
       message = "Something went wrong",
@@ -16,7 +19,6 @@ class ErrorResponse extends Error {
       this.message = message;
       this.success = false;
       this.errors = errors;
-  
       if (stack) {
         this.stack = stack;
       } else {
@@ -24,5 +26,5 @@ class ErrorResponse extends Error {
       }
     }
   }
-  
   export { ErrorResponse };
+  

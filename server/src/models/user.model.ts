@@ -2,24 +2,11 @@ import mongoose, { Model } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { accessTokenExpiry, accessTokenSecret, refreshTokenExpiry, refreshTokenSecret } from "../config/envConfig";
-
-export interface IUser extends mongoose.Document {
-  userName: string;
-  fullName: string;
-  OauthId:string,
-  email: string;
-  password: any;
-  role: string;
-  avatar: string;
-  refreshToken: any;
-  generateAccessToken(): string;
-  generateRefreshToken(): string;
-  isPasswordCorrect(password: any): Promise<boolean>;
-}
+import { IUser } from "../types/user.types";
 
 const userSchema = new mongoose.Schema<IUser>(
   {
-    userName: {
+    username: {
       type: String,
       required: true,
       trim: true,
