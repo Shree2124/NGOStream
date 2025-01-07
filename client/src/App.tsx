@@ -1,14 +1,22 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LoginPage, RegisterPage, HomePage, MemberManagementPage, DashboardHomePage, DonationDetailsPage, EventsPage } from "./pages";
-import { DashboardLayout } from "./components";
+import {
+  LoginPage,
+  RegisterPage,
+  HomePage,
+  MemberManagementPage,
+  DashboardHomePage,
+  DonationDetailsPage,
+  EventsPage,
+} from "./pages";
+import { AuthLayout, DashboardLayout } from "./components";
 import { fetchUser } from "./redux/slices/authSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "./redux/store";
 
 const App: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch()
-  dispatch(fetchUser())
+  const dispatch: AppDispatch = useDispatch();
+  dispatch(fetchUser());
   return (
     <BrowserRouter>
       <div className="h-screen">
@@ -19,16 +27,22 @@ const App: React.FC = () => {
           <Route
             path="/dashboard/*"
             element={
-              // <AuthLayout>
+              <AuthLayout allowedRoles={["admin"]}>
                 <DashboardLayout>
                   <Routes>
                     <Route path="/" element={<DashboardHomePage />} />
-                    <Route path="/members-details" element= {<MemberManagementPage/>}/>
-                    <Route path="/donation-details" element= {<DonationDetailsPage />}/>
-                    <Route path="/events" element= {<EventsPage />}/>
+                    <Route
+                      path="/members-details"
+                      element={<MemberManagementPage />}
+                    />
+                    <Route
+                      path="/donation-details"
+                      element={<DonationDetailsPage />}
+                    />
+                    <Route path="/events" element={<EventsPage />} />
                   </Routes>
                 </DashboardLayout>
-              // </AuthLayout> 
+              </AuthLayout>
             }
           />
         </Routes>

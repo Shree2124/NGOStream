@@ -41,7 +41,7 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
+    // if (validateForm()) {
       console.log("Form submitting ");
       try {
         const res = await api.post("/users/login", { username, password });
@@ -53,7 +53,7 @@ const Login: React.FC = () => {
         console.log(error);
         setGeneralError(error.message);
       }
-    }
+    // }
   };
 
   return (
@@ -131,17 +131,17 @@ const Login: React.FC = () => {
                 margin="normal"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                error={!!passwordError}
-                helperText={passwordError}
+                // error={!!passwordError}
+                // helperText={passwordError}
                 aria-describedby="password-error"
               />
-              <Typography
+              {/* <Typography
                 variant="body2"
                 color="error"
                 sx={{ mt: 1, textAlign: "left" }}
               >
                 {generalError}
-              </Typography>
+              </Typography> */}
               <Button
                 type="submit"
                 variant="contained"

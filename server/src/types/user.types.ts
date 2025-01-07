@@ -2,12 +2,14 @@ import mongoose from "mongoose";
 
 export interface IUser extends mongoose.Document {
   username: string;
+  gender: string;
+  age: string;
+  bio: string;
   fullName: string;
-  OauthId:string,
   email: string;
   password: any;
   role: string;
-  avatar: string;
+  status: string;
   refreshToken: any;
   generateAccessToken(): string;
   generateRefreshToken(): string;

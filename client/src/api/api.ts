@@ -11,6 +11,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Utility to get cookies by name
 const getCookies = (tokenName: string): string | null => {
   const token = document.cookie
     .split("; ")
@@ -22,75 +23,32 @@ const getCookies = (tokenName: string): string | null => {
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     const accessToken = getCookies("accessToken");
+    // console.log("Cookies ", document.cookie);
+
+    // console.log(accessToken);
+
     if (accessToken && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+    // console.log("config", config);
     return config;
   },
   (error: AxiosError) => Promise.reject(error)
 );
 
-let isRefreshing = false;
-let refreshSubscribers: ((newAccessToken: string) => void)[] = [];
-
-function onRefreshed(newAccessToken: string): void {
-  refreshSubscribers.forEach((callback) => callback(newAccessToken));
-  refreshSubscribers = [];
-}
-
-function addRefreshSubscriber(callback: (newAccessToke: string) => void): void {
-  refreshSubscribers.push(callback);
-}
-
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
-  async (error: AxiosError) => {
+  (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      if (!isRefreshing) {
-        isRefreshing = true;
-
-        const refreshToken = getCookies("refreshToken");
-
-        if (!refreshToken) {
-          store.dispatch(clearUser());
-          store.dispatch(setAuth(false));
-          return Promise.reject(new Error("Refresh token is missing."));
-        }
-
-        try {
-          const refreshResponse = await api.post<{ accessToken: string }>(
-            "/users/refresh-token",
-            { refreshToken }
-          );
-          const newAccessToken = refreshResponse?.data?.accessToken;
-
-          if (newAccessToken) {
-            document.cookie = `accessToken=${newAccessToken}; path=/; secure; SameSite=None`;
-            api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-            onRefreshed(newAccessToken);
-          }
-        } catch (refreshError) {
-          store.dispatch(clearUser());
-          store.dispatch(setAuth(false));
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
-      }
-
-      return new Promise((resolve) => {
-        addRefreshSubscriber((newAccessToken) => {
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          }
-          resolve(api(originalRequest));
-        });
-      });
+      store.dispatch(clearUser());
+      store.dispatch(setAuth(false));
+      return Promise.reject(new Error("Session expired. Please log in again."));
     }
 
     return Promise.reject(error);
