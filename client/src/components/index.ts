@@ -7,6 +7,7 @@ import DashboardHome from "./Dashboard/DashboardHome";
 import MemberManagement from "./Dashboard/MemberManagement";
 import DonationDetails from "./Dashboard/DonationDetails";
 import Events from "./Dashboard/Events";
+import AuthLayout from "./Layouts/AuthLayout";
 
 export {
     Login,
@@ -17,5 +18,6 @@ export {
     DashboardHome,
     MemberManagement,
     DonationDetails,
-    Events
+    Events,
+    AuthLayout
 }

@@ -12,7 +12,6 @@ import {
   Menu,
   ExitToApp,
   Home,
-  Person2,
   ManageAccounts,
   VolunteerActivism,
   Event,

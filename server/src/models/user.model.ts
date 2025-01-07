@@ -23,22 +23,19 @@ const userSchema = new mongoose.Schema<IUser>(
       required: true,
       trim: true,
     },
-    OauthId:{
-      type:String,
-      unique:true
-    },
     password: {
       type: String,
-      required: function(){return !this.OauthId},
+      required: true,
       trim: true,
       default:null
     },
     role: {
       type: String,
-      enum: ["host", "user", "guest"],
+      enum: ["admin", "volunteer", "staff"],
     },
-    avatar: {
-      type: String
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"]
     },
     refreshToken: {
       type: String,
