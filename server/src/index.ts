@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { corsOrigin, PORT } from "./config/envConfig";
 import { connectDatabase } from "./database/db";
+import passport from "passport";
 
 connectDatabase().then(()=>{
   console.log("Connected");
@@ -26,6 +27,13 @@ app.use(express.json());
 
 app.use(express.static("public"));
 
+passport.use(googleStratergy)
+
+
+
+/* passport initialized */
+app.use(passport.initialize())
+
 app.listen(PORT || 5000 , () => {
   console.log(`App is stared and is running on http://localhost:${PORT}`);
 });
@@ -36,4 +44,6 @@ app.get("/", (req, res) => {
 });
 
 import userRouter from "./routes/user.routes"
+import { googleStratergy } from "./config/oauthStratergies";
+
 app.use("/api/v1/users", userRouter)
