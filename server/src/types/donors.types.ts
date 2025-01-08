@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 export interface IDonors extends mongoose.Document {
     name: string;
     email: string;
     phone: string;
     address: string;
-    donations: mongoose.Schema.Types.ObjectId[]
+    donations: { donationId: Types.ObjectId }[];
 }

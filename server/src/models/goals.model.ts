@@ -1,4 +1,4 @@
-import mongoose, { Model } from "mongoose";
+import mongoose, { Model, Types } from "mongoose";
 import { IGoals } from "../types/goals.types";
 
 const goalSchema = new mongoose.Schema<IGoals>(
@@ -26,12 +26,7 @@ const goalSchema = new mongoose.Schema<IGoals>(
       enum: ["Active", "Inactive", "Completed"],
       default: "Active",
     },
-    donations: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Donar"
-      }
-    ],
+    donations: [{ donationId: { type: Types.ObjectId, ref: "Donation" } }],
   },
   {
     timestamps: true,

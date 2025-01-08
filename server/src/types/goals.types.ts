@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 export interface IGoals extends mongoose.Document {
     name: String;
@@ -7,5 +7,5 @@ export interface IGoals extends mongoose.Document {
     currentAmount: Number;
     startDate: Date;
     status: String;
-    donations: mongoose.Schema.Types.ObjectId[];
+    donations: { donationId: Types.ObjectId }[];
 }

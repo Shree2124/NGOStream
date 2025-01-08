@@ -1,4 +1,4 @@
-import mongoose, { Model } from "mongoose";
+import mongoose, { Model, Types } from "mongoose";
 import { IDonors } from "../types/donors.types";
 
 const DonarSchema = new mongoose.Schema<IDonors>(
@@ -23,6 +23,7 @@ const DonarSchema = new mongoose.Schema<IDonors>(
       trim: true,
       required: true,
     },
+    donations: [{ donationId: { type: Types.ObjectId, ref: "Donation" } }],
   },
   {
     timestamps: true,
