@@ -2,7 +2,7 @@ import mongoose, { Types } from "mongoose";
 
 export interface IGoals extends mongoose.Document {
     name: String;
-    describe: String;
+    description: String;
     targetAmount: Number;
     currentAmount: Number;
     startDate: Date;

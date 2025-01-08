@@ -8,7 +8,7 @@ const goalSchema = new mongoose.Schema<IGoals>(
       trim: true,
       required: true,
     },
-    describe: {
+    description: {
       type: String,
     },
     targetAmount: {
@@ -23,6 +23,7 @@ const goalSchema = new mongoose.Schema<IGoals>(
     },
     status: {
       type: String,
+      required: true,
       enum: ["Active", "Inactive", "Completed"],
       default: "Active",
     },

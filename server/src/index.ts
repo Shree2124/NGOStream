@@ -45,5 +45,7 @@ app.get("/", (req, res) => {
 });
 
 import userRouter from "./routes/user.routes"
+import goalRouter from "./routes/goals.routes"
 
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/goals", goalRouter)
