@@ -4,6 +4,7 @@ import cors from "cors";
 import { corsOrigin, PORT } from "./config/envConfig";
 import { connectDatabase } from "./database/db";
 import passport from "passport";
+// import { googleStratergy } from "./config/oauthStratergies";
 
 connectDatabase().then(()=>{
   console.log("Connected");
@@ -27,7 +28,7 @@ app.use(express.json());
 
 app.use(express.static("public"));
 
-passport.use(googleStratergy)
+// passport.use(googleStratergy)
 
 
 
@@ -44,6 +45,5 @@ app.get("/", (req, res) => {
 });
 
 import userRouter from "./routes/user.routes"
-import { googleStratergy } from "./config/oauthStratergies";
 
 app.use("/api/v1/users", userRouter)
