@@ -7,10 +7,9 @@ import { CircularProgress } from "@mui/material";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
-  allowedRoles: string[]; 
 }
 
-const AuthLayout: React.FC<AuthLayoutProps> = ({ children, allowedRoles }) => {
+const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -33,7 +32,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, allowedRoles }) => {
     } else {
       setIsAuthorized(false);
     }
-  }, [auth, user, allowedRoles]);
+  }, [auth, user]);
 
   if (loading || isAuthorized === null) {
     return (

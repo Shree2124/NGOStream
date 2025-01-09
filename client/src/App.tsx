@@ -13,6 +13,7 @@ import { AuthLayout, DashboardLayout } from "./components";
 import { fetchUser } from "./redux/slices/authSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "./redux/store";
+import GoalsPage from "./pages/Dashboard/GoalsPage";
 
 const App: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -27,7 +28,7 @@ const App: React.FC = () => {
           <Route
             path="/dashboard/*"
             element={
-              <AuthLayout allowedRoles={["admin"]}>
+              <AuthLayout>
                 <DashboardLayout>
                   <Routes>
                     <Route path="/" element={<DashboardHomePage />} />
@@ -40,6 +41,7 @@ const App: React.FC = () => {
                       element={<DonationDetailsPage />}
                     />
                     <Route path="/events" element={<EventsPage />} />
+                    <Route path="/goals" element={<GoalsPage />} />
                   </Routes>
                 </DashboardLayout>
               </AuthLayout>

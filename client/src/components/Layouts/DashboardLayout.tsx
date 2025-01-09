@@ -15,6 +15,7 @@ import {
   ManageAccounts,
   VolunteerActivism,
   Event,
+  Flag,
 } from "@mui/icons-material";
 import { ReactNode, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
@@ -40,7 +41,7 @@ const fitNotesTabs: Tab[] = [
     icon: <VolunteerActivism />,
   },
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
-  // { name: "Profile", path: "/dashboard/profile", icon: <Person2 /> },
+  { name: "Goals", path: "/dashboard/goals", icon: <Flag /> },
 ];
 
 const Link = styled(RouterLink)(({ theme }) => ({
