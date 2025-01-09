@@ -49,6 +49,19 @@ const createGoal = asyncHandler(async (req: any, res: Response) => {
     return res.status(201).json(new SuccessResponse(201, goal,"Goal created Successfully"))
 });
 
+const getAllGoals = asyncHandler(async (req: any, res: Response)=>{
+  console.log("requested");
+  
+  const allGoals = await Goal.find();
+
+  if(!allGoals || allGoals.length === 0) {
+    throw new ErrorResponse(404, "Goals not found")
+  }
+
+  return res.status(200).json(new SuccessResponse(200, allGoals, "Goals fetched successfully"))
+})
+
 export {
-    createGoal
+    createGoal,
+    getAllGoals
 }

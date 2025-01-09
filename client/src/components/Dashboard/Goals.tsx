@@ -10,6 +10,7 @@ import {
   ListItem,
   ListItemText,
   MenuItem,
+  Select,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -18,39 +19,48 @@ import { api } from "../../api/api";
 const Goals: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [goals, setGoals] = useState<any | unknown>([]);
+  const [goals, setGoals] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [targetAmount, setTargetAmount] = useState<number>();
-  const [startDate, setStartDate] = useState<Date | string>(
+  const [targetAmount, setTargetAmount] = useState<number | undefined>();
+  const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [status, setStatus] = useState<string>("Active");
-  //   const isMobile = useMediaQuery('(max-width:600px)');
 
   const handleAddGoal = async () => {
     if (name.trim() && description.trim() && typeof targetAmount === "number") {
-        console.log({name, description, startDate, targetAmount, status});
-        
-        const res = await api.post("/goals/create",{name, description, targetAmount, startDate,status})
-        console.log(res.data.data);
-        
-    //   setGoals([...goals, name]);
+      const newGoal = { name, description, targetAmount, startDate, status };
+
+      const res = await api.post("/goals/create", newGoal);
+      setGoals((prevGoals) => [...prevGoals, res.data.data]);
+
       setName("");
       setDescription("");
-      setTargetAmount(0);
+      setTargetAmount(undefined);
       setStartDate(new Date().toISOString().split("T")[0]);
       setStatus("Active");
       setIsModalOpen(false);
     }
   };
 
-  const filteredGoals = goals.filter((goal) =>
-    goal.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredGoals = goals.filter((goal) => {
+    const matchesSearchQuery =
+      goal.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === "All" || goal.status === statusFilter;
+    return matchesSearchQuery && matchesStatus;
+  });
 
+  useEffect(() => {
+    const fetchGoals = async () => {
+      const res = await api.get("/goals/all-goals");
+      setGoals(res.data.data);
+    };
+    fetchGoals();
+  }, []);
 
   return (
     <Box sx={{ p: 2, maxWidth: "100%", margin: "0" }}>
@@ -65,7 +75,7 @@ const Goals: React.FC = () => {
       >
         <IconButton
           sx={{
-            display: { xs: "block", md: "none", lg: "none" },
+            display: { xs: "block", md: "none" },
           }}
           onClick={() => setIsSearchBarVisible(!isSearchBarVisible)}
         >
@@ -78,9 +88,19 @@ const Goals: React.FC = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           sx={{
-            display: { xs: "none", md: "block", lg: "block" },
+            display: { xs: "none", md: "block" },
           }}
         />
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="All">All</MenuItem>
+          <MenuItem value="Active">Active</MenuItem>
+          <MenuItem value="Inactive">Inactive</MenuItem>
+          <MenuItem value="Complete">Complete</MenuItem>
+        </Select>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -103,7 +123,10 @@ const Goals: React.FC = () => {
       <List>
         {filteredGoals.map((goal, index) => (
           <ListItem key={index}>
-            <ListItemText primary={goal} />
+            <ListItemText
+              primary={goal.name}
+              secondary={`Description: ${goal.description}, Status: ${goal.status}`}
+            />
           </ListItem>
         ))}
       </List>
@@ -129,7 +152,6 @@ const Goals: React.FC = () => {
             fullWidth
             variant="outlined"
             label="Name"
-            placeholder="Enter goal name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             sx={{ mb: 2 }}
@@ -138,7 +160,6 @@ const Goals: React.FC = () => {
             fullWidth
             variant="outlined"
             label="Description"
-            placeholder="Enter goal description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             multiline
@@ -149,8 +170,7 @@ const Goals: React.FC = () => {
             fullWidth
             variant="outlined"
             label="Target Amount"
-            placeholder="Enter target amount"
-            value={targetAmount}
+            value={targetAmount || ""}
             onChange={(e) => setTargetAmount(Number(e.target.value))}
             type="number"
             sx={{ mb: 2 }}
@@ -175,6 +195,7 @@ const Goals: React.FC = () => {
           >
             <MenuItem value="Active">Active</MenuItem>
             <MenuItem value="Inactive">Inactive</MenuItem>
+            <MenuItem value="Complete">Complete</MenuItem>
           </TextField>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
             <Button variant="outlined" onClick={() => setIsModalOpen(false)}>
