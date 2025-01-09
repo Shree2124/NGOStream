@@ -9,6 +9,8 @@ import DonationDetails from "./Dashboard/DonationDetails";
 import Events from "./Dashboard/Events";
 import AuthLayout from "./Layouts/AuthLayout";
 import Goals from "./Dashboard/Goals";
+import GoalsSection from "./Home/GoalsSection";
+import DonorForm from "./forms/donorForm";
 
 export {
     Login,
@@ -21,5 +23,7 @@ export {
     DonationDetails,
     Events,
     AuthLayout,
-    Goals
+    Goals,
+    GoalsSection,
+    DonorForm
 }

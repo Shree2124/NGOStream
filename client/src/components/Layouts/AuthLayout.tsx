@@ -13,43 +13,29 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { auth, user, loading } = useSelector((state: RootState) => state.user);
-
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const { auth, loading } = useSelector((state: RootState) => state.user);
+  const [isReady, setIsReady] = useState(false);
 
   useLayoutEffect(() => {
     dispatch(fetchUser());
   }, [dispatch]);
 
   useEffect(() => {
-    console.log(user);
-    console.log(auth);
-    
-    
-    if (auth && user) {
-      // const hasAccess = allowedRoles.includes(user.role); 
-      setIsAuthorized(true);
-    } else {
-      setIsAuthorized(false);
+    if (!loading) {
+      if (auth) {
+        setIsReady(true);
+      } else {
+        navigate("/login"); 
+      }
     }
-  }, [auth, user]);
+  }, [auth, loading, navigate]);
 
-  if (loading || isAuthorized === null) {
+  if (loading || !isReady) {
     return (
       <div className="flex justify-center items-center h-screen bg-[#f4f4f4]">
         <CircularProgress />
       </div>
     );
-  }
-
-  if (!auth) {
-    navigate("/login"); 
-    return null;
-  }
-
-  if (!isAuthorized) {
-    navigate("/unauthorized"); 
-    return null;
   }
 
   return <>{children}</>;

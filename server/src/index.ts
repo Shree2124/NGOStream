@@ -46,6 +46,8 @@ app.get("/", (req, res) => {
 
 import userRouter from "./routes/user.routes"
 import goalRouter from "./routes/goals.routes"
+import donationRouter from "./routes/donation.routes"
 
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/goals", goalRouter)
+app.use("/api/v1/donation", donationRouter)

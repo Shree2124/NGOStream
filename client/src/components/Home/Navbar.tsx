@@ -27,9 +27,10 @@ const Navbar: React.FC = () => {
   };
 
   const menuItems: MenuItem[] = [
-    { text: "Home", link: "/" },
+    { text: "Home", link: "#home" },
+    // { text: "Register", link: "/register" },
+    { text: "Goals", link: "#goals" },
     { text: "Login", link: "/login" },
-    { text: "Register", link: "/register" },
   ];
 
   return (

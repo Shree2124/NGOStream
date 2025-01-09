@@ -3,7 +3,7 @@ import mongoose, { Types } from "mongoose";
 export interface IGoals extends mongoose.Document {
     name: String;
     description: String;
-    targetAmount: Number;
+    targetAmount: Number | any;
     currentAmount: Number;
     startDate: Date;
     status: String;

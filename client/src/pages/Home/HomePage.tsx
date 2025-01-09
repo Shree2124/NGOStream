@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { HeroSection, Navbar } from "../../components";
+import { GoalsSection, HeroSection, Navbar } from "../../components";
 
 const HomePage: React.FC = () => {
 
@@ -12,8 +12,12 @@ const HomePage: React.FC = () => {
       <div>
         <Navbar />
       </div>
+      <div className="shadow-lg h-screen w-full" id="#home">
       <HeroSection />
-      
+      </div>
+      <div className="" id="goals">
+        <GoalsSection />
+      </div>
     </Box>
   );
 };

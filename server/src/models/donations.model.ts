@@ -7,9 +7,10 @@ const DonationSchema = new Schema<IDonation>(
     goalId: { type: Schema.Types.ObjectId, ref: "Goal", required: true },
     amount: { type: Number, required: true },
     currency: { type: String, required: true, default: "USD" },
-    paymentStatus: { type: String, enum: ["Successful", "Failed"], required: true },
+    paymentStatus: { type: String, enum: ["Successful", "Failed", "Pending"], required: true },
     paymentMethod: { type: String, required: true },
-    stripePaymentId: { type: String, required: true },
+    stripePaymentId: { type: String },
+    stripeSessionId: { type: String, required: true },
   },
   { timestamps: true }
 );

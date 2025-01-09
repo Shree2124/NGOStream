@@ -8,6 +8,7 @@ export interface IDonation extends Document {
     paymentStatus: "Successful" | "Failed";
     paymentMethod: string;
     stripePaymentId: string;
+    stripeSessionId: string;
     createdAt?: Date;
     updatedAt?: Date;
   }

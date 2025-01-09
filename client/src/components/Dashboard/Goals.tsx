@@ -19,6 +19,7 @@ import { api } from "../../api/api";
 const Goals: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [goals, setGoals] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");

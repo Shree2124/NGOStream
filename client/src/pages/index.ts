@@ -5,6 +5,7 @@ import DashboardHomePage from "./Dashboard/DashboardHomePage";
 import MemberManagementPage from "./Dashboard/MemberManagementPage";
 import DonationDetailsPage from "./Dashboard/DonationDetailsPage";
 import EventsPage from "./Dashboard/EventsPage";
+import DonorFormPage from "./Forms/DonorFormPage";
 
 export {
     LoginPage,
@@ -13,5 +14,6 @@ export {
     DashboardHomePage,
     MemberManagementPage,
     DonationDetailsPage,
-    EventsPage
+    EventsPage,
+    DonorFormPage
 }

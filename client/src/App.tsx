@@ -8,12 +8,14 @@ import {
   DashboardHomePage,
   DonationDetailsPage,
   EventsPage,
+  DonorFormPage,
 } from "./pages";
 import { AuthLayout, DashboardLayout } from "./components";
 import { fetchUser } from "./redux/slices/authSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "./redux/store";
 import GoalsPage from "./pages/Dashboard/GoalsPage";
+import PaymentSuccessPage from "./components/constants/PaymentSuccess";
 
 const App: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -25,6 +27,8 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/donor-form/:goalId" element={<DonorFormPage />} />
+          <Route path="/donation-success" element={<PaymentSuccessPage />} />
           <Route
             path="/dashboard/*"
             element={

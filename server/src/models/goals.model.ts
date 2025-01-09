@@ -16,6 +16,7 @@ const goalSchema = new mongoose.Schema<IGoals>(
     },
     currentAmount: {
       type: Number,
+      default: 0,
     },
     startDate: {
       type: Date,
