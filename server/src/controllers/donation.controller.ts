@@ -67,7 +67,6 @@ export const createCheckoutSession = asyncHandler(
       });
 
       console.log(session);
-      
 
       await Donation.create({
         donorId: donor._id,
@@ -80,17 +79,16 @@ export const createCheckoutSession = asyncHandler(
         // stripePaymentId: "",
       });
 
-      res
-        .status(200)
-        .json(
-          new SuccessResponse(
-            200,
-            { 
-              sessionId: session.id,
-              url: session.url },
-            "session created successfully"
-          )
-        );
+      res.status(200).json(
+        new SuccessResponse(
+          200,
+          {
+            sessionId: session.id,
+            url: session.url,
+          },
+          "session created successfully"
+        )
+      );
     } catch (error) {
       console.error("Error creating Stripe session:", error);
       throw new ErrorResponse(500, "Failed to create stripe session");
@@ -102,7 +100,6 @@ export const handlePaymentSuccess = asyncHandler(
   async (req: Request, res: Response) => {
     const { session_id } = req.body;
     console.log(session_id);
-    
 
     if (!session_id) {
       throw new ErrorResponse(400, "Missing session_id");
@@ -140,5 +137,48 @@ export const handlePaymentSuccess = asyncHandler(
 
       res.status(500).json({ message: "Error processing payment" });
     }
+  }
+);
+
+export const getDonationInformation = asyncHandler(
+  async (req: any, res: Response) => {
+    const donationInfo = await Donation.aggregate([
+      {
+        $lookup: {
+          from: "donors",
+          localField: "donorId",
+          foreignField: "_id",
+          as: "donorInfo",
+        },
+      },
+      {
+        $lookup: {
+          from: "goals",
+          localField: "goalId",
+          foreignField: "_id",
+          as: "goalInfo",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          donorInfo: { $arrayElemAt: ["$donorInfo", 0] },
+          goalInfo: { $arrayElemAt: ["$goalInfo", 0] },
+          amount: 1,
+          currency: 1,
+          paymentStatus: 1,
+          paymentMethod: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ]);
+
+    if (!donationInfo || donationInfo.length === 0)
+      throw new ErrorResponse(404, "Donations not found");
+
+    return res
+      .status(200)
+      .json(new SuccessResponse(200, donationInfo, "Donations found"));
   }
 );

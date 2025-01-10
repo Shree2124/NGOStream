@@ -31,6 +31,6 @@ const DonarSchema = new mongoose.Schema<IDonors>(
 );
 
 export const Donar: Model<IDonors> = mongoose.model<IDonors>(
-  "Donar",
+  "Donor",
   DonarSchema
 );
