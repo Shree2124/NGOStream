@@ -1,23 +1,22 @@
-import {
-  accessTokenExpiry,
-  accessTokenSecret,
-} from "../config/envConfig";
+import { accessTokenExpiry, accessTokenSecret } from "../config/envConfig";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-
+import { User } from "../models/user.model";
+import uploadOnCloudinary from "../utils/cloudinary";
 
 const options: any = {
-  httpOnly: false,           
-  secure: false,              
-  sameSite: 'Strict',          
-  path: '/',                 
+  httpOnly: false,
+  secure: false,
+  sameSite: "Strict",
+  path: "/",
 };
 
-
-{/* Function to generate access and refresh token  */}
+{
+  /* Function to generate access and refresh token  */
+}
 
 // Function to generate an access token
 const generateAccess = (username: string) => {
@@ -26,11 +25,9 @@ const generateAccess = (username: string) => {
       throw new ErrorResponse(401, "Username is required.");
     }
 
-    const accessToken = jwt.sign(
-      { username },
-      accessTokenSecret as string,
-      { expiresIn: accessTokenExpiry }
-    );
+    const accessToken = jwt.sign({ username }, accessTokenSecret as string, {
+      expiresIn: accessTokenExpiry,
+    });
 
     return accessToken;
   } catch (error) {
@@ -54,23 +51,18 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
 
   const accessToken = generateAccess(username);
   console.log(accessToken);
-  
 
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
     .json(
-      new SuccessResponse(
-        200,
-        { accessToken },
-        "User logged in successfully!"
-      )
+      new SuccessResponse(200, { accessToken }, "User logged in successfully!")
     );
 });
 
-
-
-{/* Function to logout the user by checking if the person is authenticated or not */}
+{
+  /* Function to logout the user by checking if the person is authenticated or not */
+}
 const logoutUser = asyncHandler(async (req: any, res: Response) => {
   const user = req.user;
 
@@ -84,7 +76,9 @@ const logoutUser = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, {}, "user logout successfully"));
 });
 
-{/* Function to fetch the current authenticated user  */}
+{
+  /* Function to fetch the current authenticated user  */
+}
 const getUser = asyncHandler(async (req: any, res: Response) => {
   const user = req.user;
 
@@ -99,6 +93,72 @@ const getUser = asyncHandler(async (req: any, res: Response) => {
     );
 });
 
+const createUser = asyncHandler(async (req: Request, res: Response) => {
+  const {
+    avatar,
+    gender,
+    age,
+    bio,
+    fullName,
+    email,
+    address,
+    phone,
+    role,
+  } = req.body;
+
+  if (!fullName || !email || !address || !phone || !role || !gender || !age) {
+    throw new ErrorResponse(400, "Please fill in all required fields.");
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ErrorResponse(400, "User with this email already exists.");
+  }
+
+  const newUser = await User.create({
+    gender,
+    age,
+    bio,
+    fullName,
+    email,
+    address,
+    phone,
+    role,
+  });
+
+  if (newUser) {
+    let avatarLocalPath: string | null = "";
+    let uploadedAvatar: any;
+
+    if (req.file) {
+      avatarLocalPath = req.file.path;
+      uploadedAvatar = uploadOnCloudinary(avatarLocalPath);
+    }
+
+    newUser.avatar = uploadedAvatar.url;
+    const createdUser = await newUser.save();
+
+    createdUser
+      ? res
+          .status(201)
+          .json(new SuccessResponse(201, newUser, "User created successfully"))
+      : res
+          .status(201)
+          .json(new SuccessResponse(201, newUser, "User Created Successfully"));
+  } else {
+    throw new ErrorResponse(500, "Failed to create user.");
+  }
+});
+
+const getUsers = asyncHandler(async (req: any, res: Response) => {
+  const users = await User.find();
+
+  if (!users) throw new ErrorResponse(404, "Users not found");
+
+  return res
+    .status(200)
+    .json(new SuccessResponse(200, users, "Users fetched successfully"));
+});
 
 // {/* Function to fetch the current logged in user */}
 // const getSystemUsers = asyncHandler(async (req: any, res: Response) => {
@@ -165,8 +225,6 @@ const getUser = asyncHandler(async (req: any, res: Response) => {
 //       )
 //     );
 // });
-
-
 
 // {/* Function to update the current password of the user */}
 // const updatePassword = asyncHandler(async (req: any, res: Response) => {
@@ -366,9 +424,4 @@ const getUser = asyncHandler(async (req: any, res: Response) => {
 //     .json(new SuccessResponse(201, token, "AccessToken fetched successfully!"));
 // });
 
-
-export {
-  loginUser,
-  logoutUser,
-  getUser
-};
+export { loginUser, logoutUser, getUser, createUser };
