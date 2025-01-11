@@ -14,7 +14,6 @@ const options: any = {
   secure: false,              
   sameSite: 'Strict',          
   path: '/',                 
-  maxAge: 15 * 60 * 1000
 };
 
 

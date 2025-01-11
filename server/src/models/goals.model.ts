@@ -8,6 +8,9 @@ const goalSchema = new mongoose.Schema<IGoals>(
       trim: true,
       required: true,
     },
+    image: {
+      type: String,
+    },
     description: {
       type: String,
     },

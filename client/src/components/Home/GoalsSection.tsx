@@ -99,7 +99,7 @@ const GoalsSection: React.FC = () => {
                   }}
                 >
                   <img
-                    src={goal.imageUrl}
+                    src={goal.image}
                     alt={goal.name}
                     style={{
                       width: "100%",

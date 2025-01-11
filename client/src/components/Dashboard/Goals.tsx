@@ -11,45 +11,121 @@ import {
   ListItemText,
   MenuItem,
   Select,
+  Stack,
+  Avatar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import { api } from "../../api/api";
+import { Delete, Edit, Visibility } from "@mui/icons-material";
+import { Pie } from "react-chartjs-2";
 
 const Goals: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentGoal, setCurrentGoal] = useState<any | null>(null);
+  const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+
   const [goals, setGoals] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [name, setName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [targetAmount, setTargetAmount] = useState<number | undefined>();
-  const [startDate, setStartDate] = useState<string>(
+  const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-  const [status, setStatus] = useState<string>("Active");
+  const [status, setStatus] = useState("Active");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const handleAddGoal = async () => {
-    if (name.trim() && description.trim() && typeof targetAmount === "number") {
-      const newGoal = { name, description, targetAmount, startDate, status };
-
-      const res = await api.post("/goals/create", newGoal);
-      setGoals((prevGoals) => [...prevGoals, res.data.data]);
-
+  const handleOpenModal = (goal: any = null) => {
+    if (goal) {
+      setIsEditing(true);
+      setCurrentGoal(goal);
+      setName(goal.name);
+      setDescription(goal.description);
+      setTargetAmount(goal.targetAmount);
+      setStartDate(goal.startDate);
+      setStatus(goal.status);
+    } else {
+      setIsEditing(false);
       setName("");
       setDescription("");
       setTargetAmount(undefined);
       setStartDate(new Date().toISOString().split("T")[0]);
       setStatus("Active");
-      setIsModalOpen(false);
+      setImage(null);
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
+  const handleAddOrEditGoal = async () => {
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("description", description);
+    if (targetAmount) formData.append("targetAmount", targetAmount.toString());
+    formData.append("startDate", startDate);
+    formData.append("status", status);
+    if (image) formData.append("image", image);
+
+    try {
+      if (isEditing && currentGoal) {
+        const res = await api.put(`/goals/edit/${currentGoal._id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        setImagePreview(null)
+        
+        setGoals((prevGoals) =>
+          prevGoals.map((goal) =>
+            goal._id === currentGoal._id ? res.data.data : goal
+          )
+        );
+      } else {
+        const res = await api.post("/goals/create", {name, description, status, startDate, targetAmount});
+        setGoals((prevGoals) => [...prevGoals, res.data.data]);
+      }
+      setIsModalOpen(false);
+      setCurrentGoal(null);
+    } catch (error) {
+      console.error("Error saving goal:", error);
+    }
+  };
+
+  const handleDeleteGoal = async () => {
+    if (selectedGoal) {
+      try {
+        await api.delete(`/goals/delete/${selectedGoal._id}`);
+        setGoals((prevGoals) =>
+          prevGoals.filter((goal) => goal._id !== selectedGoal._id)
+        );
+        setIsDeleteModalOpen(false);
+      } catch (error) {
+        console.error("Error deleting goal:", error);
+      }
+    }
+  };
+
+  const handleViewGoal = (goal: any) => {
+    setSelectedGoal(goal);
+    setIsViewModalOpen(true);
+  };
+
   const filteredGoals = goals.filter((goal) => {
-    const matchesSearchQuery =
-      goal.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearchQuery = goal.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "All" || goal.status === statusFilter;
     return matchesSearchQuery && matchesStatus;
@@ -57,11 +133,41 @@ const Goals: React.FC = () => {
 
   useEffect(() => {
     const fetchGoals = async () => {
-      const res = await api.get("/goals/all-goals");
-      setGoals(res.data.data);
+      try {
+        const res = await api.get("/goals/all-goals");
+        setGoals(res.data.data);
+      } catch (error) {
+        console.error("Error fetching goals:", error);
+      }
     };
     fetchGoals();
   }, []);
+
+  const modalStyles = {
+    position: "absolute" as const,
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    bgcolor: "background.paper",
+    boxShadow: 24,
+    p: 3,
+    borderRadius: 2,
+  };
+
+  const chartData = {
+    labels: ["Raised", "Remaining"],
+    datasets: [
+      {
+        data: [
+          selectedGoal?.currentAmount || 0,
+          (selectedGoal?.targetAmount || 0) -
+            (selectedGoal?.currentAmount || 0),
+        ],
+        backgroundColor: ["#36A2EB", "#FF6384"],
+        hoverBackgroundColor: ["#36A2EB", "#FF6384"],
+      },
+    ],
+  };
 
   return (
     <Box sx={{ p: 2, maxWidth: "100%", margin: "0" }}>
@@ -75,9 +181,7 @@ const Goals: React.FC = () => {
         }}
       >
         <IconButton
-          sx={{
-            display: { xs: "block", md: "none" },
-          }}
+          sx={{ display: { xs: "block", md: "none" } }}
           onClick={() => setIsSearchBarVisible(!isSearchBarVisible)}
         >
           <SearchIcon />
@@ -88,9 +192,7 @@ const Goals: React.FC = () => {
           placeholder="Search goals..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          sx={{
-            display: { xs: "none", md: "block" },
-          }}
+          sx={{ display: { xs: "none", md: "block", lg: "block" } }}
         />
         <Select
           value={statusFilter}
@@ -105,11 +207,12 @@ const Goals: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => handleOpenModal()}
         >
           Add Goal
         </Button>
       </Box>
+
       {isSearchBarVisible && (
         <TextField
           fullWidth
@@ -117,95 +220,173 @@ const Goals: React.FC = () => {
           placeholder="Search goals..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, display: { md: "none", lg: "none", sx: "block" } }}
         />
       )}
 
       <List>
-        {filteredGoals.map((goal, index) => (
-          <ListItem key={index}>
+        {filteredGoals.map((goal) => (
+          <ListItem key={goal._id} sx={{ borderBottom: "1px solid #ccc" }}>
+            <Box sx={{mr: '1.5rem'}}>
+              <img
+                src={goal.image}
+                alt="Goal"
+                style={{
+                  width: "2rem",
+                  height: "2rem",
+                  objectFit: "cover",
+                }}
+              />
+            </Box>
             <ListItemText
               primary={goal.name}
               secondary={`Description: ${goal.description}, Status: ${goal.status}`}
             />
+            <Stack direction="row" spacing={1}>
+              <IconButton onClick={() => handleViewGoal(goal)} title="View">
+                <Visibility />
+              </IconButton>
+              <IconButton onClick={() => handleOpenModal(goal)} title="Edit">
+                <Edit />
+              </IconButton>
+              <IconButton
+                title="Delete"
+                color="error"
+                onClick={() => {
+                  setSelectedGoal(goal);
+                  setIsDeleteModalOpen(true);
+                }}
+              >
+                <Delete />
+              </IconButton>
+            </Stack>
           </ListItem>
         ))}
       </List>
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "90%",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 3,
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            Add a New Goal
+        <Box sx={{ ...modalStyles, width: "50%" }}>
+          <Typography variant="h6" mb={2}>
+            {isEditing ? "Edit Goal" : "Add Goal"}
           </Typography>
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            multiline
-            rows={3}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Target Amount"
-            value={targetAmount || ""}
-            onChange={(e) => setTargetAmount(Number(e.target.value))}
-            type="number"
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Start Date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Status"
-            select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="Active">Active</MenuItem>
-            <MenuItem value="Inactive">Inactive</MenuItem>
-            <MenuItem value="Complete">Complete</MenuItem>
-          </TextField>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Stack spacing={2}>
+            <TextField
+              label="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              fullWidth
+              multiline
+              rows={3}
+            />
+            <TextField
+              label="Target Amount"
+              type="number"
+              value={targetAmount || ""}
+              onChange={(e) => setTargetAmount(Number(e.target.value))}
+              fullWidth
+            />
+            <TextField
+              label="Start Date"
+              type="date"
+              value={startDate.split("T")[0]}
+              onChange={(e) => setStartDate(e.target.value)}
+              fullWidth
+            />
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              fullWidth
+            >
+              <MenuItem value="Active">Active</MenuItem>
+              <MenuItem value="Inactive">Inactive</MenuItem>
+              <MenuItem value="Complete">Complete</MenuItem>
+            </Select>
+
+            {isEditing && (
+              <Button variant="contained" component="label">
+                Upload Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleImageChange}
+                />
+              </Button>
+            )}
+
+            {(imagePreview && isEditing) && (
+              <Box>
+                <img
+                  src={imagePreview}
+                  alt="Goal"
+                  style={{
+                    width: "100%",
+                    maxHeight: "200px",
+                    objectFit: "cover",
+                  }}
+                />
+              </Box>
+            )}
+          </Stack>
+          <Stack direction="row" justifyContent="flex-end" spacing={2} mt={3}>
             <Button variant="outlined" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleAddGoal}>
-              Save
+            <Button
+              variant="contained"
+              onClick={handleAddOrEditGoal}
+              color="primary"
+            >
+              {isEditing ? "Save Changes" : "Add Goal"}
             </Button>
+          </Stack>
+        </Box>
+      </Modal>
+
+      <Modal open={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
+        <Box sx={{ ...modalStyles, width: "80%" }}>
+          <Typography variant="h6">{selectedGoal?.name}</Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", mt: 3 }}>
+            <Box sx={{ width: "50%", margin: "0 auto" }}>
+              <Pie data={chartData} />
+            </Box>
+            <Typography variant="h6" mt={3}>
+              Donor Information
+            </Typography>
           </Box>
+        </Box>
+      </Modal>
+
+      <Modal
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+      >
+        <Box sx={{ ...modalStyles }}>
+          <Typography variant="h6">Confirm Delete</Typography>
+          <Typography sx={{ mt: 2 }}>
+            Are you sure you want to delete this goal?
+          </Typography>
+          <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>
+            <Button
+              variant="outlined"
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeleteGoal}
+            >
+              Delete
+            </Button>
+          </Stack>
         </Box>
       </Modal>
     </Box>
