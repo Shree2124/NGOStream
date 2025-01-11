@@ -28,7 +28,7 @@ interface NewUser {
   fullName: string;
   email: string;
   address: string;
-  phone: string; // Changed to string for form input handling
+  phone: string;
   role: string;
 }
 
@@ -164,7 +164,6 @@ const MemberManagement: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: "flex", gap: 5, alignItems: "center", mb: 2 }}>
-            {/* Image Upload Box */}
             <Box
               sx={{
                 width: "10rem",
@@ -194,7 +193,6 @@ const MemberManagement: React.FC = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    // Update state with uploaded file or its URL
                     setNewUser({
                       ...newUser,
                       avatar: URL.createObjectURL(file),
@@ -204,7 +202,6 @@ const MemberManagement: React.FC = () => {
               />
             </Box>
 
-            {/* Name, Age, Gender */}
             <Box sx={{ flex: 1 }}>
               <TextField
                 fullWidth
@@ -247,8 +244,6 @@ const MemberManagement: React.FC = () => {
               </Select>
             </Box>
           </Box>
-
-          {/* Remaining Details */}
           <TextField
             fullWidth
             label="Email"
