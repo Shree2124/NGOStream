@@ -95,7 +95,6 @@ const getUser = asyncHandler(async (req: any, res: Response) => {
 
 const createUser = asyncHandler(async (req: Request, res: Response) => {
   const {
-    avatar,
     gender,
     age,
     bio,
@@ -105,6 +104,10 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
     phone,
     role,
   } = req.body;
+
+  console.log(req.body);
+  
+  
 
   if (!fullName || !email || !address || !phone || !role || !gender || !age) {
     throw new ErrorResponse(400, "Please fill in all required fields.");
@@ -132,19 +135,13 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (req.file) {
       avatarLocalPath = req.file.path;
-      uploadedAvatar = uploadOnCloudinary(avatarLocalPath);
+      uploadedAvatar = await uploadOnCloudinary(avatarLocalPath);
+      newUser.avatar = uploadedAvatar?.url;
     }
-
-    newUser.avatar = uploadedAvatar.url;
     const createdUser = await newUser.save();
-
-    createdUser
-      ? res
+      res
           .status(201)
-          .json(new SuccessResponse(201, newUser, "User created successfully"))
-      : res
-          .status(201)
-          .json(new SuccessResponse(201, newUser, "User Created Successfully"));
+          .json(new SuccessResponse(201, createdUser, "User created successfully"))
   } else {
     throw new ErrorResponse(500, "Failed to create user.");
   }
@@ -424,4 +421,4 @@ const getUsers = asyncHandler(async (req: any, res: Response) => {
 //     .json(new SuccessResponse(201, token, "AccessToken fetched successfully!"));
 // });
 
-export { loginUser, logoutUser, getUser, createUser };
+export { loginUser, logoutUser, getUser, createUser, getUsers };

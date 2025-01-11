@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       required: true,
     },
+    age: {
+      type: Number,
+      required: true,
+    },
     gender: {
       type: String,
       required: true,
@@ -51,7 +55,7 @@ const userSchema = new mongoose.Schema<IUser>(
     // },
     role: {
       type: String,
-      enum: ["volunteer", "staff"],
+      enum: ["Volunteer", "Staff"],
     },
     // status: {
     //   type: String,

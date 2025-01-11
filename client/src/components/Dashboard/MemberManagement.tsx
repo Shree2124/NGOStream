@@ -13,15 +13,10 @@ import {
   ListItemText,
 } from "@mui/material";
 import { Add, Search } from "@mui/icons-material";
-
-interface Member {
-  id: number;
-  name: string;
-  role: string;
-}
+import { api } from "../../api/api";
 
 interface NewUser {
-  avatar?: string;
+  avatar?: File | string;
   gender: string;
   age: string;
   bio?: string;
@@ -32,22 +27,52 @@ interface NewUser {
   role: string;
 }
 
+interface Member {
+  id: string;
+  name: string;
+  role: string;
+}
+
+const addUser = async (userData: NewUser) => {
+  try {
+    const formData = new FormData();
+
+    if (userData.avatar && typeof userData.avatar === "object") {
+      formData.append("avatar", userData.avatar);
+    }
+    if (userData.gender) formData.append("gender", userData.gender);
+    if (userData.age) formData.append("age", userData.age.toString());
+    if (userData.bio) formData.append("bio", userData.bio);
+    if (userData.fullName) formData.append("fullName", userData.fullName);
+    if (userData.email) formData.append("email", userData.email);
+    if (userData.address) formData.append("address", userData.address);
+    if (userData.phone) formData.append("phone", userData.phone);
+    if (userData.role) formData.append("role", userData.role);
+
+    const response = await api.post("/users/add-member", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    if (response.status !== 200) {
+      throw new Error("Failed to add member. Please try again.");
+    }
+
+    return response.data?.data;
+  } catch (error: any) {
+    console.error("Error adding user:", error?.message || error);
+    throw new Error(error?.response?.data?.message || "An error occurred while adding the user.");
+  }
+};
+
+
+
 const MemberManagement: React.FC = () => {
   const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filter, setFilter] = useState<string>("All");
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [members, setMembers] = useState<Member[]>([
-    { id: 1, name: "John Doe", role: "Staff" },
-    { id: 2, name: "Jane Smith", role: "Volunteer" },
-    { id: 3, name: "Alice Brown", role: "Staff" },
-    { id: 4, name: "Bob Green", role: "Volunteer" },
-  ]);
-  const [newMember, setNewMember] = useState<Member>({
-    id: 0,
-    name: "",
-    role: "Staff",
-  });
+  const [members, setMembers] = useState<Member[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [newUser, setNewUser] = useState<NewUser>({
     gender: "",
@@ -65,12 +90,27 @@ const MemberManagement: React.FC = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setNewMember({ id: 0, name: "", role: "Staff" });
+    setNewUser({
+      gender: "",
+      age: "",
+      fullName: "",
+      email: "",
+      address: "",
+      phone: "",
+      role: "",
+    });
+    setImagePreview(null);
   };
 
-  const handleAddUser = () => {
-    console.log("New User Data:", newUser);
-    handleCloseModal();
+  const handleAddUser = async () => {
+    try {
+      const result = await addUser(newUser);
+      console.log("User added successfully:", result);
+      setMembers((prev) => [...prev, result]);
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error adding user:", error);
+    }
   };
 
   const isFormValid =
@@ -167,7 +207,7 @@ const MemberManagement: React.FC = () => {
             <Box
               sx={{
                 width: "10rem",
-                height: "10.5rem",
+                height: "10rem",
                 border: "1px dashed gray",
                 display: "flex",
                 justifyContent: "center",
@@ -177,14 +217,24 @@ const MemberManagement: React.FC = () => {
                 cursor: "pointer",
                 backgroundColor: "background.default",
               }}
-              onClick={() => {
-                // Trigger file upload logic here
-                document.getElementById("avatarUpload")?.click();
-              }}
+              onClick={() => document.getElementById("avatarUpload")?.click()}
             >
-              <Typography variant="h6" color="primary" fontWeight="bold">
-                +
-              </Typography>
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "inherit",
+                  }}
+                />
+              ) : (
+                <Typography variant="h6" color="primary">
+                  +
+                </Typography>
+              )}
               <input
                 id="avatarUpload"
                 type="file"
@@ -193,10 +243,8 @@ const MemberManagement: React.FC = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    setNewUser({
-                      ...newUser,
-                      avatar: URL.createObjectURL(file),
-                    });
+                    setNewUser({ ...newUser, avatar: file });
+                    setImagePreview(URL.createObjectURL(file));
                   }
                 }}
               />
