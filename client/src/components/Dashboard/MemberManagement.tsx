@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -11,6 +11,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  ListItemAvatar,
+  Avatar,
 } from "@mui/material";
 import { Add, Search } from "@mui/icons-material";
 import { api } from "../../api/api";
@@ -27,11 +29,6 @@ interface NewUser {
   role: string;
 }
 
-interface Member {
-  id: string;
-  name: string;
-  role: string;
-}
 
 const addUser = async (userData: NewUser) => {
   try {
@@ -58,13 +55,14 @@ const addUser = async (userData: NewUser) => {
     }
 
     return response.data?.data;
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error adding user:", error?.message || error);
-    throw new Error(error?.response?.data?.message || "An error occurred while adding the user.");
+    throw new Error(
+      error?.response?.data?.message ||
+        "An error occurred while adding the user."
+    );
   }
 };
-
-
 
 const MemberManagement: React.FC = () => {
   const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
@@ -73,6 +71,20 @@ const MemberManagement: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get("/users/all-members");
+        setMembers(res.data.data);
+        console.log(members);
+        
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const [newUser, setNewUser] = useState<NewUser>({
     gender: "",
@@ -125,9 +137,12 @@ const MemberManagement: React.FC = () => {
   const filteredMembers = members.filter((member) => {
     return (
       (filter === "All" || member.role === filter) &&
-      member.name.toLowerCase().includes(searchQuery.toLowerCase())
+      member.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
+
+  console.log(filteredMembers);
+  
 
   return (
     <Box sx={{ p: 2, maxWidth: "100%", margin: "0" }}>
@@ -174,12 +189,25 @@ const MemberManagement: React.FC = () => {
         </Button>
       </Box>
 
+      
       <List>
-        {filteredMembers.map((member) => (
-          <ListItem key={member.id}>
+        {filteredMembers.map((member, index) => (
+          <ListItem key={index} alignItems="flex-start">
+            <ListItemAvatar>
+              <Avatar sx={{border: "1px solid black"}} src={member.avatar} alt={member.fullName} />
+            </ListItemAvatar>
             <ListItemText
-              primary={member.name}
-              secondary={`Role: ${member.role}`}
+              primary={member.fullName}
+              secondary={
+                <>
+                  <Typography variant="body2" color="textSecondary">
+                    Role: {member.role}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {member.bio}
+                  </Typography>
+                </>
+              }
             />
           </ListItem>
         ))}

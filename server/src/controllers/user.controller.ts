@@ -106,6 +106,8 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
   } = req.body;
 
   console.log(req.body);
+  console.log(req.file);
+  
   
   
 
