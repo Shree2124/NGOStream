@@ -19,6 +19,7 @@ import { Add, Delete, Edit, Search, Visibility } from "@mui/icons-material";
 import { api } from "../../api/api";
 
 interface NewUser {
+  _id?: any;
   avatar?: File | string;
   gender: string;
   age: string;
@@ -31,7 +32,7 @@ interface NewUser {
 }
 
 interface Member extends NewUser {
-  id: string;
+  _id: string;
 }
 
 const addUser = async (userData: NewUser) => {
@@ -65,12 +66,38 @@ const addUser = async (userData: NewUser) => {
   }
 };
 
-const updateUser = async (userId: string, updatedUser: NewUser) => {
+const updateUser = async (
+  userId: string,
+  updatedUser: NewUser,
+  existingUser: NewUser | any
+) => {
   try {
-    const response = await api.put(
-      `/users/update-member/${userId}`,
-      updatedUser
+    console.log(userId);
+    
+    const updatedFields = Object.entries(updatedUser).reduce(
+      (acc, [key, value]) => {
+        if (existingUser[key as keyof NewUser] !== value) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Partial<NewUser>
     );
+
+    console.log(updatedFields);
+    
+
+    const response = await api.put(
+      `/users/edit-member/${userId}`,
+      updatedFields,
+      {
+        headers: {"Content-Type" : updatedFields.avatar ? "multipart/form-data" : "application/json"}
+      }
+    );
+
+    console.log(response.data.data);
+    
+
     if (response.status !== 200) {
       throw new Error("Failed to update user. Please try again.");
     }
@@ -82,7 +109,6 @@ const updateUser = async (userId: string, updatedUser: NewUser) => {
     );
   }
 };
-
 const deleteUser = async (userId: string) => {
   try {
     const response = await api.delete(`/users/delete-member/${userId}`);
@@ -105,10 +131,10 @@ const MemberManagement: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isEdit, setIsEdit] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false); 
+  const [currentUserId, setCurrentUserId] = useState<string | null>("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
-  const [showViewModal, setShowViewModal] = useState(false); 
+  const [showViewModal, setShowViewModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const handleViewDetails = (member: Member) => {
@@ -153,12 +179,18 @@ const MemberManagement: React.FC = () => {
     setDeleteMemberId(null);
   };
 
-  const handleOpenModal = (user?: Member) => {
-    if (user) {
+  const handleOpenModal = (user?: Member, id?: string) => {
+    console.log("Incoming ID:", id);
+    
+    if (user && id) {
       setIsEdit(true);
-      setCurrentUserId(user.id);
+      setCurrentUserId(id);
+      console.log("Set Current User ID:", id);
       setNewUser(user);
-      setImagePreview(typeof user.avatar === "string" ? user.avatar : null);
+      setSelectedMember(user);
+      setImagePreview(
+        user.avatar && typeof user.avatar === "string" ? user.avatar : null
+      );
     } else {
       setIsEdit(false);
       setNewUser({
@@ -172,8 +204,10 @@ const MemberManagement: React.FC = () => {
       });
       setImagePreview(null);
     }
+    
     setShowModal(true);
   };
+  
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -192,12 +226,20 @@ const MemberManagement: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+
+    console.log("submitting",isEdit, currentUserId);
+    
+
     try {
       if (isEdit && currentUserId) {
-        const updatedUser = await updateUser(currentUserId, newUser);
+        const updatedUser = await updateUser(
+          currentUserId,
+          newUser,
+          selectedMember
+        );
         setMembers((prev) =>
           prev.map((member) =>
-            member.id === currentUserId ? updatedUser : member
+            member._id === currentUserId ? updatedUser : member
           )
         );
       } else {
@@ -280,7 +322,7 @@ const MemberManagement: React.FC = () => {
               >
                 <Visibility />
               </IconButton>
-              <IconButton title="Edit" onClick={() => handleOpenModal(member)}>
+              <IconButton title="Edit" onClick={() => handleOpenModal(member, member._id)}>
                 <Edit />
               </IconButton>
               <IconButton
@@ -316,7 +358,10 @@ const MemberManagement: React.FC = () => {
             <Box>
               <Stack direction="row" spacing={2} mb={2}>
                 <Avatar
-                  src={selectedMember?.avatar || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
+                  src={
+                    selectedMember?.avatar ||
+                    "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+                  }
                   alt={selectedMember.fullName}
                   sx={{ width: 100, height: 100 }}
                 />

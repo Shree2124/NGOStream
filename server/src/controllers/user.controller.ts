@@ -94,22 +94,10 @@ const getUser = asyncHandler(async (req: any, res: Response) => {
 });
 
 const createUser = asyncHandler(async (req: Request, res: Response) => {
-  const {
-    gender,
-    age,
-    bio,
-    fullName,
-    email,
-    address,
-    phone,
-    role,
-  } = req.body;
+  const { gender, age, bio, fullName, email, address, phone, role } = req.body;
 
   console.log(req.body);
   console.log(req.file);
-  
-  
-  
 
   if (!fullName || !email || !address || !phone || !role || !gender || !age) {
     throw new ErrorResponse(400, "Please fill in all required fields.");
@@ -141,9 +129,9 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
       newUser.avatar = uploadedAvatar?.url;
     }
     const createdUser = await newUser.save();
-      res
-          .status(201)
-          .json(new SuccessResponse(201, createdUser, "User created successfully"))
+    res
+      .status(201)
+      .json(new SuccessResponse(201, createdUser, "User created successfully"));
   } else {
     throw new ErrorResponse(500, "Failed to create user.");
   }
@@ -159,16 +147,37 @@ const getUsers = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, users, "Users fetched successfully"));
 });
 
-const editUser = asyncHandler(async (req: any, res: Response)=>{
-  const {userId} = req.params
-  const {fullName,gender, role, age, email, address, phone } = req.body
+const editUser = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+  const { fullName, gender, role, age, email, address, phone, bio } = req.body;
 
-  const user = await User.findById(userId)
+  const user = await User.findById(userId);
+  if (!user) throw new ErrorResponse(404, "User not found");
 
-  if(!user) throw new ErrorResponse(404, "User not found")
+  if (fullName) user.fullName = fullName;
+  if (gender) user.gender = gender;
+  if (role) user.role = role;
+  if (age) user.age = age;
+  if (email) user.email = email;
+  if (address) user.address = address;
+  if (phone) user.phone = phone;
+  if (bio) user.bio = bio;
 
+  console.log(req.file);
   
-})
+
+  if (req.file) {
+    const avatarLocalPath = req.file.path;
+    const uploadedAvatar = await uploadOnCloudinary(avatarLocalPath);
+    user.avatar = uploadedAvatar?.url;
+  }
+
+  const updatedUser = await user.save();
+
+  res
+    .status(200)
+    .json(new SuccessResponse(200, updatedUser, "User updated successfully"));
+});
 
 // {/* Function to fetch the current logged in user */}
 // const getSystemUsers = asyncHandler(async (req: any, res: Response) => {
