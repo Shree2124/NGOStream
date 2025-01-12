@@ -49,7 +49,7 @@ const Login: React.FC = () => {
         dispatch(fetchUser());
         navigate("/dashboard");
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error) {
+      } catch (error:any) {
         console.log(error);
         setGeneralError(error.message);
       }
