@@ -179,6 +179,19 @@ const editUser = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, updatedUser, "User updated successfully"));
 });
 
+const deleteUser = asyncHandler(async (req: any, res: Response)=>{
+  const {userId} = req.params
+
+  if(!userId) throw new ErrorResponse(400, "User id is required")
+
+  const user = await User.findOneAndDelete({_id: userId})
+
+  console.log(user);
+
+  res.status(200).json(new SuccessResponse(200, null, "user deleted successfully"))
+  
+})
+
 // {/* Function to fetch the current logged in user */}
 // const getSystemUsers = asyncHandler(async (req: any, res: Response) => {
 //   const userId = req?.user?.id;
@@ -443,4 +456,4 @@ const editUser = asyncHandler(async (req: any, res: Response) => {
 //     .json(new SuccessResponse(201, token, "AccessToken fetched successfully!"));
 // });
 
-export { loginUser, logoutUser, getUser, createUser, getUsers, editUser };
+export { loginUser, logoutUser, getUser, createUser, getUsers, editUser, deleteUser };

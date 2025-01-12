@@ -19,6 +19,9 @@ import AddIcon from "@mui/icons-material/Add";
 import { api } from "../../api/api";
 import { Delete, Edit, Visibility } from "@mui/icons-material";
 import { Pie } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Goals: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,15 +88,21 @@ const Goals: React.FC = () => {
         const res = await api.put(`/goals/edit/${currentGoal._id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setImagePreview(null)
-        
+        setImagePreview(null);
+
         setGoals((prevGoals) =>
           prevGoals.map((goal) =>
             goal._id === currentGoal._id ? res.data.data : goal
           )
         );
       } else {
-        const res = await api.post("/goals/create", {name, description, status, startDate, targetAmount});
+        const res = await api.post("/goals/create", {
+          name,
+          description,
+          status,
+          startDate,
+          targetAmount,
+        });
         setGoals((prevGoals) => [...prevGoals, res.data.data]);
       }
       setIsModalOpen(false);
@@ -154,6 +163,7 @@ const Goals: React.FC = () => {
     borderRadius: 2,
   };
 
+
   const chartData = {
     labels: ["Raised", "Remaining"],
     datasets: [
@@ -167,6 +177,31 @@ const Goals: React.FC = () => {
         hoverBackgroundColor: ["#36A2EB", "#FF6384"],
       },
     ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function (tooltipItem: any) {
+            return `${tooltipItem.label}: ${tooltipItem.raw}`;
+          },
+        },
+      },
+    },
+    rotation: [55, 55],
+    animation: {
+      animateScale: true,
+      animateRotate: true,
+    },
+    cutout: "50%", 
+    elements: {
+      arc: {
+        borderWidth: 5, 
+        borderColor: "rgba(0, 0, 0, 0.2)",
+      },
+    },
   };
 
   return (
@@ -227,7 +262,7 @@ const Goals: React.FC = () => {
       <List>
         {filteredGoals.map((goal) => (
           <ListItem key={goal._id} sx={{ borderBottom: "1px solid #ccc" }}>
-            <Box sx={{mr: '1.5rem'}}>
+            <Box sx={{ mr: "1.5rem" }}>
               <img
                 src={goal.image}
                 alt="Goal"
@@ -320,7 +355,7 @@ const Goals: React.FC = () => {
               </Button>
             )}
 
-            {(imagePreview && isEditing) && (
+            {imagePreview && isEditing && (
               <Box>
                 <img
                   src={imagePreview}
@@ -353,8 +388,8 @@ const Goals: React.FC = () => {
         <Box sx={{ ...modalStyles, width: "80%" }}>
           <Typography variant="h6">{selectedGoal?.name}</Typography>
           <Box sx={{ display: "flex", flexDirection: "column", mt: 3 }}>
-            <Box sx={{ width: "50%", margin: "0 auto" }}>
-              <Pie data={chartData} />
+            <Box sx={{ width: "50%", margin: "0 auto", mt: 3 }}>
+              <Pie data={chartData} options={chartOptions} />{" "}
             </Box>
             <Typography variant="h6" mt={3}>
               Donor Information

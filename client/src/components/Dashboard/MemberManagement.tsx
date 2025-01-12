@@ -73,7 +73,7 @@ const updateUser = async (
 ) => {
   try {
     console.log(userId);
-    
+
     const updatedFields = Object.entries(updatedUser).reduce(
       (acc, [key, value]) => {
         if (existingUser[key as keyof NewUser] !== value) {
@@ -85,18 +85,20 @@ const updateUser = async (
     );
 
     console.log(updatedFields);
-    
 
     const response = await api.put(
       `/users/edit-member/${userId}`,
       updatedFields,
       {
-        headers: {"Content-Type" : updatedFields.avatar ? "multipart/form-data" : "application/json"}
+        headers: {
+          "Content-Type": updatedFields.avatar
+            ? "multipart/form-data"
+            : "application/json",
+        },
       }
     );
 
     console.log(response.data.data);
-    
 
     if (response.status !== 200) {
       throw new Error("Failed to update user. Please try again.");
@@ -109,12 +111,14 @@ const updateUser = async (
     );
   }
 };
+
 const deleteUser = async (userId: string) => {
   try {
     const response = await api.delete(`/users/delete-member/${userId}`);
     if (response.status !== 200) {
       throw new Error("Failed to delete user. Please try again.");
     }
+    return response;
   } catch (error) {
     console.error("Error deleting user:", error.message || error);
     throw new Error(
@@ -170,6 +174,8 @@ const MemberManagement: React.FC = () => {
   }, []);
 
   const handleConfirmDelete = (userId: string) => {
+    console.log(userId);
+
     setDeleteMemberId(userId);
     setShowDeleteModal(true);
   };
@@ -181,7 +187,7 @@ const MemberManagement: React.FC = () => {
 
   const handleOpenModal = (user?: Member, id?: string) => {
     console.log("Incoming ID:", id);
-    
+
     if (user && id) {
       setIsEdit(true);
       setCurrentUserId(id);
@@ -204,10 +210,9 @@ const MemberManagement: React.FC = () => {
       });
       setImagePreview(null);
     }
-    
+
     setShowModal(true);
   };
-  
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -226,9 +231,7 @@ const MemberManagement: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-
-    console.log("submitting",isEdit, currentUserId);
-    
+    console.log("submitting", isEdit, currentUserId);
 
     try {
       if (isEdit && currentUserId) {
@@ -254,7 +257,8 @@ const MemberManagement: React.FC = () => {
 
   const handleDelete = async (userId: string) => {
     try {
-      await deleteUser(userId);
+      const res = await deleteUser(userId);
+      if (res.status === 200) setShowDeleteModal(false);
       setMembers((prev) => prev.filter((member) => member.id !== userId));
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -322,12 +326,15 @@ const MemberManagement: React.FC = () => {
               >
                 <Visibility />
               </IconButton>
-              <IconButton title="Edit" onClick={() => handleOpenModal(member, member._id)}>
+              <IconButton
+                title="Edit"
+                onClick={() => handleOpenModal(member, member._id)}
+              >
                 <Edit />
               </IconButton>
               <IconButton
                 title="Delete"
-                onClick={() => handleConfirmDelete(member.id)}
+                onClick={() => handleConfirmDelete(member._id)}
                 color="error"
               >
                 <Delete />
