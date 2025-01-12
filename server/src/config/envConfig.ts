@@ -17,11 +17,7 @@ const smtpPass = process.env.SMTP_PASS
 const smtpPort = process.env.SMTP_PORT
 const googleId = process.env.GOOGLE_ID
 const googleSecret = process.env.GOOGLE_SECRET
-const githubId = process.env.GITHUB_ID
-const githubSecret = process.env.GITHUB_SECRET
-const redisHost = process.env.REDIS_HOST
-const redisPort = process.env.REDIS_PORT
-const redisPass = process.env.REDIS_PASSWORD
+
 
 
 export {
@@ -40,10 +36,6 @@ export {
     smtpUser,
     googleId,
     googleSecret,
-    githubId,
-    githubSecret,
-    redisHost,
-    redisPass,
-    redisPort,
+
 
 }
