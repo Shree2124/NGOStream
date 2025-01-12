@@ -1,4 +1,3 @@
-// MemberManagement.tsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -32,7 +31,7 @@ interface NewUser {
 }
 
 interface Member extends NewUser {
-  id: string; // Add a unique identifier for each member
+  id: string;
 }
 
 const addUser = async (userData: NewUser) => {
@@ -107,9 +106,9 @@ const MemberManagement: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isEdit, setIsEdit] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // State for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false); 
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
-  const [showViewModal, setShowViewModal] = useState(false); // State for view modal
+  const [showViewModal, setShowViewModal] = useState(false); 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const handleViewDetails = (member: Member) => {
