@@ -159,6 +159,17 @@ const getUsers = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, users, "Users fetched successfully"));
 });
 
+const editUser = asyncHandler(async (req: any, res: Response)=>{
+  const {userId} = req.params
+  const {fullName,gender, role, age, email, address, phone } = req.body
+
+  const user = await User.findById(userId)
+
+  if(!user) throw new ErrorResponse(404, "User not found")
+
+  
+})
+
 // {/* Function to fetch the current logged in user */}
 // const getSystemUsers = asyncHandler(async (req: any, res: Response) => {
 //   const userId = req?.user?.id;
@@ -423,4 +434,4 @@ const getUsers = asyncHandler(async (req: any, res: Response) => {
 //     .json(new SuccessResponse(201, token, "AccessToken fetched successfully!"));
 // });
 
-export { loginUser, logoutUser, getUser, createUser, getUsers };
+export { loginUser, logoutUser, getUser, createUser, getUsers, editUser };

@@ -1,3 +1,4 @@
+// MemberManagement.tsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -13,8 +14,9 @@ import {
   ListItemText,
   ListItemAvatar,
   Avatar,
+  Stack,
 } from "@mui/material";
-import { Add, Search } from "@mui/icons-material";
+import { Add, Delete, Edit, Search, Visibility } from "@mui/icons-material";
 import { api } from "../../api/api";
 
 interface NewUser {
@@ -29,6 +31,9 @@ interface NewUser {
   role: string;
 }
 
+interface Member extends NewUser {
+  id: string; // Add a unique identifier for each member
+}
 
 const addUser = async (userData: NewUser) => {
   try {
@@ -37,14 +42,14 @@ const addUser = async (userData: NewUser) => {
     if (userData.avatar && typeof userData.avatar === "object") {
       formData.append("avatar", userData.avatar);
     }
-    if (userData.gender) formData.append("gender", userData.gender);
-    if (userData.age) formData.append("age", userData.age.toString());
+    formData.append("gender", userData.gender);
+    formData.append("age", userData.age);
     if (userData.bio) formData.append("bio", userData.bio);
-    if (userData.fullName) formData.append("fullName", userData.fullName);
-    if (userData.email) formData.append("email", userData.email);
-    if (userData.address) formData.append("address", userData.address);
-    if (userData.phone) formData.append("phone", userData.phone);
-    if (userData.role) formData.append("role", userData.role);
+    formData.append("fullName", userData.fullName);
+    formData.append("email", userData.email);
+    formData.append("address", userData.address);
+    formData.append("phone", userData.phone);
+    formData.append("role", userData.role);
 
     const response = await api.post("/users/add-member", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -56,35 +61,66 @@ const addUser = async (userData: NewUser) => {
 
     return response.data?.data;
   } catch (error) {
-    console.error("Error adding user:", error?.message || error);
+    console.error("Error adding user:", error.message || error);
+    throw new Error(error.response?.data?.message || "Error adding the user.");
+  }
+};
+
+const updateUser = async (userId: string, updatedUser: NewUser) => {
+  try {
+    const response = await api.put(
+      `/users/update-member/${userId}`,
+      updatedUser
+    );
+    if (response.status !== 200) {
+      throw new Error("Failed to update user. Please try again.");
+    }
+    return response.data?.data;
+  } catch (error) {
+    console.error("Error updating user:", error.message || error);
     throw new Error(
-      error?.response?.data?.message ||
-        "An error occurred while adding the user."
+      error.response?.data?.message || "Error updating the user."
+    );
+  }
+};
+
+const deleteUser = async (userId: string) => {
+  try {
+    const response = await api.delete(`/users/delete-member/${userId}`);
+    if (response.status !== 200) {
+      throw new Error("Failed to delete user. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error deleting user:", error.message || error);
+    throw new Error(
+      error.response?.data?.message || "Error deleting the user."
     );
   }
 };
 
 const MemberManagement: React.FC = () => {
-  const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [filter, setFilter] = useState<string>("All");
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState("All");
+  const [showModal, setShowModal] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isEdit, setIsEdit] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // State for delete confirmation modal
+  const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false); // State for view modal
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await api.get("/users/all-members");
-        setMembers(res.data.data);
-        console.log(members);
-        
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchUsers();
-  }, []);
+  const handleViewDetails = (member: Member) => {
+    setSelectedMember(member);
+    setShowViewModal(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setSelectedMember(null);
+  };
 
   const [newUser, setNewUser] = useState<NewUser>({
     gender: "",
@@ -96,7 +132,47 @@ const MemberManagement: React.FC = () => {
     role: "",
   });
 
-  const handleOpenModal = () => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get("/users/all-members");
+        setMembers(res.data.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleConfirmDelete = (userId: string) => {
+    setDeleteMemberId(userId);
+    setShowDeleteModal(true);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteMemberId(null);
+  };
+
+  const handleOpenModal = (user?: Member) => {
+    if (user) {
+      setIsEdit(true);
+      setCurrentUserId(user.id);
+      setNewUser(user);
+      setImagePreview(typeof user.avatar === "string" ? user.avatar : null);
+    } else {
+      setIsEdit(false);
+      setNewUser({
+        gender: "",
+        age: "",
+        fullName: "",
+        email: "",
+        address: "",
+        phone: "",
+        role: "",
+      });
+      setImagePreview(null);
+    }
     setShowModal(true);
   };
 
@@ -112,18 +188,43 @@ const MemberManagement: React.FC = () => {
       role: "",
     });
     setImagePreview(null);
+    setIsEdit(false);
+    setCurrentUserId(null);
   };
 
-  const handleAddUser = async () => {
+  const handleSubmit = async () => {
     try {
-      const result = await addUser(newUser);
-      console.log("User added successfully:", result);
-      setMembers((prev) => [...prev, result]);
+      if (isEdit && currentUserId) {
+        const updatedUser = await updateUser(currentUserId, newUser);
+        setMembers((prev) =>
+          prev.map((member) =>
+            member.id === currentUserId ? updatedUser : member
+          )
+        );
+      } else {
+        const addedUser = await addUser(newUser);
+        setMembers((prev) => [...prev, addedUser]);
+      }
       handleCloseModal();
     } catch (error) {
-      console.error("Error adding user:", error);
+      console.error("Error saving user:", error);
     }
   };
+
+  const handleDelete = async (userId: string) => {
+    try {
+      await deleteUser(userId);
+      setMembers((prev) => prev.filter((member) => member.id !== userId));
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
+  const filteredMembers = members.filter(
+    (member) =>
+      (filter === "All" || member.role === filter) &&
+      member.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const isFormValid =
     newUser.gender &&
@@ -134,36 +235,14 @@ const MemberManagement: React.FC = () => {
     newUser.phone &&
     newUser.role;
 
-  const filteredMembers = members.filter((member) => {
-    return (
-      (filter === "All" || member.role === filter) &&
-      member.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
-
-  console.log(filteredMembers);
-  
-
   return (
-    <Box sx={{ p: 2, maxWidth: "100%", margin: "0" }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "1rem",
-          mb: 2,
-        }}
-      >
-        <IconButton
-          sx={{ display: { xs: "block", md: "none" } }}
-          onClick={() => setIsSearchBarVisible(!isSearchBarVisible)}
-        >
+    <Box sx={{ p: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 2 }}>
+        <IconButton onClick={() => setIsSearchBarVisible(!isSearchBarVisible)}>
           <Search />
         </IconButton>
         <TextField
           fullWidth
-          variant="outlined"
           placeholder="Search members..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -171,11 +250,7 @@ const MemberManagement: React.FC = () => {
             display: isSearchBarVisible ? "block" : { xs: "none", md: "block" },
           }}
         />
-        <Select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          sx={{ minWidth: 120 }}
-        >
+        <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
           <MenuItem value="All">All</MenuItem>
           <MenuItem value="Staff">Staff</MenuItem>
           <MenuItem value="Volunteer">Volunteer</MenuItem>
@@ -183,35 +258,110 @@ const MemberManagement: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<Add />}
-          onClick={handleOpenModal}
+          onClick={() => handleOpenModal()}
         >
           Add Member
         </Button>
       </Box>
 
-      
       <List>
-        {filteredMembers.map((member, index) => (
-          <ListItem key={index} alignItems="flex-start">
+        {filteredMembers.map((member) => (
+          <ListItem key={member.id}>
             <ListItemAvatar>
-              <Avatar sx={{border: "1px solid black"}} src={member.avatar} alt={member.fullName} />
+              <Avatar src={member.avatar || ""} alt={member.fullName} />
             </ListItemAvatar>
             <ListItemText
               primary={member.fullName}
-              secondary={
-                <>
-                  <Typography variant="body2" color="textSecondary">
-                    Role: {member.role}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {member.bio}
-                  </Typography>
-                </>
-              }
+              secondary={`Role: ${member.role}`}
             />
+            <Stack direction="row" spacing={1}>
+              <IconButton
+                title="View"
+                onClick={() => handleViewDetails(member)}
+              >
+                <Visibility />
+              </IconButton>
+              <IconButton title="Edit" onClick={() => handleOpenModal(member)}>
+                <Edit />
+              </IconButton>
+              <IconButton
+                title="Delete"
+                onClick={() => handleConfirmDelete(member.id)}
+                color="error"
+              >
+                <Delete />
+              </IconButton>
+            </Stack>
           </ListItem>
         ))}
       </List>
+
+      <Modal open={showViewModal} onClose={handleCloseViewModal}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            bgcolor: "background.paper",
+            p: 4,
+            borderRadius: 2,
+            boxShadow: 24,
+          }}
+        >
+          <Typography variant="h6" mb={2}>
+            Member Details
+          </Typography>
+          {selectedMember && (
+            <Box>
+              <Stack direction="row" spacing={2} mb={2}>
+                <Avatar
+                  src={selectedMember?.avatar || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
+                  alt={selectedMember.fullName}
+                  sx={{ width: 100, height: 100 }}
+                />
+                <Box>
+                  <Typography variant="body1">
+                    <strong>Full Name:</strong> {selectedMember.fullName}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Gender:</strong> {selectedMember.gender}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Age:</strong> {selectedMember.age}
+                  </Typography>
+                </Box>
+              </Stack>
+              <Typography variant="body1" mb={1}>
+                <strong>Email:</strong> {selectedMember.email}
+              </Typography>
+              <Typography variant="body1" mb={1}>
+                <strong>Phone:</strong> {selectedMember.phone}
+              </Typography>
+              <Typography variant="body1" mb={1}>
+                <strong>Address:</strong> {selectedMember.address}
+              </Typography>
+              <Typography variant="body1" mb={1}>
+                <strong>Role:</strong> {selectedMember.role}
+              </Typography>
+              {selectedMember.bio && (
+                <Typography variant="body1" mb={1}>
+                  <strong>Bio:</strong> {selectedMember.bio}
+                </Typography>
+              )}
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                onClick={handleCloseViewModal}
+              >
+                Close
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </Modal>
 
       <Modal open={showModal} onClose={handleCloseModal}>
         <Box
@@ -228,22 +378,18 @@ const MemberManagement: React.FC = () => {
           }}
         >
           <Typography variant="h6" mb={2}>
-            Add New User
+            {isEdit ? "Edit User" : "Add New User"}
           </Typography>
-
-          <Box sx={{ display: "flex", gap: 5, alignItems: "center", mb: 2 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
             <Box
               sx={{
-                width: "10rem",
-                height: "10rem",
+                width: "100px",
+                height: "100px",
                 border: "1px dashed gray",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                position: "relative",
-                borderRadius: 2,
                 cursor: "pointer",
-                backgroundColor: "background.default",
               }}
               onClick={() => document.getElementById("avatarUpload")?.click()}
             >
@@ -251,17 +397,10 @@ const MemberManagement: React.FC = () => {
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    borderRadius: "inherit",
-                  }}
+                  style={{ width: "100%", height: "100%" }}
                 />
               ) : (
-                <Typography variant="h6" color="primary">
-                  +
-                </Typography>
+                "+"
               )}
               <input
                 id="avatarUpload"
@@ -277,7 +416,6 @@ const MemberManagement: React.FC = () => {
                 }}
               />
             </Box>
-
             <Box sx={{ flex: 1 }}>
               <TextField
                 fullWidth
@@ -378,11 +516,47 @@ const MemberManagement: React.FC = () => {
           <Button
             fullWidth
             variant="contained"
-            onClick={handleAddUser}
+            onClick={handleSubmit}
             disabled={!isFormValid}
           >
-            Add User
+            {isEdit ? "Update" : "Add"}
           </Button>
+        </Box>
+      </Modal>
+
+      <Modal open={showDeleteModal} onClose={handleCancelDelete}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            p: 4,
+            borderRadius: 2,
+            boxShadow: 24,
+          }}
+        >
+          <Typography variant="h6" mb={2}>
+            Confirm Delete
+          </Typography>
+          <Typography variant="body1" mb={3}>
+            Are you sure you want to delete this member? This action cannot be
+            undone.
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button variant="outlined" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => deleteMemberId && handleDelete(deleteMemberId)}
+            >
+              Delete
+            </Button>
+          </Stack>
         </Box>
       </Modal>
     </Box>

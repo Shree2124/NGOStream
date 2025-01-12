@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { createUser, getUser, getUsers, loginUser, logoutUser } from "../controllers/user.controller";
+import { createUser, editUser, getUser, getUsers, loginUser, logoutUser } from "../controllers/user.controller";
 import { verifyJWT } from "../middlewares/auth.middleware"
 import {upload} from "../middlewares/multer.middleware"
 
@@ -11,6 +11,7 @@ router.route("/logout").post(logoutUser)
 router.route("/current-user").get(getUser)
 router.route("/add-member").post(upload.single("avatar"),createUser)
 router.route("/all-members").get(getUsers)
+router.route("/edit/:userId").put(upload.single("avatar"),editUser)
 
 
 export default router
