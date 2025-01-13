@@ -16,7 +16,6 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { api } from "../../api/api";
 
-
 const DonationDetails: React.FC = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -31,11 +30,14 @@ const DonationDetails: React.FC = () => {
       donation.paymentStatus.toLowerCase().includes(search.toLowerCase()) ||
       donation.paymentMethod.toLowerCase().includes(search.toLowerCase())
   );
+  console.log(filteredDonations);
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
         const res = await api.get("/donation/get-donation-info");
+        console.log(res);
+
         setDonationData(res.data.data);
       } catch (error) {
         console.log(error);
@@ -108,15 +110,17 @@ const DonationDetails: React.FC = () => {
           </TableHead>
           <TableBody>
             {filteredDonations
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((donation) => (
+              ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              ?.map((donation, ind) => (
                 <TableRow key={donation._id}>
-                  <TableCell>{donation.donorInfo.name}</TableCell>
-                  <TableCell>{donation.amount}</TableCell>
-                  <TableCell>{donation.currency}</TableCell>
-                  <TableCell>{donation.paymentStatus}</TableCell>
-                  <TableCell>{donation.paymentMethod}</TableCell>
-                  <TableCell>{donation.goalInfo.name}</TableCell>
+                  <TableCell>
+                    {donation?.donorInfo?.name || "Unknown"}
+                  </TableCell>
+                  <TableCell>{donation.amount || "Unknown"}</TableCell>
+                  <TableCell>{donation.currency || "Unknown"}</TableCell>
+                  <TableCell>{donation.paymentStatus || "Unknown"}</TableCell>
+                  <TableCell>{donation.paymentMethod || "Unknown"}</TableCell>
+                  <TableCell>{donation.goalInfo?.name || "Unknown"}</TableCell>
                 </TableRow>
               ))}
           </TableBody>
