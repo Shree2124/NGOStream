@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import Stripe from "stripe";
-import { Donar } from "../models/donors.model";
+import { Donor } from "../models/donors.model";
 import { Donation } from "../models/donations.model";
 import { Goal } from "../models/goals.model";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
 import { IGoals } from "../types/goals.types";
-import { IDonation } from "../types/donations.types";
+import { IDonation } from "../types/donation.types";
 import { asyncHandler } from "../utils/asyncHandler";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -30,9 +30,9 @@ export const createCheckoutSession = asyncHandler(
     }
 
     try {
-      let donor = await Donar.findOne({ email });
+      let donor = await Donor.findOne({ email });
       if (!donor) {
-        donor = await Donar.create({
+        donor = await Donor.create({
           name,
           email,
           phone,
@@ -68,7 +68,7 @@ export const createCheckoutSession = asyncHandler(
 
       console.log(session);
 
-      await Donation.create({
+      const donation = await Donation.create({
         donorId: donor._id,
         goalId,
         amount,
@@ -78,6 +78,9 @@ export const createCheckoutSession = asyncHandler(
         stripeSessionId: session.id,
         // stripePaymentId: "",
       });
+
+      donor.donations.push(donation._id)
+      await donor.save()
 
       res.status(200).json(
         new SuccessResponse(

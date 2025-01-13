@@ -6,6 +6,7 @@ import { SuccessResponse } from "../utils/successResponse";
 import mongoose, { isValidObjectId } from "mongoose";
 import uploadOnCloudinary from "../utils/cloudinary";
 import { Donation } from "../models/donations.model";
+import { Donor } from "../models/donors.model";
 
 const createGoal = asyncHandler(async (req: any, res: Response) => {
   const { name, description, startDate, targetAmount, status } = req.body;
@@ -187,27 +188,43 @@ const editGoal = asyncHandler(async (req: any, res: Response) => {
 
 const deleteGoal = asyncHandler(async (req: any, res: Response) => {
   const { goalId } = req.params;
+
   if (!goalId) {
-    throw new ErrorResponse(400, "Goal id is required");
+    throw new ErrorResponse(400, "Goal ID is required");
   }
+
   const goal = await Goal.findById(goalId);
   if (!goal) {
     throw new ErrorResponse(404, "Goal not found");
   }
-  await Donation.deleteMany({ _id: { $in: goal.donations } });
-  goal.donations = [];
 
+  const donations = await Donation.find({ _id: { $in: goal.donations } });
+
+  for (const donation of donations) {
+    if (donation.donorId) {
+      const donor = await Donor.findById(donation.donorId);
+      if (donor) {
+        donor.donations = donor.donations.filter(
+          (donationId) => donationId.toString() !== donation._id.toString()
+        );
+        await donor.save();
+      }
+    }
+  }
+
+  await Donation.deleteMany({ _id: { $in: goal.donations } });
+
+  goal.donations = [];
   await goal.deleteOne();
 
-  res
-    .status(200)
-    .json(
-      new SuccessResponse(
-        200,
-        null,
-        "Goal and its donations deleted successfully"
-      )
-    );
+  res.status(200).json(
+    new SuccessResponse(
+      200,
+      null,
+      "Goal and its donations deleted successfully, and donor records updated"
+    )
+  );
 });
+
 
 export { createGoal, getAllGoals, editGoal, deleteGoal, getGoal };

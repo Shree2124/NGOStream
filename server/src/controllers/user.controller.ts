@@ -4,7 +4,7 @@ import { SuccessResponse } from "../utils/successResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
+import { User } from "../models/member.model";
 import uploadOnCloudinary from "../utils/cloudinary";
 
 const options: any = {

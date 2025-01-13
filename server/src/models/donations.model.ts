@@ -1,5 +1,5 @@
 import { model, Schema, Types } from "mongoose";
-import { IDonation } from "../types/donations.types";
+import { IDonation } from "../types/donation.types";
 
 const DonationSchema = new Schema<IDonation>(
   {

@@ -23,14 +23,14 @@ const DonarSchema = new mongoose.Schema<IDonors>(
       trim: true,
       required: true,
     },
-    donations: [{ donationId: { type: Types.ObjectId, ref: "Donation" } }],
+    donations: [{ type: Types.ObjectId, ref: "Donation" }],
   },
   {
     timestamps: true,
   }
 );
 
-export const Donar: Model<IDonors> = mongoose.model<IDonors>(
+export const Donor: Model<IDonors> = mongoose.model<IDonors>(
   "Donor",
   DonarSchema
 );

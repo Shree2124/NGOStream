@@ -111,7 +111,7 @@ const DonationDetails: React.FC = () => {
           <TableBody>
             {filteredDonations
               ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              ?.map((donation, ind) => (
+              ?.map((donation) => (
                 <TableRow key={donation._id}>
                   <TableCell>
                     {donation?.donorInfo?.name || "Unknown"}
