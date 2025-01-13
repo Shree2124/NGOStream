@@ -13,6 +13,13 @@ import {
   Select,
   Stack,
   Avatar,
+  TableContainer,
+  Paper,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -44,6 +51,20 @@ const Goals: React.FC = () => {
   const [status, setStatus] = useState("Active");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [goal, setGoal] = useState(null);
+
+  const fetchGoalInfo = async () => {
+    try {
+      console.log(selectedGoal._id);
+
+      const res = await api.get(`/goals/goal/${selectedGoal._id}`);
+      // console.log("res", res.data);
+      setGoal(res.data.data);
+      console.log(goal);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleOpenModal = (goal: any = null) => {
     if (goal) {
@@ -126,9 +147,11 @@ const Goals: React.FC = () => {
     }
   };
 
-  const handleViewGoal = (goal: any) => {
+  const handleViewGoal = async (goal: any) => {
     setSelectedGoal(goal);
+    console.log(selectedGoal);
     setIsViewModalOpen(true);
+    await fetchGoalInfo();
   };
 
   const filteredGoals = goals.filter((goal) => {
@@ -163,7 +186,6 @@ const Goals: React.FC = () => {
     borderRadius: 2,
   };
 
-
   const chartData = {
     labels: ["Raised", "Remaining"],
     datasets: [
@@ -190,15 +212,15 @@ const Goals: React.FC = () => {
         },
       },
     },
-    rotation: [55, 55],
+    rotation: [45, 45],
     animation: {
       animateScale: true,
       animateRotate: true,
     },
-    cutout: "50%", 
+    cutout: "50%",
     elements: {
       arc: {
-        borderWidth: 5, 
+        borderWidth: 5,
         borderColor: "rgba(0, 0, 0, 0.2)",
       },
     },
@@ -387,14 +409,52 @@ const Goals: React.FC = () => {
       <Modal open={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
         <Box sx={{ ...modalStyles, width: "80%" }}>
           <Typography variant="h6">{selectedGoal?.name}</Typography>
+
           <Box sx={{ display: "flex", flexDirection: "column", mt: 3 }}>
-            <Box sx={{ width: "50%", margin: "0 auto", mt: 3 }}>
-              <Pie data={chartData} options={chartOptions} />{" "}
-              
+            <Box sx={{ width: "45%", height: "45%", margin: "0 auto", mt: 3 }}>
+              <Pie data={chartData} options={chartOptions} />
             </Box>
             <Typography variant="h6" mt={3}>
               Donor Information
             </Typography>
+            <Box mt={2}>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Donor Name</TableCell>
+                      <TableCell>Donor Email</TableCell>
+                      <TableCell>Donated Amount</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {goal?.length > 0 ? (
+                      goal?.map((goalItem, goalIndex) =>
+                        goalItem.donations.map((donation, donationIndex) => (
+                          <TableRow key={`${goalIndex}-${donationIndex}`}>
+                            <TableCell>
+                              {donation.donorName || "Unknown"}
+                            </TableCell>
+                            <TableCell>
+                              {donation.donorEmail || "Unknown"}
+                            </TableCell>
+                            <TableCell>
+                              {donation.amount || "Unknown"}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          No donations yet
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           </Box>
         </Box>
       </Modal>

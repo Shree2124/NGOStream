@@ -85,7 +85,7 @@ export const createCheckoutSession = asyncHandler(
           {
             sessionId: session.id,
             url: session.url,
-            donorId: donor._id
+            donorId: donor._id,
           },
           "session created successfully"
         )
@@ -130,7 +130,11 @@ export const handlePaymentSuccess = asyncHandler(
         goal.targetAmount =
           Number(donation.amount.valueOf() || 0) - goal.targetAmount;
 
-        if (!goal.donations.includes(donation._id)) {
+        const isDonationAdded = goal.donations.some((id: any) =>
+          id.equals(donation._id)
+        );
+
+        if (!isDonationAdded) {
           goal.donations.push(donation._id);
         }
 
