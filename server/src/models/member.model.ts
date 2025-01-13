@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Model, Schema } from "mongoose";
 import { IMember } from "../types/member.types";
 
 const memberSchema: Schema = new Schema<IMember>(
@@ -35,3 +35,5 @@ const memberSchema: Schema = new Schema<IMember>(
   },
   { timestamps: true }
 );
+
+export const Member: Model<IMember> = mongoose.model<IMember>("Member", memberSchema);

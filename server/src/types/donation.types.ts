@@ -16,13 +16,13 @@ export interface IDonation extends Document {
     estimatedValue: number;
     description: string;
   };
-    goalId: Types.ObjectId;
-    amount: number;
-    currency: string;
-    paymentStatus: "Successful" | "Failed";
-    paymentMethod: string;
-    stripePaymentId: string;
-    stripeSessionId: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-  }
+  goalId?: mongoose.Types.ObjectId;
+  eventId?: mongoose.Types.ObjectId;
+  beneficiaryId?: mongoose.Types.ObjectId;
+  amount: number;
+  currency: string;
+  paymentStatus: "Successful" | "Failed";
+  paymentMethod: string;
+  stripePaymentId: string;
+  stripeSessionId: string;
+}

@@ -32,6 +32,12 @@ const EventSchema: Schema = new Schema<IEvent>(
       fundsRaised: { type: Number },
       successMetrics: [{ type: String }],
     },
+    donations: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Donation",
+      },
+    ],
     feedback: [
       {
         participantId: {
