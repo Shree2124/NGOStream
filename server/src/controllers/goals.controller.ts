@@ -10,7 +10,6 @@ import { Donor } from "../models/donors.model";
 
 const createGoal = asyncHandler(async (req: any, res: Response) => {
   const { name, description, startDate, targetAmount, status } = req.body;
-  console.log(req.body);
 
   if (!name || typeof name !== "string") {
     throw new ErrorResponse(400, "Name is required and must be a string.");
@@ -47,19 +46,19 @@ const createGoal = asyncHandler(async (req: any, res: Response) => {
     startDate,
     targetAmount,
     status,
+    donations: [],
   });
 
-  if (!goal)
+  if (!goal) {
     throw new ErrorResponse(500, "Something went wrong while creating goal");
+  }
 
   return res
     .status(201)
-    .json(new SuccessResponse(201, goal, "Goal created Successfully"));
+    .json(new SuccessResponse(201, goal, "Goal created successfully"));
 });
 
 const getAllGoals = asyncHandler(async (req: any, res: Response) => {
-  console.log("requested");
-
   const allGoals = await Goal.find();
 
   if (!allGoals || allGoals.length === 0) {
@@ -74,10 +73,9 @@ const getAllGoals = asyncHandler(async (req: any, res: Response) => {
 const getGoal = asyncHandler(async (req: any, res: Response) => {
   const { goalId } = req.params;
 
-  if (!goalId && !isValidObjectId(goalId))
-    throw new ErrorResponse(400, "id is missing or invalid id is provided");
-
-  // const goal = await Goal.findById(goalId)
+  if (!goalId || !isValidObjectId(goalId)) {
+    throw new ErrorResponse(400, "Invalid goal ID");
+  }
 
   const goal = await Goal.aggregate([
     {
@@ -86,7 +84,7 @@ const getGoal = asyncHandler(async (req: any, res: Response) => {
     {
       $lookup: {
         from: "donations",
-        localField: "donations._id",
+        localField: "donations.donationId",
         foreignField: "_id",
         as: "donationDetails",
       },
@@ -133,41 +131,39 @@ const getGoal = asyncHandler(async (req: any, res: Response) => {
     },
   ]);
 
-  if (!goal) throw new ErrorResponse(404, "Goal not found");
+  if (!goal) {
+    throw new ErrorResponse(404, "Goal not found");
+  }
 
   return res
     .status(200)
-    .json(new SuccessResponse(200, goal, "goal details fetched successfully"));
+    .json(new SuccessResponse(200, goal, "Goal details fetched successfully"));
 });
 
 const editGoal = asyncHandler(async (req: any, res: Response) => {
   const { goalId } = req.params;
   const { name, description, targetAmount, startDate, status } = req.body;
 
-  if (!goalId) throw new ErrorResponse(400, "Goal ID is required");
-  if (!isValidObjectId(goalId))
-    throw new ErrorResponse(400, "Not a valid object ID");
+  if (!goalId || !isValidObjectId(goalId)) {
+    throw new ErrorResponse(400, "Invalid goal ID");
+  }
 
   const goal = await Goal.findById(goalId);
-  if (!goal) throw new ErrorResponse(404, "Goal not found");
-
-  console.log(req.file);
+  if (!goal) {
+    throw new ErrorResponse(404, "Goal not found");
+  }
 
   let image;
-
   if (req.file) {
     image = req.file.path;
   }
 
-  console.log(image);
-
-  if (!image) throw new ErrorResponse(400, "Image is required");
-
-  const uploadImage: any = await uploadOnCloudinary(image);
-  console.log(uploadImage.url);
-
-  if (!uploadImage) {
-    throw new ErrorResponse(500, "Field to upload");
+  if (image) {
+    const uploadImage = await uploadOnCloudinary(image);
+    if (!uploadImage) {
+      throw new ErrorResponse(500, "Failed to upload image");
+    }
+    goal.image = uploadImage.url;
   }
 
   goal.name = name;
@@ -175,22 +171,19 @@ const editGoal = asyncHandler(async (req: any, res: Response) => {
   goal.targetAmount = targetAmount;
   goal.startDate = startDate;
   goal.status = status;
-  goal.image = uploadImage?.url;
 
   const updatedGoal = await goal.save();
 
-  console.log(updatedGoal);
-
-  res
+  return res
     .status(200)
-    .json(new SuccessResponse(200, updatedGoal, "Goal Updated successfully"));
+    .json(new SuccessResponse(200, updatedGoal, "Goal updated successfully"));
 });
 
 const deleteGoal = asyncHandler(async (req: any, res: Response) => {
   const { goalId } = req.params;
 
-  if (!goalId) {
-    throw new ErrorResponse(400, "Goal ID is required");
+  if (!goalId || !isValidObjectId(goalId)) {
+    throw new ErrorResponse(400, "Invalid goal ID");
   }
 
   const goal = await Goal.findById(goalId);
@@ -214,17 +207,13 @@ const deleteGoal = asyncHandler(async (req: any, res: Response) => {
 
   await Donation.deleteMany({ _id: { $in: goal.donations } });
 
-  goal.donations = [];
   await goal.deleteOne();
 
-  res.status(200).json(
-    new SuccessResponse(
-      200,
-      null,
-      "Goal and its donations deleted successfully, and donor records updated"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new SuccessResponse(200, null, "Goal and donations deleted successfully")
+    );
 });
-
 
 export { createGoal, getAllGoals, editGoal, deleteGoal, getGoal };
