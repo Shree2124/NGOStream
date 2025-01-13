@@ -11,7 +11,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-12-18.acacia",
-}) ;
+});
 
 export const createCheckoutSession = asyncHandler(
   async (req: Request, res: Response) => {
@@ -85,6 +85,7 @@ export const createCheckoutSession = asyncHandler(
           {
             sessionId: session.id,
             url: session.url,
+            donorId: donor._id
           },
           "session created successfully"
         )
@@ -112,6 +113,7 @@ export const handlePaymentSuccess = asyncHandler(
       const donation: IDonation | any = await Donation.findOne({
         stripeSessionId: session.id,
       });
+
       if (!donation) {
         throw new ErrorResponse(404, "Donation not found");
       }
@@ -124,14 +126,21 @@ export const handlePaymentSuccess = asyncHandler(
       if (goal) {
         goal.currentAmount =
           (goal.currentAmount.valueOf() || 0) + donation.amount!;
+
         goal.targetAmount =
           Number(donation.amount.valueOf() || 0) - goal.targetAmount;
+
+        if (!goal.donations.includes(donation._id)) {
+          goal.donations.push(donation._id);
+        }
+
         await goal.save();
+        console.log(goal);
       }
 
       res
         .status(200)
-        .json(new SuccessResponse(200, "Payment processed successfully"));
+        .json(new SuccessResponse(200, null, "Payment processed successfully"));
     } catch (error) {
       console.error("Error handling payment success:", error);
 

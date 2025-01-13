@@ -3,13 +3,12 @@ import { Goal } from "../models/goals.model";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import uploadOnCloudinary from "../utils/cloudinary";
 
 const createGoal = asyncHandler(async (req: any, res: Response) => {
   const { name, description, startDate, targetAmount, status } = req.body;
   console.log(req.body);
-  
 
   if (!name || typeof name !== "string") {
     throw new ErrorResponse(400, "Name is required and must be a string.");
@@ -70,6 +69,75 @@ const getAllGoals = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, allGoals, "Goals fetched successfully"));
 });
 
+const getGoal = asyncHandler(async (req: any, res: Response) => {
+  const { goalId } = req.params;
+
+  if (!goalId && !isValidObjectId(goalId))
+    throw new ErrorResponse(400, "id is missing or invalid id is provided");
+
+  // const goal = await Goal.findById(goalId)
+
+  const goal = await Goal.aggregate([
+    {
+      $match: { _id: new mongoose.Types.ObjectId(goalId) },
+    },
+    {
+      $lookup: {
+        from: "donations",
+        localField: "donations._id",
+        foreignField: "_id",
+        as: "donationDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$donationDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "donors",
+        localField: "donationDetails.donorId",
+        foreignField: "_id",
+        as: "donorDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$donorDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $group: {
+        _id: "$_id",
+        name: { $first: "$name" },
+        description: { $first: "$description" },
+        targetAmount: { $first: "$targetAmount" },
+        currentAmount: { $first: "$currentAmount" },
+        startDate: { $first: "$startDate" },
+        status: { $first: "$status" },
+        image: { $first: "$image" },
+        donations: {
+          $push: {
+            donationId: "$donationDetails._id",
+            amount: "$donationDetails.amount",
+            donorName: { $ifNull: ["$donorDetails.name", "Unknown"] },
+            donorEmail: { $ifNull: ["$donorDetails.email", "Unknown"] },
+          },
+        },
+      },
+    },
+  ]);
+
+  if (!goal) throw new ErrorResponse(404, "Goal not found");
+
+  return res
+    .status(200)
+    .json(new SuccessResponse(200, goal, "goal details fetched successfully"));
+});
+
 const editGoal = asyncHandler(async (req: any, res: Response) => {
   const { goalId } = req.params;
   const { name, description, targetAmount, startDate, status } = req.body;
@@ -95,7 +163,6 @@ const editGoal = asyncHandler(async (req: any, res: Response) => {
 
   const uploadImage: any = await uploadOnCloudinary(image);
   console.log(uploadImage.url);
-  
 
   if (!uploadImage) {
     throw new ErrorResponse(500, "Field to upload");
@@ -108,11 +175,9 @@ const editGoal = asyncHandler(async (req: any, res: Response) => {
   goal.status = status;
   goal.image = uploadImage?.url;
 
-
   const updatedGoal = await goal.save();
 
   console.log(updatedGoal);
-  
 
   res
     .status(200)
@@ -121,4 +186,4 @@ const editGoal = asyncHandler(async (req: any, res: Response) => {
 
 const deleteGoal = asyncHandler(async (req: any, res: Response) => {});
 
-export { createGoal, getAllGoals, editGoal, deleteGoal };
+export { createGoal, getAllGoals, editGoal, deleteGoal, getGoal };

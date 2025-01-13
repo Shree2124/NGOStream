@@ -390,6 +390,7 @@ const Goals: React.FC = () => {
           <Box sx={{ display: "flex", flexDirection: "column", mt: 3 }}>
             <Box sx={{ width: "50%", margin: "0 auto", mt: 3 }}>
               <Pie data={chartData} options={chartOptions} />{" "}
+              
             </Box>
             <Typography variant="h6" mt={3}>
               Donor Information

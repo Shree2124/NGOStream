@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
-import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import { useParams } from "react-router-dom";
 import { api } from "../../api/api";

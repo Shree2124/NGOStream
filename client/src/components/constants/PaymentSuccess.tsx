@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../../api/api";
 
@@ -9,20 +9,24 @@ const PaymentSuccessPage: React.FC = () => {
 
   const [paymentStatus, setPaymentStatus] = useState<string>("Processing your payment...");
 
-  useEffect(() => {
-    if (sessionId) {
-      const handlePaymentSuccess = async () => {
-        try {
-          const response = await api.post(`/donation/payment-success`, {
-            session_id: sessionId,
-          });
-          console.log(response);
-          setPaymentStatus("Payment successful!");
-        } catch (error) {
-          setPaymentStatus("Payment failed. Please try again.");
-        }
-      };
+  useLayoutEffect(() => {
+    const handlePaymentSuccess = async () => {
+      if (!sessionId) return;
 
+      try {
+        const response = await api.post(`/donation/payment-success`, {
+          session_id: sessionId,
+        });
+        console.log(response);
+        setPaymentStatus("Payment successful!");
+      } catch (error: any) {
+        console.log(error);
+        
+        setPaymentStatus("Payment failed. Please try again.");
+      }
+    };
+
+    if (sessionId) {
       handlePaymentSuccess();
     }
   }, [sessionId]);

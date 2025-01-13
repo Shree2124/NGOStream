@@ -1,9 +1,10 @@
 import { Router } from "express"
 import { verifyJWT } from "../middlewares/auth.middleware"
-import { createGoal, editGoal, getAllGoals } from "../controllers/goals.controller"
+import { createGoal, editGoal, getAllGoals, getGoal } from "../controllers/goals.controller"
 import { upload } from "../middlewares/multer.middleware"
 
 const router = Router()
+router.route("/goal/:goalId").get(getGoal)
 
 router.use(verifyJWT)
 router.route("/create").post(createGoal)
