@@ -30,6 +30,11 @@ export const createCheckoutSession = asyncHandler(
       quantity,
     } = req.body;
 
+    console.log(req.body);
+    console.log(!Number(amount) || Number(amount) <= 0);
+    
+    
+
     if (!name || !email || !phone || !address || !donationType) {
       throw new ErrorResponse(400, "Missing required fields");
     }
@@ -41,7 +46,7 @@ export const createCheckoutSession = asyncHandler(
           "A monetary donation must be associated with a goal, event, or beneficiary"
         );
       }
-      if (!amount || amount <= 0) {
+      if (!Number(amount) || Number(amount) <= 0) {
         throw new ErrorResponse(400, "Invalid amount for monetary donation");
       }
     } else if (donationType === "In-Kind") {

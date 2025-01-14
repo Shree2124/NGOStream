@@ -4,7 +4,7 @@ import { SuccessResponse } from "../utils/successResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { User } from "../models/member.model";
+import { Member } from "../models/member.model";
 import uploadOnCloudinary from "../utils/cloudinary";
 
 const options: any = {
@@ -103,12 +103,12 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
     throw new ErrorResponse(400, "Please fill in all required fields.");
   }
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await Member.findOne({ email });
   if (existingUser) {
     throw new ErrorResponse(400, "User with this email already exists.");
   }
 
-  const newUser = await User.create({
+  const newUser = await Member.create({
     gender,
     age,
     bio,
@@ -138,7 +138,7 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getUsers = asyncHandler(async (req: any, res: Response) => {
-  const users = await User.find();
+  const users = await Member.find();
 
   if (!users) throw new ErrorResponse(404, "Users not found");
 
@@ -151,7 +151,7 @@ const editUser = asyncHandler(async (req: any, res: Response) => {
   const { userId } = req.params;
   const { fullName, gender, role, age, email, address, phone, bio } = req.body;
 
-  const user = await User.findById(userId);
+  const user = await Member.findById(userId);
   if (!user) throw new ErrorResponse(404, "User not found");
 
   if (fullName) user.fullName = fullName;
@@ -184,13 +184,14 @@ const deleteUser = asyncHandler(async (req: any, res: Response)=>{
 
   if(!userId) throw new ErrorResponse(400, "User id is required")
 
-  const user = await User.findOneAndDelete({_id: userId})
+  const user = await Member.findOneAndDelete({_id: userId})
 
   console.log(user);
 
   res.status(200).json(new SuccessResponse(200, null, "user deleted successfully"))
   
 })
+
 
 // {/* Function to fetch the current logged in user */}
 // const getSystemUsers = asyncHandler(async (req: any, res: Response) => {

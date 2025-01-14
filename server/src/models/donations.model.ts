@@ -42,6 +42,9 @@ const DonationSchema: Schema = new Schema<IDonation>(
           return this.donationType === "In-Kind";
         },
       },
+      image: {
+        type: String,
+      },
       quantity: {
         type: Number,
         required: function () {

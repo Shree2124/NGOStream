@@ -3,10 +3,22 @@ import { IMember } from "../types/member.types";
 
 const memberSchema: Schema = new Schema<IMember>(
   {
-    name: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
+    },
+    bio: {
+      type: String,
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: true
+    },
+    age: {
+      type: Number,
+      required: true
     },
     email: {
       type: String,
@@ -24,6 +36,9 @@ const memberSchema: Schema = new Schema<IMember>(
     role: {
       type: String,
       enum: ["Volunteer", "Staff", "Coordinator", "Board Member"],
+    },
+    avatar: {
+      type: String,
     },
     participationHistory: [
       {
