@@ -12,6 +12,7 @@ const DonationSchema: Schema = new Schema<IDonation>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Donor",
       required: true,
+      index: true,
     },
     monetaryDetails: {
       amount: {
@@ -54,10 +55,9 @@ const DonationSchema: Schema = new Schema<IDonation>(
       estimatedValue: { type: Number },
       description: { type: String },
     },
-    goalId: { type: mongoose.Schema.Types.ObjectId, ref: "Goal" },
-    amount: { type: Number, required: true },
+    goalId: { type: mongoose.Schema.Types.ObjectId, ref: "Goal", index: true },
     currency: { type: String, required: true },
-    paymentStatus: { type: String, enum: ["Successful", "Failed"] },
+    paymentStatus: { type: String, enum: ["Successful", "Pending", "Failed"] },
     paymentMethod: { type: String, required: true },
     stripePaymentId: { type: String },
     stripeSessionId: { type: String },

@@ -1,0 +1,16 @@
+div {
+    padding: 1rem;
+    font-family: Arial, sans-serif;
+  }
+  
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  img {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-top: 1rem;
+  }
+  

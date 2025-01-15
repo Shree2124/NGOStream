@@ -16,6 +16,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "./redux/store";
 import GoalsPage from "./pages/Dashboard/GoalsPage";
 import PaymentSuccessPage from "./components/constants/PaymentSuccess";
+import FundraisingMetrics from "./pages/predicted";
 
 const App: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -27,6 +28,7 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/predict" element={<FundraisingMetrics />}/>
           <Route path="/donor-form/:goalId" element={<DonorFormPage />} />
           <Route path="/donation-success" element={<PaymentSuccessPage />} />
           <Route
