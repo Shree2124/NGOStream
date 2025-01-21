@@ -14,134 +14,161 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-12-18.acacia",
 });
 
-export const createCheckoutSession = asyncHandler(
-  async (req: Request, res: Response) => {
-    const {
+export const createCheckoutSession = async (req: Request, res: Response) => {
+  const {
+    name,
+    email,
+    phone,
+    address,
+    goalId,
+    eventId,
+    beneficiaryId,
+    donationType,
+    amount,
+    itemName,
+    quantity,
+    image,
+    estimatedValue,
+    description,
+  } = req.body;
+
+  console.log(req.body);
+  
+
+  // Ensure amount is parsed as a number
+  const parsedAmount = parseFloat(amount);
+  console.log(parsedAmount);
+   // Parse amount to float
+
+  // Validate required fields
+  if (!name || !email || !phone || !address || !donationType) {
+    throw new ErrorResponse(400, "Missing required fields");
+  }
+
+  // Validation for monetary donations
+  if (donationType === "Monetary") {
+    if (!goalId && !eventId && !beneficiaryId) {
+      throw new ErrorResponse(
+        400,
+        "A monetary donation must be associated with a goal, event, or beneficiary"
+      );
+    }
+    if (!parsedAmount || parsedAmount <= 0) {
+      throw new ErrorResponse(400, "Invalid amount for monetary donation");
+    }
+  }
+  // Validation for in-kind donations
+  else if (donationType === "In-Kind") {
+    if (!itemName || !quantity || quantity <= 0) {
+      throw new ErrorResponse(
+        400,
+        "Invalid itemName or quantity for in-kind donation"
+      );
+    }
+  } else {
+    throw new ErrorResponse(400, "Invalid donation type");
+  }
+
+  // Check if the donor exists, if not, create a new donor
+  let donor = await Donor.findOne({ email });
+  if (!donor) {
+    donor = await Donor.create({
       name,
       email,
       phone,
       address,
-      goalId,
-      eventId,
-      beneficiaryId,
-      donationType,
-      amount,
-      itemName,
-      quantity,
-    } = req.body;
-
-    console.log(req.body);
-    console.log(!Number(amount) || Number(amount) <= 0);
-    
-    
-
-    if (!name || !email || !phone || !address || !donationType) {
-      throw new ErrorResponse(400, "Missing required fields");
-    }
-
-    if (donationType === "Monetary") {
-      if (!goalId && !eventId && !beneficiaryId) {
-        throw new ErrorResponse(
-          400,
-          "A monetary donation must be associated with a goal, event, or beneficiary"
-        );
-      }
-      if (!Number(amount) || Number(amount) <= 0) {
-        throw new ErrorResponse(400, "Invalid amount for monetary donation");
-      }
-    } else if (donationType === "In-Kind") {
-      if (!itemName || !quantity || quantity <= 0) {
-        throw new ErrorResponse(
-          400,
-          "Invalid itemName or quantity for in-kind donation"
-        );
-      }
-    } else {
-      throw new ErrorResponse(400, "Invalid donation type");
-    }
-
-    let donor = await Donor.findOne({ email });
-    if (!donor) {
-      donor = await Donor.create({
-        name,
-        email,
-        phone,
-        address,
-        donations: [],
-      });
-    }
-
-    let session = null;
-    if (donationType === "Monetary") {
-      session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        customer_email: email,
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: `Donation for ${goalId || eventId || beneficiaryId}`,
-              },
-              unit_amount: amount * 100,
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        success_url: `${process.env.FRONTEND_URL}/donation-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/donation-cancel`,
-        metadata: {
-          donorId: donor._id.toString(),
-          goalId,
-          eventId,
-          beneficiaryId,
-          amount: amount.toString(),
-        },
-      });
-    }
-
-    const donation = await Donation.create({
-      donorId: donor._id,
-      donationType,
-      goalId,
-      eventId,
-      beneficiaryId,
-      amount: donationType === "Monetary" ? amount : undefined,
-      currency: donationType === "Monetary" ? "USD" : undefined,
-      paymentStatus: donationType === "Monetary" ? "Pending" : undefined,
-      paymentMethod: donationType === "Monetary" ? "Card" : undefined,
-      stripeSessionId: session?.id,
-      inKindDetails:
-        donationType === "In-Kind" ? { itemName, quantity } : undefined,
+      donations: [],
     });
-
-    donor.donations.push(donation._id);
-    await donor.save();
-    if (eventId) {
-      const event = await Event.findById(eventId);
-      if (event) {
-        event.kpis.fundsRaised = (event.kpis.fundsRaised || 0) + amount;
-        event.donations.push(donation._id);
-        await event.save();
-      } else {
-        throw new ErrorResponse(404, "Event not found");
-      }
-    }
-
-    res.status(200).json(
-      new SuccessResponse(
-        200,
-        {
-          sessionId: session?.id,
-          url: session?.url,
-          donorId: donor._id,
-        },
-        "Session created successfully"
-      )
-    );
   }
-);
+
+  // Create Stripe session for monetary donation
+  let session = null;
+  if (donationType === "Monetary") {
+    session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `Donation for ${goalId || eventId || beneficiaryId}`,
+            },
+            unit_amount: parsedAmount * 100, // Amount in cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${process.env.FRONTEND_URL}/donation-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/donation-cancel`,
+      metadata: {
+        donorId: donor._id.toString(),
+        goalId,
+        eventId,
+        beneficiaryId,
+        amount: parsedAmount.toString(),
+      },
+    });
+  }
+
+  // Create donation entry in the database
+  const donation = await Donation.create({
+    donorId: donor._id,
+    donationType,
+    goalId,
+    eventId,
+    beneficiaryId,
+    currency: donationType === "Monetary" ? "USD" : undefined,
+    paymentStatus:
+      donationType === "Monetary"
+        ? "Pending"
+        : undefined,
+    paymentMethod: donationType === "Monetary" ? "Card" : undefined,
+    stripeSessionId: session?.id,
+    monetaryDetails:
+      donationType === "Monetary"
+        ? {
+            amount: parsedAmount,
+            currency: "USD",
+            paymentMethod: "Card",
+            paymentStatus: "Pending",
+          }
+        : undefined,
+    inKindDetails:
+      donationType === "In-Kind"
+        ? { itemName, quantity, image, estimatedValue, description }
+        : undefined,
+  });
+
+  donor.donations.push(donation._id);
+  await donor.save();
+
+  // Update event if available
+  if (eventId) {
+    const event = await Event.findById(eventId);
+    if (event) {
+      event.kpis.fundsRaised = (event.kpis.fundsRaised || 0) + parsedAmount;
+      event.donations.push(donation._id);
+      await event.save();
+    } else {
+      throw new ErrorResponse(404, "Event not found");
+    }
+  }
+
+  // Return the session ID and URL for the checkout session
+  res.status(200).json(
+    new SuccessResponse(
+      200,
+      {
+        sessionId: session?.id,
+        url: session?.url,
+        donorId: donor._id,
+      },
+      "Session created successfully"
+    )
+  );
+};
 
 export const handlePaymentSuccess = asyncHandler(
   async (req: Request, res: Response) => {
@@ -169,7 +196,8 @@ export const handlePaymentSuccess = asyncHandler(
     if (donation.goalId) {
       const goal = await Goal.findById(donation.goalId);
       if (goal) {
-        goal.currentAmount = (goal.currentAmount || 0) + donation.amount!;
+        // Ensure goal.currentAmount is initialized as a valid number
+        goal.currentAmount = (Number(goal.currentAmount) || 0) + (Number(donation.amount) || 0);
         goal.donations.push(donation._id);
         await goal.save();
       }
@@ -179,29 +207,18 @@ export const handlePaymentSuccess = asyncHandler(
       const event = await Event.findById(donation.eventId);
       if (event) {
         event.kpis.fundsRaised =
-          (event.kpis.fundsRaised || 0) + donation.amount!;
+          (event.kpis.fundsRaised || 0) + (Number(donation.amount) || 0);
         event.donations.push(donation._id);
         await event.save();
       }
     }
-
-    // if (donation.beneficiaryId) {
-    //   const beneficiary = await Beneficiary.findById(donation.beneficiaryId);
-    //   if (beneficiary) {
-    //     // Update the total amount received by the beneficiary
-    //     beneficiary.totalReceived =
-    //       (beneficiary.totalReceived || 0) + donation.amount!;
-
-    //     beneficiary.donations.push(donation._id);
-    //     await beneficiary.save();
-    //   }
-    // }
 
     res
       .status(200)
       .json(new SuccessResponse(200, null, "Payment processed successfully"));
   }
 );
+
 
 export const getDonationInformation = asyncHandler(
   async (req: any, res: Response) => {
@@ -252,7 +269,7 @@ export const getDonationInformation = asyncHandler(
           createdAt: 1,
           updatedAt: 1,
           donationType: 1,
-          inKindDetails: 1, 
+          inKindDetails: 1,
         },
       },
     ]);
@@ -265,4 +282,3 @@ export const getDonationInformation = asyncHandler(
       .json(new SuccessResponse(200, donationInfo, "Donations found"));
   }
 );
-

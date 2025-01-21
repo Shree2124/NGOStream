@@ -1,10 +1,21 @@
 import React, { useState } from "react";
-import { Box, TextField, Button, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { loadStripe } from "@stripe/stripe-js";
 import { useParams } from "react-router-dom";
 import { api } from "../../api/api";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY as string);
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLIC_KEY as string
+);
 
 const DonationForm: React.FC = () => {
   const { goalId } = useParams<{ goalId: string }>();
@@ -22,7 +33,6 @@ const DonationForm: React.FC = () => {
     amount: 0,
     currency: "USD",
     paymentMethod: "",
-    transactionId: "",
   });
 
   const [inKindData, setInKindData] = useState({
@@ -33,7 +43,9 @@ const DonationForm: React.FC = () => {
     description: "",
   });
 
-  const handleDonationTypeChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleDonationTypeChange = (
+    event: React.ChangeEvent<{ value: unknown }>
+  ) => {
     setDonationType(event.target.value as string);
   };
 
@@ -55,11 +67,13 @@ const DonationForm: React.FC = () => {
       const stripe = await stripePromise;
 
       const response = await api.post(`/donation/checkout`, {
-        ...donorData,
-        donationType,
-        monetaryDetails: donationType === "Monetary" ? monetaryData : undefined,
-        inKindDetails: donationType === "In-Kind" ? inKindData : undefined,
+        name: donorData.name,
+        email: donorData.email,
+        phone: donorData.phone,
+        address: donorData.address,
         goalId,
+        donationType,
+        amount: donationType === "Monetary" ? monetaryData.amount : undefined,
       });
 
       const result = await stripe?.redirectToCheckout({
@@ -76,10 +90,22 @@ const DonationForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const donationData = {
+      name: donorData.name,
+      email: donorData.email,
+      phone: donorData.phone,
+      address: donorData.address,
+      goalId,
+      donationType,
+      amount: donationType === "Monetary" ? monetaryData.amount : undefined,
+    };
+
+    // Handle form submission based on the donation type
     if (donationType === "Monetary") {
       makePayment();
     } else {
-      console.log("In-Kind Donation Data Submitted:", { ...donorData, ...inKindData });
+      console.log("In-Kind Donation Data Submitted:", donationData);
       alert("In-Kind Donation Submitted!");
     }
   };
@@ -88,7 +114,10 @@ const DonationForm: React.FC = () => {
     <Box sx={{ maxWidth: 500, margin: "auto", padding: 3 }}>
       {step === 1 && (
         <>
-          <Typography variant="h5" sx={{ marginBottom: 3, textAlign: "center" }}>
+          <Typography
+            variant="h5"
+            sx={{ marginBottom: 3, textAlign: "center" }}
+          >
             Select Donation Type
           </Typography>
           <FormControl fullWidth sx={{ marginBottom: 3 }}>
@@ -103,7 +132,12 @@ const DonationForm: React.FC = () => {
             </Select>
           </FormControl>
           {donationType && (
-            <Button variant="contained" color="primary" fullWidth onClick={() => setStep(2)}>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={() => setStep(2)}
+            >
               Next
             </Button>
           )}
@@ -112,8 +146,13 @@ const DonationForm: React.FC = () => {
 
       {step === 2 && donationType && (
         <>
-          <Typography variant="h5" sx={{ marginBottom: 3, textAlign: "center" }}>
-            {donationType === "Monetary" ? "Monetary Donation" : "In-Kind Donation"}
+          <Typography
+            variant="h5"
+            sx={{ marginBottom: 3, textAlign: "center" }}
+          >
+            {donationType === "Monetary"
+              ? "Monetary Donation"
+              : "In-Kind Donation"}
           </Typography>
           <form onSubmit={handleSubmit}>
             <TextField
@@ -161,28 +200,10 @@ const DonationForm: React.FC = () => {
                   label="Amount"
                   name="amount"
                   type="number"
-                  value={Number(monetaryData.amount)}
+                  value={monetaryData.amount}
                   onChange={(e) => handleChange(e, "monetary")}
                   required
                   sx={{ marginBottom: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Currency"
-                  name="currency"
-                  value={monetaryData.currency}
-                  onChange={(e) => handleChange(e, "monetary")}
-                  required
-                  sx={{ marginBottom: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Payment Method"
-                  name="paymentMethod"
-                  value={monetaryData.paymentMethod}
-                  onChange={(e) => handleChange(e, "monetary")}
-                  required
-                  sx={{ marginBottom: 3 }}
                 />
               </>
             ) : (
@@ -195,42 +216,6 @@ const DonationForm: React.FC = () => {
                   onChange={(e) => handleChange(e, "inKind")}
                   required
                   sx={{ marginBottom: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Image URL"
-                  name="image"
-                  value={inKindData.image}
-                  onChange={(e) => handleChange(e, "inKind")}
-                  sx={{ marginBottom: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Quantity"
-                  name="quantity"
-                  type="number"
-                  value={inKindData.quantity}
-                  onChange={(e) => handleChange(e, "inKind")}
-                  required
-                  sx={{ marginBottom: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Estimated Value"
-                  name="estimatedValue"
-                  type="number"
-                  value={inKindData.estimatedValue}
-                  onChange={(e) => handleChange(e, "inKind")}
-                  sx={{ marginBottom: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Description"
-                  name="description"
-                  value={inKindData.description}
-                  onChange={(e) => handleChange(e, "inKind")}
-                  required
-                  sx={{ marginBottom: 3 }}
                 />
               </>
             )}

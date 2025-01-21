@@ -19,9 +19,8 @@ export interface IDonation extends Document {
   goalId?: mongoose.Types.ObjectId;
   eventId?: mongoose.Types.ObjectId;
   beneficiaryId?: mongoose.Types.ObjectId;
-  amount: number;
   currency: string;
-  paymentStatus: "Successful" | "Failed";
+  paymentStatus: "Successful" | "Pending" | "Failed";
   paymentMethod: string;
   stripePaymentId: string;
   stripeSessionId: string;

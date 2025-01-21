@@ -1,0 +1,60 @@
+from flask import Blueprint, jsonify, current_app, send_file, make_response
+from .model import train_model, predict_donations
+from .utils import get_donation_data, save_plot, generate_donation_trends_graph
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+
+api = Blueprint('api', __name__)
+
+@api.route('/api/donation-trends', methods=['GET'])
+def donation_trends():
+    db = current_app.config['db']
+    data = get_donation_data(db)
+    print("Processed data:", data)
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(data['dates'], data['amounts'], marker='o', label="Donations")
+    plt.title('Donation Trends')
+    plt.xlabel('Date')
+    plt.ylabel('Amount')
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.legend()
+    
+    img = BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plt.close()
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+    
+    return jsonify({
+        'message': 'Donation trends data',
+        # 'graph': f"data:image/png;base64,{img_base64}",
+        'numeric_data': data['numeric_data']
+    }), 200
+    
+    
+@api.route('/api/fundraising-metrics', methods=['GET'])
+def fundraising_metrics():
+    db = current_app.config['db']
+    print(db)
+    avg, prediction, monthly_totals = predict_donations(db)
+    print(avg, prediction, monthly_totals)
+    monthly_totals_serializable = [
+        {"month": item["month"], "amount": int(item["amount"])}
+        for item in monthly_totals
+    ]
+    print(monthly_totals_serializable)
+
+    return jsonify({
+        'averageMonthlyDonations': int(avg),  
+        'predictedNextMonthDonations': int(prediction),  
+        'monthlyTotals': monthly_totals_serializable  
+    }), 200
+    
+@api.route('/api/train-model', methods=['GET'])
+def train():
+    db = current_app.config['db']
+    model_path = train_model(db)
+    return jsonify({'message': 'Model trained and saved', 'model_path': model_path}), 200
