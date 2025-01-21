@@ -42,7 +42,6 @@ import {
   Tooltip as ChartTooltip,
   Legend,
 } from "chart.js";
-import { log } from "node:console";
 import { api } from "../../api/api";
 
 ChartJS.register(
@@ -54,18 +53,6 @@ ChartJS.register(
   Legend
 );
 
-interface Event {
-  id: string;
-  name: string;
-  description: string;
-  date: string;
-  location: string;
-  eventType: string;
-  status: string;
-  attendance: number;
-  fundsRaised: number;
-  successMetrics: string[];
-}
 
 const Events: React.FC = () => {
   const theme = useTheme();
@@ -96,6 +83,18 @@ const Events: React.FC = () => {
     setLocation("");
     setEventType("");
   };
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const res = await api.get("/event/");
+      console.log(res.data.data);
+      setEvents(res.data.data)
+      console.log("E",events);
+      setFilteredEvents(res.data.data)
+      
+    };
+    fetchEvents();
+  }, []);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -152,6 +151,8 @@ const Events: React.FC = () => {
 
   const filterEvents = (query: string, status: string, type: string): void => {
     let filtered = events;
+    console.log("f",filtered);
+    
     if (status !== "All") {
       filtered = filtered.filter((event) => event.status === status);
     }
@@ -228,7 +229,7 @@ const Events: React.FC = () => {
   });
 
   const getSuccessMetricsChartData = (event: Event) => ({
-    labels: event.successMetrics,
+    labels: event.kpis.successMetrics,
     datasets: [
       {
         data: event.successMetrics.map(() => 1),
@@ -295,7 +296,7 @@ const Events: React.FC = () => {
       </Box>
 
       <Grid container spacing={3}>
-        {filteredEvents.map((event) => (
+        {filteredEvents?.map((event) => (
           <Grid item xs={12} sm={6} md={4} key={event.id}>
             <Card>
               <CardContent>
@@ -494,7 +495,6 @@ const Events: React.FC = () => {
             </Button>
           </Box>
         </DialogContent>
-
 
         <Dialog open={rolesModalOpen} onClose={closeAssignRolesModal}>
           <DialogTitle>Assign Roles to Participants</DialogTitle>
