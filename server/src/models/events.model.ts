@@ -11,6 +11,12 @@ const EventSchema: Schema = new Schema<IEvent>(
       type: String,
       enum: ["Fundraiser", "Workshop", "Outreach", "Seminar", "Training"],
     },
+    status: {
+      type: String,
+      enum: ["Upcoming", "Happening", "Completed"],
+      default: "Upcoming",
+      required: true,
+    },
     participants: [
       {
         memberId: {

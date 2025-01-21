@@ -6,6 +6,7 @@ export interface IEvent extends Document {
   date: Date;
   location: string;
   eventType: string;
+  status: "Upcoming" | "Happening" | "Completed";
   participants: {
     memberId: mongoose.Types.ObjectId;
     role: string;
