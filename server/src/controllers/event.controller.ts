@@ -8,7 +8,8 @@ import { SuccessResponse } from "../utils/successResponse";
 const createEvent = asyncHandler(async (req: any, res: Response) => {
   const {
     name,
-    date,
+    startDate,
+    endDate,
     description,
     location,
     eventType,
@@ -18,7 +19,7 @@ const createEvent = asyncHandler(async (req: any, res: Response) => {
   console.log(req.body);
 
   if (
-    [name, date, description, location, eventType].some((e) => e?.trim() === "")
+    [name, startDate, endDate, description, location, eventType].some((e) => e?.trim() === "")
   )
     throw new ErrorResponse(400, "All fields are required");
 
@@ -47,18 +48,21 @@ const createEvent = asyncHandler(async (req: any, res: Response) => {
     throw new ErrorResponse(400, "One or more participants not found");
 
   const now = new Date();
-  const eventDate = new Date(date);
+  const eventStartDate = new Date(startDate);
+  const eventEndDate = new Date(endDate);
   let status = "Upcoming";
 
-  if (eventDate.toDateString() === now.toDateString()) {
+  // Check the event status based on the start and end dates
+  if (eventStartDate <= now && eventEndDate >= now) {
     status = "Happening";
-  } else if (eventDate < now) {
+  } else if (eventEndDate < now) {
     status = "Completed";
   }
 
   const event = await Event.create({
     name,
-    date: eventDate,
+    startDate: eventStartDate,
+    endDate: eventEndDate,
     description,
     location,
     eventType,
@@ -85,14 +89,14 @@ const getAllEvents = asyncHandler(async (req: any, res: Response) => {
 
   await Event.updateMany(
     {
-      date: { $lt: now },
+      endDate: { $lt: now },
     },
     { $set: { status: "Completed" } }
   );
 
   await Event.updateMany(
     {
-      date: { $gt: now },
+      startDate: { $gt: now },
     },
     {
       $set: { status: "Upcoming" },
@@ -101,10 +105,8 @@ const getAllEvents = asyncHandler(async (req: any, res: Response) => {
 
   await Event.updateMany(
     {
-      date: {
-        $gte: new Date(now.toISOString().split("T")[0]),
-        $lt: now,
-      },
+      startDate: { $lte: now },
+      endDate: { $gte: now },
     },
     {
       $set: { status: "Happening" },
@@ -152,7 +154,7 @@ const getAllEvents = asyncHandler(async (req: any, res: Response) => {
         participantDetails: 0,
       },
     },
-    { $sort: { date: 1 } },
+    { $sort: { startDate: 1 } },
   ]);
 
   if (events.length <= 0) throw new ErrorResponse(400, "Events not found");
@@ -161,6 +163,7 @@ const getAllEvents = asyncHandler(async (req: any, res: Response) => {
     .status(200)
     .json(new SuccessResponse(200, events, "Events fetched successfully"));
 });
+
 
 
 export { createEvent, getAllEvents };

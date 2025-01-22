@@ -30,6 +30,7 @@ const Navbar: React.FC = () => {
     { text: "Home", link: "#home" },
     // { text: "Register", link: "/register" },
     { text: "Goals", link: "#goals" },
+    { text: "Events", link: "/events" },
     { text: "Login", link: "/login" },
   ];
 

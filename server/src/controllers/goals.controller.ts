@@ -74,7 +74,7 @@ const getGoal = asyncHandler(async (req: any, res: Response) => {
   const { goalId } = req.params;
 
   if (!goalId || !isValidObjectId(goalId)) {
-    throw new ErrorResponse(400, "Invalid goal ID");
+    throw new ErrorResponse(400, "Invalid or missing goal ID");
   }
 
   const goal = await Goal.aggregate([
@@ -122,22 +122,35 @@ const getGoal = asyncHandler(async (req: any, res: Response) => {
         donations: {
           $push: {
             donationId: "$donationDetails._id",
-            amount: "$donationDetails.amount",
+            amount: { 
+              $cond: { 
+                if: { $eq: ["$donationDetails.donationType", "Monetary"] }, 
+                then: "$donationDetails.monetaryDetails.amount", 
+                else: null 
+              } 
+            },
             donorName: { $ifNull: ["$donorDetails.name", "Unknown"] },
             donorEmail: { $ifNull: ["$donorDetails.email", "Unknown"] },
+            itemName: { 
+              $cond: { 
+                if: { $eq: ["$donationDetails.donationType", "In-Kind"] }, 
+                then: "$donationDetails.inKindDetails.itemName", 
+                else: null 
+              } 
+            },
           },
         },
       },
     },
   ]);
 
-  if (!goal) {
+  if (!goal || goal.length === 0) {
     throw new ErrorResponse(404, "Goal not found");
   }
 
   return res
     .status(200)
-    .json(new SuccessResponse(200, goal, "Goal details fetched successfully"));
+    .json(new SuccessResponse(200, goal[0], "Goal details fetched successfully"));
 });
 
 const editGoal = asyncHandler(async (req: any, res: Response) => {

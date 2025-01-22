@@ -53,7 +53,6 @@ ChartJS.register(
   Legend
 );
 
-
 const Events: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -70,16 +69,19 @@ const Events: React.FC = () => {
   const [assignedRoles, setAssignedRoles] = useState({});
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [location, setLocation] = useState("");
   const [eventType, setEventType] = useState("");
   const [participantIds, setParticipantIds] = useState([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const resetForm = () => {
     setName("");
     setDescription("");
-    setDate("");
+    setStartDate("");
+    setEndDate("");
     setLocation("");
     setEventType("");
   };
@@ -88,10 +90,9 @@ const Events: React.FC = () => {
     const fetchEvents = async () => {
       const res = await api.get("/event/");
       console.log(res.data.data);
-      setEvents(res.data.data)
-      console.log("E",events);
-      setFilteredEvents(res.data.data)
-      
+      setEvents(res.data.data);
+      console.log("E", events);
+      setFilteredEvents(res.data.data);
     };
     fetchEvents();
   }, []);
@@ -151,8 +152,8 @@ const Events: React.FC = () => {
 
   const filterEvents = (query: string, status: string, type: string): void => {
     let filtered = events;
-    console.log("f",filtered);
-    
+    console.log("f", filtered);
+
     if (status !== "All") {
       filtered = filtered.filter((event) => event.status === status);
     }
@@ -169,13 +170,29 @@ const Events: React.FC = () => {
 
   const handleDialogOpen = (event: Event | null = null) => {
     setCurrentEvent(event);
+    if (event) {
+      setName(event.name);
+      setDescription(event.description);
+      setStartDate(event.startDate);
+      setEndDate(event.endDate);
+      setLocation(event.location);
+      setEventType(event.eventType);
+      setParticipantIds(event?.participants?.map((p) => p.memberId));
+      const roles = event.participants.reduce((acc, participant) => {
+        acc[participant.memberId] = participant.role;
+        return acc;
+      }, {});
+      setAssignedRoles(roles);
+    } else {
+      resetForm();
+    }
     setDialogOpen(true);
   };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    setCurrentEvent(null);
     resetForm();
+    setCurrentEvent(null);
   };
 
   const handleSaveEvent = async () => {
@@ -183,20 +200,40 @@ const Events: React.FC = () => {
       alert("All participants must have a role assigned.");
       return;
     }
+
     try {
       const participantsWithRoles = participantIds.map((id) => ({
         memberId: id,
         role: assignedRoles[id],
       }));
-      const res = await api.post("/event/create", {
-        name,
-        date,
-        description,
-        location,
-        eventType,
-        participants: participantsWithRoles,
-      });
-      setEvents((prev) => [...prev, res.data.data]);
+
+      if (currentEvent) {
+        const res = await api.put(`/event/update/${currentEvent.id}`, {
+          name,
+          startDate,
+          endDate,
+          description,
+          location,
+          eventType,
+          participants: participantsWithRoles,
+        });
+        setEvents((prev) =>
+          prev.map((event) =>
+            event.id === currentEvent.id ? res.data.data : event
+          )
+        );
+      } else {
+        const res = await api.post("/event/create", {
+          name,
+          startDate,
+          endDate,
+          description,
+          location,
+          eventType,
+          participants: participantsWithRoles,
+        });
+        setEvents((prev) => [...prev, res.data.data]);
+      }
     } catch (error) {
       console.error("Error saving event:", error);
     }
@@ -305,34 +342,39 @@ const Events: React.FC = () => {
                   {event.description}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Date:</strong> {event.date}
+                  <strong>start date:</strong> {event.startDate}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>end date:</strong> {event.endDate}
                 </Typography>
                 <Typography variant="body2">
                   <strong>Status:</strong> {event.status}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
 
-                {/* Visuals Icon Button */}
-                <Box display="flex" justifyContent="space-between">
-                  <Tooltip title="Show Visuals">
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleShowVisuals(event.id)}
-                    >
-                      <BarChart />
-                    </IconButton>
-                  </Tooltip>
-
-                  {/* Edit and Delete Buttons */}
-                  <Box>
-                    <Tooltip title="Edit">
+                <Box display="flex" justifyContent="space-evenly">
+                  {event?.status === "Completed" && (
+                    <Tooltip title="Show Visuals">
                       <IconButton
                         color="primary"
-                        onClick={() => handleDialogOpen(event)}
+                        onClick={() => handleShowVisuals(event.id)}
                       >
-                        <Edit />
+                        <BarChart />
                       </IconButton>
                     </Tooltip>
+                  )}
+
+                  <Box>
+                    {event?.status === "Upcoming" && (
+                      <Tooltip title="Edit">
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleDialogOpen(event)}
+                        >
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     <Tooltip title="Delete">
                       <IconButton
                         color="error"
@@ -417,9 +459,19 @@ const Events: React.FC = () => {
             label="Date"
             variant="outlined"
             fullWidth
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            type="datetime-local"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            sx={{ my: 2 }}
+            required
+          />
+          <TextField
+            label="Date"
+            variant="outlined"
+            fullWidth
+            type="datetime-local"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
             sx={{ my: 2 }}
             required
           />
@@ -462,7 +514,7 @@ const Events: React.FC = () => {
                     );
                     return participant ? participant.fullName : "";
                   })
-                  .join(", ")
+                  .join(",")
               }
             >
               {systemParticipants?.map((member) => (
@@ -474,7 +526,6 @@ const Events: React.FC = () => {
             </Select>
           </FormControl>
 
-          {/* Assign Roles Section */}
           <Box
             sx={{
               display: "flex",
@@ -499,7 +550,7 @@ const Events: React.FC = () => {
         <Dialog open={rolesModalOpen} onClose={closeAssignRolesModal}>
           <DialogTitle>Assign Roles to Participants</DialogTitle>
           <DialogContent>
-            {participantIds.map((id) => {
+            {participantIds?.map((id) => {
               const participant = systemParticipants.find(
                 (member) => member._id === id
               );
@@ -553,23 +604,9 @@ const Events: React.FC = () => {
           </DialogActions>
         </Dialog>
 
-        <DialogActions
-          sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-        >
-          <Button
-            onClick={handleDialogClose}
-            variant="outlined"
-            color="error"
-            sx={{ textTransform: "none" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => handleSaveEvent()}
-            variant="contained"
-            color="primary"
-            sx={{ textTransform: "none" }}
-          >
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button onClick={handleSaveEvent} variant="contained">
             {currentEvent ? "Save Changes" : "Add Event"}
           </Button>
         </DialogActions>
