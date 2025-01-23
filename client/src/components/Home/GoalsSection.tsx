@@ -1,40 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { Button, LinearProgress, Typography, Box, Grid } from "@mui/material";
+import {
+  Button,
+  LinearProgress,
+  Typography,
+  Box,
+  CardContent,
+  Card,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api/api";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "../ui/carousel";
 
 const GoalsSection: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const navigate = useNavigate()
-  const [goalsData, setGoalsData] = useState([])
+  const navigate = useNavigate();
+  const [goalsData, setGoalsData] = useState([]);
 
-  useEffect(()=>{
-    const fetchGoalsData = async()=>{
-    try {
-      const res = await api.get("/goals/all-goals")
-      setGoalsData(res.data.data)
-    } catch (error) {
-      console.log(error);
-    }}
+  useEffect(() => {
+    const fetchGoalsData = async () => {
+      try {
+        const res = await api.get("/goals/all-goals");
+        setGoalsData(res.data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-    fetchGoalsData()
-  },[])
-
-  const handleNavigate = (goalId) =>{
-    navigate(`/donor-form/${goalId}`)
-  }
-
-  const handlePrev = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? goalsData.length - itemsPerView() : prevIndex - 1
-    );
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === goalsData.length - itemsPerView() ? 0 : prevIndex + 1
-    );
-  };
+    fetchGoalsData();
+  }, []);
 
   const itemsPerView = () => {
     if (window.innerWidth < 600) return 1;
@@ -42,62 +41,52 @@ const GoalsSection: React.FC = () => {
     return 3;
   };
 
+  const visibleGoals = goalsData.slice(
+    currentIndex,
+    currentIndex + itemsPerView()
+  );
+
   return (
     <Box
       sx={{
         width: "100%",
-        height: "100%",
         textAlign: "center",
-        padding: { xs: 2, md: 4, lg: 6 },
+        backgroundColor: "#f9f9f9",
       }}
       id="goals"
     >
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
         Our Goals
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          mb: 4,
+          color: "text.secondary",
+          maxWidth: "800px",
+          mx: "auto",
+        }}
+      >
+        Discover the impactful goals we’re working towards. Your support helps
+        make a difference.
       </Typography>
 
       <Box
         sx={{
+          position: "relative",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          flexWrap: "nowrap",
         }}
       >
-        <Button
-          variant="outlined"
-          onClick={handlePrev}
-          sx={{
-            minWidth: { xs: "30px", md: "50px" },
-            fontSize: { xs: "12px", md: "16px" },
-            marginRight: 2,
-          }}
-        >
-          &#8592;
-        </Button>
-
-        <Grid
-          container
-          spacing={2}
-          sx={{
-            maxWidth: "90%",
-            overflow: "hidden",
-            flexWrap: "nowrap",
-          }}
-        >
-          {goalsData
-            .slice(currentIndex, currentIndex + itemsPerView())
-            .map((goal) => (
-              <Grid item xs={12} sm={6} md={4} key={goal.id}>
-                <Box
-                  sx={{
-                    backgroundColor: "#f4f4f4",
-                    padding: 2,
-                    borderRadius: 2,
-                    boxShadow: 2,
-                    height: "100%",
-                  }}
-                >
+        <Carousel opts={{ align: "start" }}>
+          <CarouselContent>
+            {visibleGoals.map((goal, index) => (
+              <CarouselItem
+                key={goal._id}
+                className="md:basis-1/2 lg:basis-1/3 p-2"
+              >
+                <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                   <img
                     src={goal.image}
                     alt={goal.name}
@@ -105,75 +94,87 @@ const GoalsSection: React.FC = () => {
                       width: "100%",
                       height: "150px",
                       objectFit: "cover",
-                      borderRadius: "8px",
+                      borderRadius: "8px 8px 0 0",
                     }}
                   />
-                  <Typography variant="h6" sx={{ marginTop: 2 }}>
-                    {goal.name}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "text.secondary", marginBottom: 2 }}
-                  >
-                    {goal.description}
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 1,
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                      Target: ${goal.targetAmount}
+                  <CardContent sx={{ textAlign: "left" }}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                      {goal.name}
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: "bold", color: "green" }}
+                      sx={{ color: "text.secondary", mb: 2 }}
                     >
-                      {((goal.currentAmount / goal.targetAmount) * 100).toFixed(
-                        2
-                      )}
-                      %
+                      {goal.description}
                     </Typography>
-                  </Box>
-
-                  <LinearProgress
-                    variant="determinate"
-                    value={(goal.raisedAmount / goal.targetAmount) * 100}
-                    sx={{
-                      height: 10,
-                      borderRadius: 5,
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor: "#4caf50",
-                      },
-                    }}
-                  />
-                  <Button
-                    onClick={()=>handleNavigate(goal._id)}
-                    variant="contained"
-                    color="primary"
-                    sx={{ marginTop: 2, width: "100%" }}
-                  >
-                    Donate
-                  </Button>
-                </Box>
-              </Grid>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: "bold" }}
+                      >
+                        Target: ₹{goal.targetAmount}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: "bold", color: "green" }}
+                      >
+                        {((goal.currentAmount / goal.targetAmount) * 100).toFixed(
+                          2
+                        )}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={(goal.currentAmount / goal.targetAmount) * 100}
+                      sx={{
+                        height: 8,
+                        borderRadius: 5,
+                        backgroundColor: "#e0e0e0",
+                        "& .MuiLinearProgress-bar": {
+                          backgroundColor: "#4caf50",
+                        },
+                      }}
+                    />
+                    <Button
+                      onClick={() => navigate(`/donor-form/${goal._id}`)}
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      sx={{ mt: 2, borderRadius: 5 }}
+                    >
+                      Donate Now
+                    </Button>
+                  </CardContent>
+                </Card>
+              </CarouselItem>
             ))}
-        </Grid>
-
-        <Button
-          variant="outlined"
-          onClick={handleNext}
-          sx={{
-            minWidth: { xs: "30px", md: "50px" },
-            fontSize: { xs: "12px", md: "16px" },
-            marginLeft: 2,
-          }}
-        >
-          &#8594;
-        </Button>
+          </CarouselContent>
+          <CarouselPrevious
+            onClick={() =>
+              setCurrentIndex(
+                currentIndex === 0
+                  ? goalsData.length - itemsPerView()
+                  : currentIndex - 1
+              )
+            }
+          />
+          <CarouselNext
+            onClick={() =>
+              setCurrentIndex(
+                currentIndex === goalsData.length - itemsPerView()
+                  ? 0
+                  : currentIndex + 1
+              )
+            }
+          />
+        </Carousel>
       </Box>
     </Box>
   );

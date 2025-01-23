@@ -5,11 +5,18 @@ const EventSchema: Schema = new Schema<IEvent>(
   {
     name: { type: String, required: true },
     description: { type: String, required: true },
-    date: { type: Date, required: true },
+    startDate: { type: Date, required: true },
+    endDate: {type: Date, required: true},
     location: { type: String, required: true },
     eventType: {
       type: String,
       enum: ["Fundraiser", "Workshop", "Outreach", "Seminar", "Training"],
+    },
+    status: {
+      type: String,
+      enum: ["Upcoming", "Happening", "Completed"],
+      default: "Upcoming",
+      required: true,
     },
     participants: [
       {

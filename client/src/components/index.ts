@@ -11,19 +11,21 @@ import AuthLayout from "./Layouts/AuthLayout";
 import Goals from "./Dashboard/Goals";
 import GoalsSection from "./Home/GoalsSection";
 import DonorForm from "./forms/donorForm";
+import { Events as EventsComponent } from "./Events/Events";
 
 export {
-    Login,
-    Register,
-    Navbar,
-    HeroSection,
-    DashboardLayout,
-    DashboardHome,
-    MemberManagement,
-    DonationDetails,
-    Events,
-    AuthLayout,
-    Goals,
-    GoalsSection,
-    DonorForm
-}
+  Login,
+  Register,
+  Navbar,
+  HeroSection,
+  DashboardLayout,
+  DashboardHome,
+  MemberManagement,
+  DonationDetails,
+  Events,
+  AuthLayout,
+  Goals,
+  GoalsSection,
+  DonorForm,
+  EventsComponent,
+};

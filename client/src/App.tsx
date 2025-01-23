@@ -9,6 +9,7 @@ import {
   DonationDetailsPage,
   EventsPage,
   DonorFormPage,
+  EventFrontPage,
 } from "./pages";
 import { AuthLayout, DashboardLayout } from "./components";
 import { fetchUser } from "./redux/slices/authSlice";
@@ -31,6 +32,7 @@ const App: React.FC = () => {
           <Route path="/predict" element={<FundraisingMetrics />}/>
           <Route path="/donor-form/:goalId" element={<DonorFormPage />} />
           <Route path="/donation-success" element={<PaymentSuccessPage />} />
+          <Route path="/events" element={<EventFrontPage />}/>
           <Route
             path="/dashboard/*"
             element={

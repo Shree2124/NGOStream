@@ -153,7 +153,7 @@ const Login: React.FC = () => {
               </Button>
             </form>
 
-            <Typography
+            {/* <Typography
               variant="body2"
               mt={3}
               mb={1}
@@ -195,7 +195,7 @@ const Login: React.FC = () => {
               <Link to="/register" style={{ fontWeight: 500 }}>
                 Register
               </Link>
-            </Typography>
+            </Typography> */}
           </Box>
         </Grid>
       </Grid>

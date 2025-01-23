@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
       <div className="shadow-lg h-screen w-full" id="#home">
       <HeroSection />
       </div>
-      <div className="" id="goals">
+      <div className="w-full mt-8" id="goals">
         <GoalsSection />
       </div>
     </Box>

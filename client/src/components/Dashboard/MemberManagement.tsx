@@ -161,15 +161,15 @@ const MemberManagement: React.FC = () => {
     role: "",
   });
 
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get("/users/all-members");
+      setMembers(res.data.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await api.get("/users/all-members");
-        setMembers(res.data.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
     fetchUsers();
   }, []);
 
@@ -248,6 +248,9 @@ const MemberManagement: React.FC = () => {
       } else {
         const addedUser = await addUser(newUser);
         setMembers((prev) => [...prev, addedUser]);
+        setShowModal(false)
+        fetchUsers()
+
       }
       handleCloseModal();
     } catch (error) {

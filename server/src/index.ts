@@ -6,9 +6,9 @@ import { connectDatabase } from "./database/db";
 import passport from "passport";
 // import { googleStratergy } from "./config/oauthStratergies";
 
-connectDatabase().then(()=>{
+connectDatabase().then(() => {
   console.log("Connected");
-})
+});
 
 const app = express();
 
@@ -24,31 +24,32 @@ app.use(
 
 console.log(corsOrigin);
 
-
 app.use(express.json());
 
 app.use(express.static("public"));
 
 // passport.use(googleStratergy)
 
-
-
 /* passport initialized */
-app.use(passport.initialize())
+app.use(passport.initialize());
 
-app.listen(PORT || 5000 , () => {
+app.listen(PORT || 5000, () => {
   console.log(`App is stared and is running on http://localhost:${PORT}`);
 });
 
-{/* Healthcheck route */}
+{
+  /* Healthcheck route */
+}
 app.get("/", (req, res) => {
   res.send("Hello");
 });
 
-import userRouter from "./routes/user.routes"
-import goalRouter from "./routes/goals.routes"
-import donationRouter from "./routes/donation.routes"
+import userRouter from "./routes/user.routes";
+import goalRouter from "./routes/goals.routes";
+import donationRouter from "./routes/donation.routes";
+import eventRouter from "./routes/events.routes";
 
-app.use("/api/v1/users", userRouter)
-app.use("/api/v1/goals", goalRouter)
-app.use("/api/v1/donation", donationRouter)
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/goals", goalRouter);
+app.use("/api/v1/donation", donationRouter);
+app.use("/api/v1/event", eventRouter);

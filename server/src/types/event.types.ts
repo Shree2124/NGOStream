@@ -3,9 +3,11 @@ import mongoose, { Document } from "mongoose";
 export interface IEvent extends Document {
   name: string;
   description: string;
-  date: Date;
+  startDate: Date;
+  endDate: Date;
   location: string;
   eventType: string;
+  status: "Upcoming" | "Happening" | "Completed";
   participants: {
     memberId: mongoose.Types.ObjectId;
     role: string;

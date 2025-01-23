@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
-import "./predicted.css";
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -15,27 +13,25 @@ ChartJS.register(
   Legend
 );
 
-// Define the type for API response
 interface FundraisingMetricsData {
   averageMonthlyDonations: number;
   predictedNextMonthDonations: number;
-  monthlyTotals: { month: string; amount: number }[]; // Monthly totals for the chart
+  monthlyTotals: { month: string; amount: number }[]; 
 }
 
 const FundraisingMetrics: React.FC = () => {
-  const [metrics, setMetrics] = useState<FundraisingMetricsData | null>(null); // State to hold API response
-  const [loading, setLoading] = useState<boolean>(true); // State for loading status
-  const [error, setError] = useState<string | null>(null); // State for error handling
+  const [metrics, setMetrics] = useState<FundraisingMetricsData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true); 
+  const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
-    // Fetch data from API using Axios
     const fetchMetrics = async () => {
       try {
         const response = await axios.get<FundraisingMetricsData>(
           "http://127.0.0.1:5000/api/fundraising-metrics"
         );
-        setMetrics(response.data); // Set the API response data
-        setLoading(false); // Update loading status
+        setMetrics(response.data);
+        setLoading(false);
       } catch (err) {
         setError(
           axios.isAxiosError(err) && err.response
@@ -49,20 +45,17 @@ const FundraisingMetrics: React.FC = () => {
     fetchMetrics();
   }, []);
 
-  // Render Loading or Error state
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
-  // Destructure metrics for convenience
   const { averageMonthlyDonations, predictedNextMonthDonations, monthlyTotals } = metrics!;
 
-  // Prepare data for the chart
   const chartData = {
-    labels: monthlyTotals.map((item) => item.month), // X-axis: months
+    labels: monthlyTotals.map((item) => item.month),
     datasets: [
       {
         label: "Total Donations",
-        data: monthlyTotals.map((item) => item.amount), // Y-axis: donation amounts
+        data: monthlyTotals.map((item) => item.amount),
         borderColor: "blue",
         fill: false,
         tension: 0.1
@@ -70,7 +63,6 @@ const FundraisingMetrics: React.FC = () => {
     ]
   };
 
-  // Chart options
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -112,7 +104,6 @@ const FundraisingMetrics: React.FC = () => {
 
       <div>
         <h2>Donation Trends</h2>
-        {/* Display the Line chart */}
         <Line data={chartData} options={chartOptions} />
       </div>
     </div>
