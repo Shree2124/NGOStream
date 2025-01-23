@@ -1,6 +1,5 @@
 import { createTransport } from "nodemailer";
 
-
 const sendMail = async (email: any, subject: any, data: any) => {
   const transport = createTransport({
     host: "smtp.gmail.com",
@@ -12,7 +11,6 @@ const sendMail = async (email: any, subject: any, data: any) => {
   });
 
   console.log(process.env.EMAIL_PASSWORD, process.env.EMAIL_ADDRESS);
-  
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -153,3 +151,54 @@ export const sendForgotMail = async (subject: any, data: any) => {
   });
 };
 
+export const sendReceiptEmail = async (
+  donor: any,
+  receiptPath: string,
+  donation: any
+) => {
+  try {
+    const transporter = createTransport({
+      host: "smtp.gmail.com",
+      auth: {
+        user: process.env.EMAIL_ADDRESS,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.Gmail,
+      to: donor.email,
+      subject: "Thank you for your Donation",
+      html: `
+        <p>Dear ${donor.name},</p>
+        <p>Thank you for your generous donation.</p>
+        <p>Donation Details:</p>
+        <ul>
+          <li><strong>Type:</strong> ${donation.donationType}</li>
+          <li><strong>Amount:</strong> ${
+            donation.monetaryDetails?.amount
+              ? `${donation.monetaryDetails.amount} ${donation.monetaryDetails.currency}`
+              : "N/A"
+          }</li>
+          <li><strong>Date:</strong> ${new Date(
+            donation.createdAt
+          ).toLocaleDateString()}</li>
+        </ul>
+        <p>Your receipt is attached.</p>
+      `,
+      attachments: [
+        {
+          filename: `${donation._id}-${donor.name}.pdf`,
+          path: receiptPath,
+        },
+      ],
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Email sent: ${info.messageId}`);
+    return "Receipt email sent successfully!";
+  } catch (error: any) {
+    console.error("Error sending receipt email:", error?.message);
+    throw error;
+  }
+};

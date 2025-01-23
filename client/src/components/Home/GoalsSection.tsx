@@ -27,6 +27,8 @@ const GoalsSection: React.FC = () => {
       try {
         const res = await api.get("/goals/all-goals");
         setGoalsData(res.data.data);
+        console.log(res.data.data);
+        
       } catch (error) {
         console.log(error);
       }
@@ -143,7 +145,7 @@ const GoalsSection: React.FC = () => {
                       }}
                     />
                     <Button
-                      onClick={() => navigate(`/donor-form/${goal._id}`)}
+                      onClick={() => navigate(`/donor-form/${goal?._id}`)}
                       variant="contained"
                       color="primary"
                       fullWidth

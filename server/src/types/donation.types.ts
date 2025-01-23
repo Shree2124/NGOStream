@@ -22,6 +22,7 @@ export interface IDonation extends Document {
   currency: string;
   paymentStatus: "Successful" | "Pending" | "Failed";
   paymentMethod: string;
+  sendReceipt: boolean;
   stripePaymentId: string;
   stripeSessionId: string;
 }

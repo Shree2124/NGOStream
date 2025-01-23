@@ -9,6 +9,9 @@ import { SuccessResponse } from "../utils/successResponse";
 import { IGoals } from "../types/goals.types";
 import { IDonation } from "../types/donation.types";
 import { asyncHandler } from "../utils/asyncHandler";
+import { generatePDFReceipt } from "../utils/receiptCreation";
+import uploadOnCloudinary from "../utils/cloudinary";
+import { sendReceiptEmail } from "../utils/sendMail";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-12-18.acacia",
@@ -33,19 +36,14 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
   } = req.body;
 
   console.log(req.body);
-  
 
-  // Ensure amount is parsed as a number
   const parsedAmount = parseFloat(amount);
   console.log(parsedAmount);
-   // Parse amount to float
 
-  // Validate required fields
   if (!name || !email || !phone || !address || !donationType) {
     throw new ErrorResponse(400, "Missing required fields");
   }
 
-  // Validation for monetary donations
   if (donationType === "Monetary") {
     if (!goalId && !eventId && !beneficiaryId) {
       throw new ErrorResponse(
@@ -56,9 +54,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     if (!parsedAmount || parsedAmount <= 0) {
       throw new ErrorResponse(400, "Invalid amount for monetary donation");
     }
-  }
-  // Validation for in-kind donations
-  else if (donationType === "In-Kind") {
+  } else if (donationType === "In-Kind") {
     if (!itemName || !quantity || quantity <= 0) {
       throw new ErrorResponse(
         400,
@@ -69,7 +65,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     throw new ErrorResponse(400, "Invalid donation type");
   }
 
-  // Check if the donor exists, if not, create a new donor
   let donor = await Donor.findOne({ email });
   if (!donor) {
     donor = await Donor.create({
@@ -81,7 +76,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     });
   }
 
-  // Create Stripe session for monetary donation
   let session = null;
   if (donationType === "Monetary") {
     session = await stripe.checkout.sessions.create({
@@ -94,7 +88,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
             product_data: {
               name: `Donation for ${goalId || eventId || beneficiaryId}`,
             },
-            unit_amount: parsedAmount * 100, // Amount in cents
+            unit_amount: parsedAmount * 100,
           },
           quantity: 1,
         },
@@ -112,7 +106,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     });
   }
 
-  // Create donation entry in the database
   const donation = await Donation.create({
     donorId: donor._id,
     donationType,
@@ -120,10 +113,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     eventId,
     beneficiaryId,
     currency: donationType === "Monetary" ? "USD" : undefined,
-    paymentStatus:
-      donationType === "Monetary"
-        ? "Pending"
-        : undefined,
+    paymentStatus: donationType === "Monetary" ? "Pending" : undefined,
     paymentMethod: donationType === "Monetary" ? "Card" : undefined,
     stripeSessionId: session?.id,
     monetaryDetails:
@@ -144,7 +134,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
   donor.donations.push(donation._id);
   await donor.save();
 
-  // Update event if available
   if (eventId) {
     const event = await Event.findById(eventId);
     if (event) {
@@ -156,7 +145,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     }
   }
 
-  // Return the session ID and URL for the checkout session
   res.status(200).json(
     new SuccessResponse(
       200,
@@ -179,27 +167,54 @@ export const handlePaymentSuccess = asyncHandler(
     }
 
     const session = await stripe.checkout.sessions.retrieve(session_id);
+    const donor = await Donor.findOne({ _id: session.metadata?.donorId });
+    console.log("session", session.id, "\n");
+
     const donation: IDonation | any = await Donation.findOne({
-      stripeSessionId: session.id,
+      stripeSessionId: session?.id,
     });
+
+    // console.log("donation ", donation);
+    // console.log(donation.goalId);
 
     if (!donation) {
       throw new ErrorResponse(404, "Donation not found");
     }
 
     if (donation.donationType === "Monetary") {
-      donation.paymentStatus = "Successful";
+      donation.monetaryDetails.paymentStatus = "Successful";
       donation.stripePaymentId = session.payment_intent as string;
       await donation.save();
     }
 
     if (donation.goalId) {
-      const goal = await Goal.findById(donation.goalId);
+      const goal = await Goal.findById(donation?.goalId);
+      console.log(goal);
+      
       if (goal) {
-        // Ensure goal.currentAmount is initialized as a valid number
-        goal.currentAmount = (Number(goal.currentAmount) || 0) + (Number(donation.amount) || 0);
-        goal.donations.push(donation._id);
-        await goal.save();
+        if (!goal.donations.includes(donation._id)) {
+          goal.currentAmount =
+            (Number(goal.currentAmount) || 0) +
+            (Number(donation.monetaryDetails.amount) || 0);
+          goal.donations.push(donation._id);
+        }
+
+        try {
+          const pdfPath: string| any = await generatePDFReceipt(donation, donor);
+          const uploadResponse = await uploadOnCloudinary(pdfPath);
+          
+          if (uploadResponse) {
+            await sendReceiptEmail(donor, uploadResponse.url, donation);
+            donation.sendReceipt = true; 
+          }
+          await goal.save();
+          await donation.save();
+          console.log("Goal and donation saved successfully");
+        } catch (error) {
+          console.error("Error generating PDF or sending email:", error);
+        }
+
+        // console.log("\nSaved Goal: ", savedGoal);
       }
     }
 
@@ -218,7 +233,6 @@ export const handlePaymentSuccess = asyncHandler(
       .json(new SuccessResponse(200, null, "Payment processed successfully"));
   }
 );
-
 
 export const getDonationInformation = asyncHandler(
   async (req: any, res: Response) => {
@@ -258,21 +272,24 @@ export const getDonationInformation = asyncHandler(
       {
         $project: {
           _id: 1,
+          donationType: 1,
+          monetaryDetails: 1,
+          stripeSessionId: 1,
+          stripePaymentId: 1,
           donorInfo: { $arrayElemAt: ["$donorInfo", 0] },
           goalInfo: { $arrayElemAt: ["$goalInfo", 0] },
-          eventInfo: { $arrayElemAt: ["$eventInfo", 0] },
-          // beneficiaryInfo: { $arrayElemAt: ["$beneficiaryInfo", 0] },
-          amount: 1,
-          currency: 1,
-          paymentStatus: 1,
-          paymentMethod: 1,
+          // eventInfo: { $arrayElemAt: ["$eventInfo", 0] },
+          amount: "$monetaryDetails.amount",
+          currency: "$monetaryDetails.currency",
+          paymentStatus: "$monetaryDetails.paymentStatus",
+          paymentMethod: "$monetaryDetails.paymentMethod",
           createdAt: 1,
           updatedAt: 1,
-          donationType: 1,
-          inKindDetails: 1,
         },
       },
     ]);
+
+    console.log(donationInfo);
 
     if (!donationInfo || donationInfo.length === 0)
       throw new ErrorResponse(404, "Donations not found");
