@@ -19,7 +19,9 @@ const createEvent = asyncHandler(async (req: any, res: Response) => {
   console.log(req.body);
 
   if (
-    [name, startDate, endDate, description, location, eventType].some((e) => e?.trim() === "")
+    [name, startDate, endDate, description, location, eventType].some(
+      (e) => e?.trim() === ""
+    )
   )
     throw new ErrorResponse(400, "All fields are required");
 
@@ -164,6 +166,154 @@ const getAllEvents = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, events, "Events fetched successfully"));
 });
 
+const editEvent = asyncHandler(async (req: any, res: Response) => {
+  const { eventId } = req.params;
+  const {
+    name,
+    startDate,
+    endDate,
+    description,
+    location,
+    eventType,
+    participants,
+  } = req.body;
 
+  const existingEvent = await Event.findById(eventId);
+  if (!existingEvent) {
+    throw new ErrorResponse(404, "Event not found");
+  }
 
-export { createEvent, getAllEvents };
+  if (
+    [name, startDate, endDate, description, location, eventType].some(
+      (field) => field?.trim() === ""
+    )
+  ) {
+    throw new ErrorResponse(400, "All fields are required");
+  }
+
+  if (!Array.isArray(participants) || participants.length === 0) {
+    throw new ErrorResponse(400, "At least one participant is required");
+  }
+
+  for (const participant of participants) {
+    if (!participant.memberId || !participant.role) {
+      throw new ErrorResponse(
+        400,
+        "Each participant must have a memberId and a role"
+      );
+    }
+
+    if (
+      !["Organizer", "Volunteer", "Attendee", "Speaker"].includes(
+        participant.role
+      )
+    ) {
+      throw new ErrorResponse(400, `Invalid role: ${participant.role}`);
+    }
+  }
+
+  const participantIds = participants.map((p) => p.memberId);
+  const members = await Member.find({ _id: { $in: participantIds } });
+
+  if (members.length !== participantIds.length) {
+    throw new ErrorResponse(400, "One or more participants not found");
+  }
+
+  const eventStartDate = new Date(startDate);
+  const eventEndDate = new Date(endDate);
+
+  existingEvent.name = name;
+  existingEvent.startDate = eventStartDate;
+  existingEvent.endDate = eventEndDate;
+  existingEvent.description = description;
+  existingEvent.location = location;
+  existingEvent.eventType = eventType;
+  existingEvent.participants = participants.map((p) => ({
+    memberId: p.memberId,
+    role: p.role,
+    addedAt: new Date(),
+  }));
+
+  await existingEvent.save();
+
+  await Member.updateMany(
+    { _id: { $in: participantIds } },
+    { $addToSet: { participationHistory: existingEvent._id } }
+  );
+
+  return res
+    .status(200)
+    .json(
+      new SuccessResponse(200, existingEvent, "Event updated successfully")
+    );
+});
+
+export const registerForEvent = asyncHandler(
+  async (req: any, res: Response) => {
+    const { eventId } = req.body;
+    const { gender, age, fullName, email, address, phone } = req.body;
+
+    if (!eventId) {
+      throw new ErrorResponse(400, "event id required");
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Event not found." });
+    }
+    if (event.status !== "Upcoming") {
+      throw new ErrorResponse(
+        400,
+        "Registration is only allowed for Upcoming events."
+      );
+    }
+
+    const member = await Member.create({
+      gender,
+      age,
+      fullName,
+      email,
+      address,
+      phone,
+      role: "Attendee"
+    });
+
+    if (!member) {
+      return res.status(404).json({ error: "Member not found." });
+    }
+
+    const isAlreadyRegistered = event.participants.some(
+      (participant) => participant.memberId.toString() === member._id.toString()
+    );
+
+    if (isAlreadyRegistered) {
+      throw new ErrorResponse(
+        400,
+        "Member is already registered for this event."
+      );
+    }
+
+    event.participants.push({
+      memberId: member._id,
+      role: "Attendee",
+    });
+    console.log("before",event.kpis.attendance);
+    
+    
+    event.kpis.attendance += 1;
+    console.log("after",event.kpis.attendance);
+
+    member.participationHistory.push({
+      eventId,
+      role: "Attendee",
+      participationDate: new Date(),
+    });
+
+    await event.save();
+    await member.save();
+
+    return res.status(200).json(new SuccessResponse(201, "Registration successful"));
+  }
+);
+
+export { createEvent, getAllEvents, editEvent };

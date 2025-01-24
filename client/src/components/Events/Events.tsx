@@ -1,7 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Card, CardContent, CircularProgress, Container, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { motion } from 'framer-motion';
-import { api } from '../../api/api';
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Modal,
+  Fade,
+  Backdrop,
+} from "@mui/material";
+import { motion } from "framer-motion";
+import { api } from "../../api/api";
+import { useNavigate } from "react-router-dom";
 
 interface Event {
   id: string;
@@ -10,12 +26,17 @@ interface Event {
   location: string;
   description: string;
   status: string;
+  attendees?: number; 
+  organizer?: string; 
 }
 
 export const Events: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('All');
+  const [filter, setFilter] = useState<string>("All");
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate()
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -23,7 +44,7 @@ export const Events: React.FC = () => {
         const res = await api.get("/event/");
         setEvents(res.data.data);
       } catch (error) {
-        console.error('Error fetching events:', error);
+        console.error("Error fetching events:", error);
       } finally {
         setLoading(false);
       }
@@ -36,16 +57,39 @@ export const Events: React.FC = () => {
     setFilter(event.target.value as string);
   };
 
+  const handleRegister = (eventId: string)=>{
+    console.log(eventId);
+    navigate(`/events/${eventId}`)
+  }
+
+  const handleViewDetails = (event: Event) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  };
+
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
 
-  const filteredEvents = filter === 'All' ? events : events.filter(event => event.status === filter);
+  const filteredEvents =
+    filter === "All"
+      ? events
+      : events.filter((event) => event.status === filter);
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="80vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -58,7 +102,7 @@ export const Events: React.FC = () => {
       </Typography>
 
       <Box display="flex" justifyContent="center" mb={4}>
-        <FormControl variant="outlined" sx={{ width: '200px' }}>
+        <FormControl variant="outlined" sx={{ width: "200px" }}>
           <InputLabel>Filter by Status</InputLabel>
           <Select
             value={filter}
@@ -81,7 +125,7 @@ export const Events: React.FC = () => {
       ) : (
         <Box
           display="grid"
-          gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }}
+          gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }}
           gap={3}
           mt={4}
         >
@@ -99,7 +143,8 @@ export const Events: React.FC = () => {
                     {event.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
+                    <strong>Date:</strong>{" "}
+                    {new Date(event.date).toLocaleDateString()}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     <strong>Location:</strong> {event.location}
@@ -107,10 +152,30 @@ export const Events: React.FC = () => {
                   <Typography variant="body2" mt={2}>
                     <strong>Description:</strong> {event.description}
                   </Typography>
-                  <Box display="flex" justifyContent="flex-start" mt={2}>
-                    <Button variant="outlined" color="primary" size="small">
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mt={2}
+                  >
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      onClick={() => handleViewDetails(event)}
+                    >
                       View Details
                     </Button>
+                    {event.status === "Upcoming" && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        onClick={() => handleRegister(event._id)}
+                      >
+                        Register
+                      </Button>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -118,6 +183,73 @@ export const Events: React.FC = () => {
           ))}
         </Box>
       )}
+
+      {/* Modal for viewing details */}
+      <Modal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
+      >
+        <Fade in={isModalOpen}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "80%",
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            {selectedEvent && (
+              <>
+                <Typography variant="h5" gutterBottom>
+                  {selectedEvent.name}
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  <strong>Date:</strong>{" "}
+                  {new Date(selectedEvent.date).toLocaleDateString()}
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  <strong>Location:</strong> {selectedEvent.location}
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  <strong>Status:</strong> {selectedEvent.status}
+                </Typography>
+                {selectedEvent.organizer && (
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Organizer:</strong> {selectedEvent.organizer}
+                  </Typography>
+                )}
+                {selectedEvent.attendees && (
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Attendees:</strong> {selectedEvent.attendees}
+                  </Typography>
+                )}
+                <Typography variant="body2" mt={2}>
+                  <strong>Description:</strong> {selectedEvent.description}
+                </Typography>
+                <Box mt={3} textAlign="right">
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleCloseModal}
+                  >
+                    Close
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Box>
+        </Fade>
+      </Modal>
     </Container>
   );
 };

@@ -23,7 +23,6 @@ const memberSchema: Schema = new Schema<IMember>(
     email: {
       type: String,
       required: true,
-      unique: true,
     },
     address: {
       type: String,
@@ -35,7 +34,7 @@ const memberSchema: Schema = new Schema<IMember>(
     },
     role: {
       type: String,
-      enum: ["Volunteer", "Staff", "Coordinator", "Board Member"],
+      enum: ["Volunteer", "Staff", "Coordinator", "Board Member", "Attendee"],
     },
     avatar: {
       type: String,

@@ -81,7 +81,7 @@ const GoalsSection: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Carousel opts={{ align: "start" }}>
+        <Carousel opts={{ align: "start" }} className="lg:min-w-[40rem] md:min-w-[25rem]">
           <CarouselContent>
             {visibleGoals.map((goal, index) => (
               <CarouselItem

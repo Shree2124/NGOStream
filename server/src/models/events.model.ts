@@ -6,7 +6,7 @@ const EventSchema: Schema = new Schema<IEvent>(
     name: { type: String, required: true },
     description: { type: String, required: true },
     startDate: { type: Date, required: true },
-    endDate: {type: Date, required: true},
+    endDate: { type: Date, required: true },
     location: { type: String, required: true },
     eventType: {
       type: String,
@@ -35,8 +35,8 @@ const EventSchema: Schema = new Schema<IEvent>(
     ],
     outcomes: { type: String },
     kpis: {
-      attendance: { type: Number },
-      fundsRaised: { type: Number },
+      attendance: { type: Number, default: 0 },
+      // fundsRaised: { type: Number },
       successMetrics: [{ type: String }],
     },
     donations: [
