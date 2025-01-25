@@ -34,26 +34,27 @@ const uploadOnCloudinary = async (
     } else if (videoExtensions.includes(fileExtension)) {
       resourceType = "video";
     } else if (pdfExtensions.includes(fileExtension)) {
-      resourceType = "raw"; // PDF should be uploaded as raw file type
+      resourceType = "raw";
     }
 
+    // Set upload options
     const uploadOptions: UploadApiOptions = {
       public_id: fileName,
       resource_type: resourceType,
+      access_mode: resourceType === "raw" ? "public" : undefined,
     };
 
     const response = await cloudinary.uploader.upload(
       localFilePath,
       uploadOptions
     );
-    console.log("Cloudinary upload response:", response);
 
-    // Clean up the local file after upload
+    console.log("Cloudinary upload response:", response);
     fs.unlinkSync(localFilePath);
+    console.log("Public URL:", response.secure_url);
 
     return response;
   } catch (error) {
-    // Clean up the local file in case of error
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }

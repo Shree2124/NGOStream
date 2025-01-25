@@ -101,7 +101,12 @@ const Events: React.FC = () => {
     const fetchMembers = async () => {
       try {
         const res = await api.get("/users/all-members");
-        setSystemParticipants(res.data.data);
+        const participants = res.data?.data?.filter(
+          (member) => member.role !== "Attendee"
+        );
+        console.log("p",participants)
+        setSystemParticipants(participants);
+        console.log(systemParticipants);
       } catch (error) {
         console.error("Error fetching participants:", error);
       }
@@ -507,8 +512,9 @@ const Events: React.FC = () => {
               renderValue={(selected) =>
                 selected
                   .map((id) => {
-                    const participant = systemParticipants.find(
-                      (member) => member._id === id
+                    const participant = systemParticipants?.find(
+                      (member) =>
+                        member._id === id && member?.role !== "Attendee"
                     );
                     return participant ? participant.fullName : "";
                   })
@@ -549,7 +555,7 @@ const Events: React.FC = () => {
           <DialogTitle>Assign Roles to Participants</DialogTitle>
           <DialogContent>
             {participantIds?.map((id) => {
-              const participant = systemParticipants.find(
+              const participant = systemParticipants?.find(
                 (member) => member._id === id
               );
               return (

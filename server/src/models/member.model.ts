@@ -23,6 +23,7 @@ const memberSchema: Schema = new Schema<IMember>(
     email: {
       type: String,
       required: true,
+      unique: true
     },
     address: {
       type: String,

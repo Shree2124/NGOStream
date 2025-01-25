@@ -185,6 +185,11 @@ export const sendReceiptEmail = async (
           ).toLocaleDateString()}</li>
         </ul>
         <p>Your receipt is attached.</p>
+        <a href="${receiptPath}" 
+           style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;"
+           download>
+          Download Receipt
+        </a>
       `,
       attachments: [
         {
@@ -197,8 +202,36 @@ export const sendReceiptEmail = async (
     const info = await transporter.sendMail(mailOptions);
     console.log(`Email sent: ${info.messageId}`);
     return "Receipt email sent successfully!";
-  } catch (error: any) {
-    console.error("Error sending receipt email:", error?.message);
+  } catch (error) {
+    console.error("Error sending receipt email:", error);
     throw error;
+  }
+};
+
+export const sendRegistrationMail = async (member: any, event: any) => {
+  try {
+    if (!member || !event) {
+      throw new Error("Member or Event not found.");
+    }
+
+    const transporter = createTransport({
+      host: "smtp.gmail.com",
+      auth: {
+        user: process.env.EMAIL_ADDRESS,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.Gmail,
+      to: member.email,
+      subject: `Registration Confirmation for ${event.name}`,
+      text: `Dear ${member.fullName},\n\nYou have successfully registered for the event '${event.name}' scheduled from ${event.startDate} to ${event.endDate}. The event will be held at ${event.location}. We look forward to your participation!\n\nBest Regards,\nNGO Stream Team`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("Registration email sent successfully.");
+  } catch (error) {
+    console.error("Error sending registration email:", error);
   }
 };

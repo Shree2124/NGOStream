@@ -4,6 +4,7 @@ import { Member } from "../models/member.model";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
+import { sendRegistrationMail } from "../utils/sendMail";
 
 const createEvent = asyncHandler(async (req: any, res: Response) => {
   const {
@@ -275,7 +276,7 @@ export const registerForEvent = asyncHandler(
       email,
       address,
       phone,
-      role: "Attendee"
+      role: "Attendee",
     });
 
     if (!member) {
@@ -297,11 +298,10 @@ export const registerForEvent = asyncHandler(
       memberId: member._id,
       role: "Attendee",
     });
-    console.log("before",event.kpis.attendance);
-    
-    
+    console.log("before", event.kpis.attendance);
+
     event.kpis.attendance += 1;
-    console.log("after",event.kpis.attendance);
+    console.log("after", event.kpis.attendance);
 
     member.participationHistory.push({
       eventId,
@@ -311,8 +311,11 @@ export const registerForEvent = asyncHandler(
 
     await event.save();
     await member.save();
+    await sendRegistrationMail(member, event);
 
-    return res.status(200).json(new SuccessResponse(201, "Registration successful"));
+    return res
+      .status(200)
+      .json(new SuccessResponse(201, "Registration successful"));
   }
 );
 

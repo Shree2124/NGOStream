@@ -164,7 +164,10 @@ const MemberManagement: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const res = await api.get("/users/all-members");
-      setMembers(res.data.data);
+      const participants = res.data?.data?.filter(
+        (member) => member.role !== "Attendee"
+      );
+      setMembers(participants);
     } catch (error) {
       console.error(error);
     }
@@ -248,9 +251,8 @@ const MemberManagement: React.FC = () => {
       } else {
         const addedUser = await addUser(newUser);
         setMembers((prev) => [...prev, addedUser]);
-        setShowModal(false)
-        fetchUsers()
-
+        setShowModal(false);
+        fetchUsers();
       }
       handleCloseModal();
     } catch (error) {
@@ -285,31 +287,51 @@ const MemberManagement: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 2 }}>
-        <IconButton onClick={() => setIsSearchBarVisible(!isSearchBarVisible)}>
-          <Search />
-        </IconButton>
-        <TextField
-          fullWidth
-          placeholder="Search members..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          sx={{
-            display: isSearchBarVisible ? "block" : { xs: "none", md: "block" },
-          }}
-        />
-        <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <MenuItem value="All">All</MenuItem>
-          <MenuItem value="Staff">Staff</MenuItem>
-          <MenuItem value="Volunteer">Volunteer</MenuItem>
-        </Select>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenModal()}
-        >
-          Add Member
-        </Button>
+      <Box
+        sx={{
+          display: { sm: "flex", lg: "flex", md: "inline" },
+          flexDirection: "row",
+          // alignItems: "center",
+          // justifyContent: "center",
+          mb: 2,
+          gap: 2,
+        }}
+      >
+        <div className="sm:flex sm:flex-col ">
+          <div className="flex flex-row w-full">
+            <IconButton
+              sx={{
+                display: { md: "none", sx: "block" },
+              }}
+              onClick={() => setIsSearchBarVisible(!isSearchBarVisible)}
+            >
+              <Search />
+            </IconButton>
+            <TextField
+              fullWidth
+              placeholder="Search members..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{
+                display: isSearchBarVisible
+                  ? "block"
+                  : { xs: "none", md: "block" },
+              }}
+            />
+          </div>
+          <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Staff">Staff</MenuItem>
+            <MenuItem value="Volunteer">Volunteer</MenuItem>
+          </Select>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => handleOpenModal()}
+          >
+            Add Member
+          </Button>
+        </div>
       </Box>
 
       <List>
