@@ -10,7 +10,7 @@ const sendMail = async (email: any, subject: any, data: any) => {
     },
   });
 
-  console.log(process.env.EMAIL_PASSWORD, process.env.EMAIL_ADDRESS);
+  // console.log(process.env.EMAIL_PASSWORD, process.env.EMAIL_ADDRESS);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -200,7 +200,7 @@ export const sendReceiptEmail = async (
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent: ${info.messageId}`);
+    // console.log(`Email sent: ${info.messageId}`);
     return "Receipt email sent successfully!";
   } catch (error) {
     console.error("Error sending receipt email:", error);
@@ -230,7 +230,7 @@ export const sendRegistrationMail = async (member: any, event: any) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("Registration email sent successfully.");
+    // console.log("Registration email sent successfully.");
   } catch (error) {
     console.error("Error sending registration email:", error);
   }

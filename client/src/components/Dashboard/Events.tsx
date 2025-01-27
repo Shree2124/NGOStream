@@ -43,6 +43,7 @@ import {
   Legend,
 } from "chart.js";
 import { api } from "../../api/api";
+import { Badge } from "../ui/badge";
 
 ChartJS.register(
   CategoryScale,
@@ -86,31 +87,32 @@ const Events: React.FC = () => {
     setEventType("");
   };
 
+  const fetchMembers = async () => {
+    try {
+      const res = await api.get("/users/all-members");
+      const participants = res.data?.data?.filter(
+        (member) => member.role !== "Attendee"
+      );
+      console.log("p", participants);
+      setSystemParticipants(participants);
+      console.log(systemParticipants);
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+    }
+  };
+  const fetchEvents = async () => {
+    const res = await api.get("/event/");
+    console.log(res.data.data);
+    setEvents(res.data.data);
+    console.log("E", events);
+    setFilteredEvents(res.data.data);
+  };
   useEffect(() => {
-    const fetchEvents = async () => {
-      const res = await api.get("/event/");
-      console.log(res.data.data);
-      setEvents(res.data.data);
-      console.log("E", events);
-      setFilteredEvents(res.data.data);
-    };
     fetchEvents();
+    fetchMembers();
   }, []);
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const res = await api.get("/users/all-members");
-        const participants = res.data?.data?.filter(
-          (member) => member.role !== "Attendee"
-        );
-        console.log("p",participants)
-        setSystemParticipants(participants);
-        console.log(systemParticipants);
-      } catch (error) {
-        console.error("Error fetching participants:", error);
-      }
-    };
     fetchMembers();
   }, []);
 
@@ -232,6 +234,7 @@ const Events: React.FC = () => {
             event.id === currentEvent.id ? res.data.data : event
           )
         );
+        
       } else {
         const res = await api.post("/event/create", {
           name,
@@ -244,6 +247,7 @@ const Events: React.FC = () => {
         });
         setEvents((prev) => [...prev, res.data.data]);
       }
+      fetchEvents()
     } catch (error) {
       console.error("Error saving event:", error);
     }
@@ -267,13 +271,14 @@ const Events: React.FC = () => {
     setVisualEventId(null);
   };
 
-  const getEventChartData = (event: Event) => ({
+  const getEventChartData = (event: any) => ({
+    
     labels: ["Attendance"],
     datasets: [
       {
         label: event.name,
-        data: [event?.attendance],
-        backgroundColor: ["#4caf50", "#2196f3"],
+        data: [event?.kpis.attendance],
+        backgroundColor: ["#4caf50"],
       },
     ],
   });
@@ -282,7 +287,7 @@ const Events: React.FC = () => {
     labels: event?.kpis?.successMetrics,
     datasets: [
       {
-        data: event.successMetrics?.map(() => 1),
+        data: event.kpis?.successMetrics?.map(() => 1),
         backgroundColor: ["#f44336", "#ff9800", "#ffeb3b"],
       },
     ],
@@ -361,7 +366,7 @@ const Events: React.FC = () => {
                   <strong>end date:</strong> {event.endDate}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Status:</strong> {event.status}
+                  <strong>Status:</strong>{"  "}<Badge variant={event?.status?.toLowerCase()} className="">{event.status}</Badge> 
                 </Typography>
                 <Divider sx={{ my: 2 }} />
 
@@ -410,13 +415,13 @@ const Events: React.FC = () => {
           {currentEvent && (
             <>
               <Typography variant="h6" gutterBottom>
-                Attendance and Funds Raised for {currentEvent.name}
+                Attendance for {currentEvent.name}
               </Typography>
               <Bar data={getEventChartData(currentEvent)} />
-              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+              {/* <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                 Success Metrics Distribution
               </Typography>
-              <Pie data={getSuccessMetricsChartData(currentEvent!)} />
+              <Pie data={getSuccessMetricsChartData(currentEvent)} /> */}
             </>
           )}
         </DialogContent>

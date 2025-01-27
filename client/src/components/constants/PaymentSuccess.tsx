@@ -8,12 +8,14 @@ const PaymentSuccessPage: React.FC = () => {
   const sessionId = new URLSearchParams(search).get("session_id");
 
   const [paymentStatus, setPaymentStatus] = useState<string>("Processing your payment...");
+  const [apiCalled, setApiCalled] = useState<boolean>(false); // Track API call
 
   useLayoutEffect(() => {
     const handlePaymentSuccess = async () => {
-      if (!sessionId) return;
+      if (!sessionId || apiCalled) return; // Prevent multiple calls
 
       try {
+        setApiCalled(true); // Mark API as called
         const response = await api.post(`/donation/payment-success`, {
           session_id: sessionId,
         });
@@ -21,15 +23,12 @@ const PaymentSuccessPage: React.FC = () => {
         setPaymentStatus("Payment successful!");
       } catch (error: any) {
         console.log(error);
-        
         setPaymentStatus("Payment failed. Please try again.");
       }
     };
 
-    if (sessionId) {
-      handlePaymentSuccess();
-    }
-  }, [sessionId]);
+    handlePaymentSuccess();
+  }, [sessionId, apiCalled]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

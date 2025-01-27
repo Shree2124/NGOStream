@@ -37,7 +37,7 @@ const Goals: React.FC = () => {
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [selectedGoal, setSelectedGoal] = useState<any>();
 
   const [goals, setGoals] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,11 +53,11 @@ const Goals: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [goal, setGoal] = useState(null);
 
-  const fetchGoalInfo = async () => {
+  const fetchGoalInfo = async (id: any) => {
     try {
-      console.log(selectedGoal._id);
+      console.log(selectedGoal);
 
-      const res = await api.get(`/goals/goal/${selectedGoal._id}`);
+      const res = await api.get(`/goals/goal/${id}`);
       // console.log("res", res.data);
       setGoal(res.data.data);
       console.log(goal);
@@ -65,6 +65,13 @@ const Goals: React.FC = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    if (selectedGoal?._id) {
+      console.log("if ",selectedGoal);
+      fetchGoalInfo(selectedGoal?._id?.toString());
+    }
+  }, [selectedGoal]);
 
   const handleOpenModal = (goal: any = null) => {
     if (goal) {
@@ -149,9 +156,7 @@ const Goals: React.FC = () => {
 
   const handleViewGoal = async (goal: any) => {
     setSelectedGoal(goal);
-    console.log(selectedGoal);
     setIsViewModalOpen(true);
-    await fetchGoalInfo();
   };
 
   const filteredGoals = goals.filter((goal) => {
@@ -185,6 +190,7 @@ const Goals: React.FC = () => {
     p: 3,
     borderRadius: 2,
   };
+
 
   const chartData = {
     labels: ["Raised", "Remaining"],

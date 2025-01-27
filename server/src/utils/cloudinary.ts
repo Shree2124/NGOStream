@@ -16,7 +16,7 @@ const uploadOnCloudinary = async (
   localFilePath: string
 ): Promise<UploadApiResponse | null> => {
   try {
-    console.log("Uploading file:", localFilePath);
+    // console.log("Uploading file:", localFilePath);
 
     if (!localFilePath) return null;
 
@@ -37,7 +37,6 @@ const uploadOnCloudinary = async (
       resourceType = "raw";
     }
 
-    // Set upload options
     const uploadOptions: UploadApiOptions = {
       public_id: fileName,
       resource_type: resourceType,
@@ -49,9 +48,9 @@ const uploadOnCloudinary = async (
       uploadOptions
     );
 
-    console.log("Cloudinary upload response:", response);
+    // console.log("Cloudinary upload response:", response);
     fs.unlinkSync(localFilePath);
-    console.log("Public URL:", response.secure_url);
+    // console.log("Public URL:", response.secure_url);
 
     return response;
   } catch (error) {

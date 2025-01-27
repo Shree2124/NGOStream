@@ -14,6 +14,7 @@ import {
   ListItemAvatar,
   Avatar,
   Stack,
+  Grid,
 } from "@mui/material";
 import { Add, Delete, Edit, Search, Visibility } from "@mui/icons-material";
 import { api } from "../../api/api";
@@ -287,52 +288,44 @@ const MemberManagement: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box
-        sx={{
-          display: { sm: "flex", lg: "flex", md: "inline" },
-          flexDirection: "row",
-          // alignItems: "center",
-          // justifyContent: "center",
-          mb: 2,
-          gap: 2,
-        }}
-      >
-        <div className="sm:flex sm:flex-col ">
-          <div className="flex flex-row w-full">
-            <IconButton
-              sx={{
-                display: { md: "none", sx: "block" },
-              }}
-              onClick={() => setIsSearchBarVisible(!isSearchBarVisible)}
-            >
-              <Search />
-            </IconButton>
-            <TextField
-              fullWidth
-              placeholder="Search members..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{
-                display: isSearchBarVisible
-                  ? "block"
-                  : { xs: "none", md: "block" },
-              }}
-            />
-          </div>
-          <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
+       <Grid container spacing={2} alignItems="center" mb={2}>
+        <Grid item xs={12} sm={6} md={8}>
+          <TextField
+            fullWidth
+            placeholder="Search members..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <IconButton>
+                  <Search />
+                </IconButton>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3} md={2}>
+          <Select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            fullWidth
+          >
             <MenuItem value="All">All</MenuItem>
             <MenuItem value="Staff">Staff</MenuItem>
             <MenuItem value="Volunteer">Volunteer</MenuItem>
           </Select>
+        </Grid>
+        <Grid item xs={6} sm={3} md={2}>
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => handleOpenModal()}
+            fullWidth
+            onClick={() => setShowModal(true)}
           >
             Add Member
           </Button>
-        </div>
-      </Box>
+        </Grid>
+      </Grid>
 
       <List>
         {filteredMembers.map((member) => (

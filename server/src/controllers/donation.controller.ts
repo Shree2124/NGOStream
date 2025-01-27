@@ -35,10 +35,10 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     description,
   } = req.body;
 
-  console.log(req.body);
+  // console.log(req.body);
 
   const parsedAmount = parseFloat(amount);
-  console.log(parsedAmount);
+  // console.log(parsedAmount);
 
   if (!name || !email || !phone || !address || !donationType) {
     throw new ErrorResponse(400, "Missing required fields");
@@ -168,14 +168,13 @@ export const handlePaymentSuccess = asyncHandler(
 
     const session = await stripe.checkout.sessions.retrieve(session_id);
     const donor = await Donor.findOne({ _id: session.metadata?.donorId });
-    console.log("session", session.id, "\n");
+    if (!donor) {
+      throw new ErrorResponse(404, "Donor not found");
+    }
 
     const donation: IDonation | any = await Donation.findOne({
       stripeSessionId: session?.id,
     });
-
-    // console.log("donation ", donation);
-    // console.log(donation.goalId);
 
     if (!donation) {
       throw new ErrorResponse(404, "Donation not found");
@@ -188,42 +187,57 @@ export const handlePaymentSuccess = asyncHandler(
     }
 
     if (donation.goalId) {
-      const goal = await Goal.findById(donation?.goalId);
-      console.log(goal);
-      
+      const goal = await Goal.findById(donation.goalId);
+
       if (goal) {
-        if (!goal.donations.includes(donation._id)) {
-          goal.currentAmount =
-            (Number(goal.currentAmount) || 0) +
-            (Number(donation.monetaryDetails.amount) || 0);
-          goal.donations.push(donation._id);
+        const isDonationAdded = goal.donations.some(
+          (id) => id.toString() === donation._id.toString()
+        );
+
+        if (isDonationAdded) {
+          throw new ErrorResponse(400, "donation already exist")
         }
+        goal.currentAmount =
+          (Number(goal.currentAmount) || 0) +
+          (Number(donation.monetaryDetails.amount) || 0);
+        goal.donations.push(donation._id);
 
         try {
-          const pdfPath: string| any = await generatePDFReceipt(donation, donor);
+          const pdfPath: string | any = await generatePDFReceipt(
+            donation,
+            donor
+          );
           const uploadResponse = await uploadOnCloudinary(pdfPath);
-          
+
           if (uploadResponse) {
             await sendReceiptEmail(donor, uploadResponse.url, donation);
-            donation.sendReceipt = true; 
+            donation.sendReceipt = true;
           }
+
           await goal.save();
           await donation.save();
           console.log("Goal and donation saved successfully");
         } catch (error) {
           console.error("Error generating PDF or sending email:", error);
         }
-
-        // console.log("\nSaved Goal: ", savedGoal);
       }
     }
 
+    // Update event if associated with the donation
     if (donation.eventId) {
       const event = await Event.findById(donation.eventId);
+
       if (event) {
         event.kpis.fundsRaised =
-          (event.kpis.fundsRaised || 0) + (Number(donation.amount) || 0);
-        event.donations.push(donation._id);
+          (event.kpis.fundsRaised || 0) + (Number(donation.monetaryDetails.amount) || 0);
+        const isDonationAdded = event.donations.some(
+          (id) => id.toString() === donation._id.toString()
+        );
+
+        if (!isDonationAdded) {
+          event.donations.push(donation._id);
+        }
+
         await event.save();
       }
     }

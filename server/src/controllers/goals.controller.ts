@@ -150,7 +150,7 @@ const getGoal = asyncHandler(async (req: any, res: Response) => {
 
   return res
     .status(200)
-    .json(new SuccessResponse(200, goal[0], "Goal details fetched successfully"));
+    .json(new SuccessResponse(200, goal, "Goal details fetched successfully"));
 });
 
 const editGoal = asyncHandler(async (req: any, res: Response) => {

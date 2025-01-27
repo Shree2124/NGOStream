@@ -257,7 +257,7 @@ const fitNotesTabs: Tab[] = [
     icon: <VolunteerActivism />,
   },
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
-  { name: "Goals", path: "/dashboard/goals", icon: <Flag /> },
+  { name: "Campaign", path: "/dashboard/goals", icon: <Flag /> },
 ];
 
 const Link = styled(RouterLink)(({ theme }) => ({
