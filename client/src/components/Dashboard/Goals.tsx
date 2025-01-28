@@ -68,7 +68,7 @@ const Goals: React.FC = () => {
 
   useEffect(() => {
     if (selectedGoal?._id) {
-      console.log("if ",selectedGoal);
+      console.log("if ", selectedGoal);
       fetchGoalInfo(selectedGoal?._id?.toString());
     }
   }, [selectedGoal]);
@@ -190,7 +190,6 @@ const Goals: React.FC = () => {
     p: 3,
     borderRadius: 2,
   };
-
 
   const chartData = {
     labels: ["Raised", "Remaining"],
@@ -413,19 +412,55 @@ const Goals: React.FC = () => {
       </Modal>
 
       <Modal open={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
-        <Box sx={{ ...modalStyles, width: "80%" }}>
-          <Typography variant="h6">{selectedGoal?.name}</Typography>
+        <Box
+          sx={{
+            ...modalStyles,
+            width: "90%",
+            maxWidth: "50rem", 
+            maxHeight: "90vh",
+            overflowY: "auto",
+            bgcolor: "background.paper",
+            borderRadius: "1rem", 
+            boxShadow: 24,
+            padding: "2rem",
+          }}
+        >
+          <Typography variant="h6" align="center">
+            {selectedGoal?.name}
+          </Typography>
 
-          <Box sx={{ display: "flex", flexDirection: "column", mt: 3 }}>
-            <Box sx={{ width: "45%", height: "45%", margin: "0 auto", mt: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              marginTop: "1.5rem",
+            }}
+          >
+            
+            <Box
+              sx={{
+                width: "100%",
+                maxWidth: "25rem",
+                height: "auto",
+                margin: "0 auto",
+                marginTop: "1.5rem",
+              }}
+            >
               <Pie data={chartData} options={chartOptions} />
             </Box>
-            <Typography variant="h6" mt={3}>
+
+            <Typography variant="h6" marginTop="2rem">
               Donor Information
             </Typography>
-            <Box mt={2}>
-              <TableContainer component={Paper}>
-                <Table>
+            <Box marginTop="1rem">
+              <TableContainer
+                component={Paper}
+                sx={{
+                  maxHeight: "25rem",
+                  overflowY: "auto",
+                }}
+              >
+                <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell>Donor Name</TableCell>
@@ -434,21 +469,38 @@ const Goals: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {goal?.length > 0 ? (
-                      goal?.map((goalItem, goalIndex) =>
-                        goalItem.donations.map((donation, donationIndex) => (
-                          <TableRow key={`${goalIndex}-${donationIndex}`}>
-                            <TableCell>
-                              {donation.donorName || "Unknown"}
-                            </TableCell>
-                            <TableCell>
-                              {donation.donorEmail || "Unknown"}
-                            </TableCell>
-                            <TableCell>
-                              {donation.amount || "Unknown"}
-                            </TableCell>
-                          </TableRow>
-                        ))
+                    {goal?.length > 0 &&
+                    goal.some((goalItem) =>
+                      goalItem.donations.some(
+                        (donation) =>
+                          donation.donorName?.trim() &&
+                          donation.donorEmail?.trim() &&
+                          donation.amount !== null &&
+                          donation.amount !== undefined &&
+                          typeof donation.amount === "number"
+                      )
+                    ) ? (
+                      goal.map((goalItem, goalIndex) =>
+                        goalItem.donations.map((donation, donationIndex) => {
+                          const donorName =
+                            donation.donorName?.trim() || "Unknown";
+                          const donorEmail =
+                            donation.donorEmail?.trim() || "Unknown";
+                          const donatedAmount =
+                            donation.amount !== null &&
+                            donation.amount !== undefined &&
+                            typeof donation.amount === "number"
+                              ? donation.amount
+                              : "Unknown";
+
+                          return (
+                            <TableRow key={`${goalIndex}-${donationIndex}`}>
+                              <TableCell>{donorName}</TableCell>
+                              <TableCell>{donorEmail}</TableCell>
+                              <TableCell>{donatedAmount}</TableCell>
+                            </TableRow>
+                          );
+                        })
                       )
                     ) : (
                       <TableRow>

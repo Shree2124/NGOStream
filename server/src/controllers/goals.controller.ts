@@ -84,7 +84,7 @@ const getGoal = asyncHandler(async (req: any, res: Response) => {
     {
       $lookup: {
         from: "donations",
-        localField: "donations.donationId",
+        localField: "donations",
         foreignField: "_id",
         as: "donationDetails",
       },
@@ -122,21 +122,21 @@ const getGoal = asyncHandler(async (req: any, res: Response) => {
         donations: {
           $push: {
             donationId: "$donationDetails._id",
-            amount: { 
-              $cond: { 
-                if: { $eq: ["$donationDetails.donationType", "Monetary"] }, 
-                then: "$donationDetails.monetaryDetails.amount", 
-                else: null 
-              } 
+            amount: {
+              $cond: {
+                if: { $eq: ["$donationDetails.donationType", "Monetary"] },
+                then: "$donationDetails.monetaryDetails.amount",
+                else: null,
+              },
             },
-            donorName: { $ifNull: ["$donorDetails.name", "Unknown"] },
-            donorEmail: { $ifNull: ["$donorDetails.email", "Unknown"] },
-            itemName: { 
-              $cond: { 
-                if: { $eq: ["$donationDetails.donationType", "In-Kind"] }, 
-                then: "$donationDetails.inKindDetails.itemName", 
-                else: null 
-              } 
+            donorName: "$donorDetails.name",
+            donorEmail: "$donorDetails.email",
+            itemName: {
+              $cond: {
+                if: { $eq: ["$donationDetails.donationType", "In-Kind"] },
+                then: "$donationDetails.inKindDetails.itemName",
+                else: null,
+              },
             },
           },
         },

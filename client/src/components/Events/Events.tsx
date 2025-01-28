@@ -143,8 +143,12 @@ export const Events: React.FC = () => {
                     {event.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>Date:</strong>{" "}
-                    {new Date(event.date).toLocaleDateString()}
+                    <strong>Start Date:</strong>{" "}
+                    {new Date(event.startDate).toLocaleDateString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>End Date:</strong>{" "}
+                    {new Date(event.endDate).toLocaleDateString()}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     <strong>Location:</strong> {event.location}
@@ -214,8 +218,12 @@ export const Events: React.FC = () => {
                   {selectedEvent.name}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
-                  <strong>Date:</strong>{" "}
-                  {new Date(selectedEvent.date).toLocaleDateString()}
+                  <strong>Start Date:</strong>{" "}
+                  {new Date(selectedEvent.startDate).toLocaleDateString()}
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  <strong>End Date:</strong>{" "}
+                  {new Date(selectedEvent.endDate).toLocaleDateString()}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
                   <strong>Location:</strong> {selectedEvent.location}
