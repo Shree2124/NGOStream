@@ -86,9 +86,11 @@ import userRouter from "./routes/user.routes";
 import goalRouter from "./routes/goals.routes";
 import donationRouter from "./routes/donation.routes";
 import eventRouter from "./routes/events.routes";
+import adminRouter from "./routes/dashboard.routes";
 
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/goals", goalRouter);
 app.use("/api/v1/donation", donationRouter);
 app.use("/api/v1/event", eventRouter);
+app.use("/api/v1/admin", adminRouter)
