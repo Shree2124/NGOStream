@@ -9,6 +9,7 @@ api = Blueprint('api', __name__)
 
 @api.route('/api/donation-trends', methods=['GET'])
 def donation_trends():
+    train()
     db = current_app.config['db']
     data = get_donation_data(db)
     print("Processed data:", data)
@@ -37,21 +38,21 @@ def donation_trends():
     
 @api.route('/api/fundraising-metrics', methods=['GET'])
 def fundraising_metrics():
+    train()
     db = current_app.config['db']
     print(db)
     avg, prediction, monthly_totals = predict_donations(db)
     print(avg, prediction, monthly_totals)
-    monthly_totals_serializable = [
+
+    result = [
         {"month": item["month"], "amount": int(item["amount"])}
         for item in monthly_totals
     ]
-    print(monthly_totals_serializable)
-
     return jsonify({
-        'averageMonthlyDonations': int(avg),  
-        'predictedNextMonthDonations': int(prediction),  
-        'monthlyTotals': monthly_totals_serializable  
-    }), 200
+        "average": avg,
+        "predicted": prediction,
+        "monthly_totals": result
+    })
     
 @api.route('/api/train-model', methods=['GET'])
 def train():
