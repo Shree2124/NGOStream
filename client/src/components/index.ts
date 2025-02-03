@@ -12,6 +12,8 @@ import Goals from "./Dashboard/Goals";
 import GoalsSection from "./Home/GoalsSection";
 import DonorForm from "./forms/donorForm";
 import { Events as EventsComponent } from "./Events/Events";
+import { SidebarProvider, SidebarTrigger } from "./ui/sidebar"
+import EventRegistrationForm from "./forms/eventRegistrationForm";
 
 export {
   Login,
@@ -28,4 +30,7 @@ export {
   GoalsSection,
   DonorForm,
   EventsComponent,
+  SidebarProvider, 
+  SidebarTrigger,
+  EventRegistrationForm
 };

@@ -66,3 +66,9 @@ static/
 # before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+
+
+/data/testdata.manual.2009.06.14.csv
+/data/training.1600000.processed.noemoticon.csv
+
+/trainingandtestdata.zip

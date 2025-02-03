@@ -10,7 +10,7 @@ import {
   Box,
   Button,
 } from "@mui/material";
-import { Close, Menu } from "@mui/icons-material";
+import { Close, LogoDev, Menu } from "@mui/icons-material";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 interface MenuItem {
@@ -53,7 +53,11 @@ const Navbar: React.FC = () => {
                 width: "100%",
               }}
             >
-              NGOStream
+              <LogoDev>
+                <img
+                src="/ngo.png"
+                />
+              </LogoDev>
               <IconButton
                 edge="start"
                 aria-label="menu"
@@ -72,7 +76,11 @@ const Navbar: React.FC = () => {
                 width: "100%",
               }}
             >
-              NGOStream
+              <div className="h-[4rem] w-[4rem] m-4">
+                <img
+                src="/ngo.png"
+                />
+              </div>
               <Box className="flex gap-3">
                 {menuItems.map((item) => (
                   <Button

@@ -43,6 +43,7 @@ import {
   Legend,
 } from "chart.js";
 import { api } from "../../api/api";
+import { Badge } from "../ui/badge";
 
 ChartJS.register(
   CategoryScale,
@@ -86,26 +87,32 @@ const Events: React.FC = () => {
     setEventType("");
   };
 
+  const fetchMembers = async () => {
+    try {
+      const res = await api.get("/users/all-members");
+      const participants = res.data?.data?.filter(
+        (member) => member.role !== "Attendee"
+      );
+      console.log("p", participants);
+      setSystemParticipants(participants);
+      console.log(systemParticipants);
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+    }
+  };
+  const fetchEvents = async () => {
+    const res = await api.get("/event/");
+    console.log(res.data.data);
+    setEvents(res.data.data);
+    console.log("E", events);
+    setFilteredEvents(res.data.data);
+  };
   useEffect(() => {
-    const fetchEvents = async () => {
-      const res = await api.get("/event/");
-      console.log(res.data.data);
-      setEvents(res.data.data);
-      console.log("E", events);
-      setFilteredEvents(res.data.data);
-    };
     fetchEvents();
+    fetchMembers();
   }, []);
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const res = await api.get("/users/all-members");
-        setSystemParticipants(res.data.data);
-      } catch (error) {
-        console.error("Error fetching participants:", error);
-      }
-    };
     fetchMembers();
   }, []);
 
@@ -170,6 +177,8 @@ const Events: React.FC = () => {
 
   const handleDialogOpen = (event: Event | null = null) => {
     setCurrentEvent(event);
+    console.log("visual ", event);
+
     if (event) {
       setName(event.name);
       setDescription(event.description);
@@ -208,7 +217,8 @@ const Events: React.FC = () => {
       }));
 
       if (currentEvent) {
-        const res = await api.put(`/event/update/${currentEvent.id}`, {
+        console.log(currentEvent._id);
+        const res = await api.put(`/event/edit/${currentEvent._id}`, {
           name,
           startDate,
           endDate,
@@ -217,11 +227,14 @@ const Events: React.FC = () => {
           eventType,
           participants: participantsWithRoles,
         });
+        console.log(res.data.data);
+
         setEvents((prev) =>
           prev.map((event) =>
             event.id === currentEvent.id ? res.data.data : event
           )
         );
+        
       } else {
         const res = await api.post("/event/create", {
           name,
@@ -234,6 +247,7 @@ const Events: React.FC = () => {
         });
         setEvents((prev) => [...prev, res.data.data]);
       }
+      fetchEvents()
     } catch (error) {
       console.error("Error saving event:", error);
     }
@@ -244,8 +258,11 @@ const Events: React.FC = () => {
     setEvents((prev) => prev.filter((e) => e.id !== id));
   };
 
-  const handleShowVisuals = (eventId: string) => {
-    setVisualEventId(eventId);
+  const handleShowVisuals = (event: any) => {
+    setCurrentEvent(event);
+    console.log("Event", event);
+
+    // setVisualEventId(eventId);
     setVisualModalOpen(true);
   };
 
@@ -254,22 +271,23 @@ const Events: React.FC = () => {
     setVisualEventId(null);
   };
 
-  const getEventChartData = (event: Event) => ({
-    labels: ["Attendance", "Funds Raised"],
+  const getEventChartData = (event: any) => ({
+    
+    labels: ["Attendance"],
     datasets: [
       {
         label: event.name,
-        data: [event.attendance, event.fundsRaised],
-        backgroundColor: ["#4caf50", "#2196f3"],
+        data: [event?.kpis.attendance],
+        backgroundColor: ["#4caf50"],
       },
     ],
   });
 
   const getSuccessMetricsChartData = (event: Event) => ({
-    labels: event.kpis.successMetrics,
+    labels: event?.kpis?.successMetrics,
     datasets: [
       {
-        data: event.successMetrics.map(() => 1),
+        data: event.kpis?.successMetrics?.map(() => 1),
         backgroundColor: ["#f44336", "#ff9800", "#ffeb3b"],
       },
     ],
@@ -348,7 +366,7 @@ const Events: React.FC = () => {
                   <strong>end date:</strong> {event.endDate}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Status:</strong> {event.status}
+                  <strong>Status:</strong>{"  "}<Badge variant={event?.status?.toLowerCase()} className="">{event.status}</Badge> 
                 </Typography>
                 <Divider sx={{ my: 2 }} />
 
@@ -357,7 +375,7 @@ const Events: React.FC = () => {
                     <Tooltip title="Show Visuals">
                       <IconButton
                         color="primary"
-                        onClick={() => handleShowVisuals(event.id)}
+                        onClick={() => handleShowVisuals(event)}
                       >
                         <BarChart />
                       </IconButton>
@@ -394,26 +412,16 @@ const Events: React.FC = () => {
       <Dialog open={visualModalOpen} onClose={handleCloseVisuals}>
         <DialogTitle>Event Visual Representation</DialogTitle>
         <DialogContent>
-          {visualEventId && (
+          {currentEvent && (
             <>
               <Typography variant="h6" gutterBottom>
-                Attendance and Funds Raised for{" "}
-                {filteredEvents.find((e) => e.id === visualEventId)?.name}
+                Attendance for {currentEvent.name}
               </Typography>
-              <Bar
-                data={getEventChartData(
-                  filteredEvents.find((e) => e.id === visualEventId)!
-                )}
-              />
-
-              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+              <Bar data={getEventChartData(currentEvent)} />
+              {/* <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                 Success Metrics Distribution
               </Typography>
-              <Pie
-                data={getSuccessMetricsChartData(
-                  filteredEvents.find((e) => e.id === visualEventId)!
-                )}
-              />
+              <Pie data={getSuccessMetricsChartData(currentEvent)} /> */}
             </>
           )}
         </DialogContent>
@@ -509,8 +517,9 @@ const Events: React.FC = () => {
               renderValue={(selected) =>
                 selected
                   .map((id) => {
-                    const participant = systemParticipants.find(
-                      (member) => member._id === id
+                    const participant = systemParticipants?.find(
+                      (member) =>
+                        member._id === id && member?.role !== "Attendee"
                     );
                     return participant ? participant.fullName : "";
                   })
@@ -551,7 +560,7 @@ const Events: React.FC = () => {
           <DialogTitle>Assign Roles to Participants</DialogTitle>
           <DialogContent>
             {participantIds?.map((id) => {
-              const participant = systemParticipants.find(
+              const participant = systemParticipants?.find(
                 (member) => member._id === id
               );
               return (

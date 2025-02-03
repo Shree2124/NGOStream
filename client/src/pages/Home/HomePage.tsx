@@ -6,13 +6,13 @@ const HomePage: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        
       }}
     >
       <div>
         <Navbar />
       </div>
-      <div className="shadow-lg h-screen w-full" id="#home">
+      <div className="shadow-lg h-screen min-w-screen" id="#home">
       <HeroSection />
       </div>
       <div className="w-full mt-8" id="goals">

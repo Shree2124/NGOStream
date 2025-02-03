@@ -11,7 +11,7 @@ export interface IEvent extends Document {
   participants: {
     memberId: mongoose.Types.ObjectId;
     role: string;
-    addedAt: Date;
+    addedAt?: Date;
   }[];
   outcomes?: string;
   kpis: {

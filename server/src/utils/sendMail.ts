@@ -1,6 +1,5 @@
 import { createTransport } from "nodemailer";
 
-
 const sendMail = async (email: any, subject: any, data: any) => {
   const transport = createTransport({
     host: "smtp.gmail.com",
@@ -11,8 +10,7 @@ const sendMail = async (email: any, subject: any, data: any) => {
     },
   });
 
-  console.log(process.env.EMAIL_PASSWORD, process.env.EMAIL_ADDRESS);
-  
+  // console.log(process.env.EMAIL_PASSWORD, process.env.EMAIL_ADDRESS);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -153,3 +151,87 @@ export const sendForgotMail = async (subject: any, data: any) => {
   });
 };
 
+export const sendReceiptEmail = async (
+  donor: any,
+  receiptPath: string,
+  donation: any
+) => {
+  try {
+    const transporter = createTransport({
+      host: "smtp.gmail.com",
+      auth: {
+        user: process.env.EMAIL_ADDRESS,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.Gmail,
+      to: donor.email,
+      subject: "Thank you for your Donation",
+      html: `
+        <p>Dear ${donor.name},</p>
+        <p>Thank you for your generous donation.</p>
+        <p>Donation Details:</p>
+        <ul>
+          <li><strong>Type:</strong> ${donation.donationType}</li>
+          <li><strong>Amount:</strong> ${
+            donation.monetaryDetails?.amount
+              ? `${donation.monetaryDetails.amount} ${donation.monetaryDetails.currency}`
+              : "N/A"
+          }</li>
+          <li><strong>Date:</strong> ${new Date(
+            donation.createdAt
+          ).toLocaleDateString()}</li>
+        </ul>
+        <p>Your receipt is attached.</p>
+        <a href="${receiptPath}" 
+           style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;"
+           download>
+          Download Receipt
+        </a>
+      `,
+      attachments: [
+        {
+          filename: `${donation._id}-${donor.name}.pdf`,
+          path: receiptPath,
+        },
+      ],
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    // console.log(`Email sent: ${info.messageId}`);
+    return "Receipt email sent successfully!";
+  } catch (error) {
+    console.error("Error sending receipt email:", error);
+    throw error;
+  }
+};
+
+export const sendRegistrationMail = async (member: any, event: any) => {
+  try {
+    if (!member || !event) {
+      throw new Error("Member or Event not found.");
+    }
+
+    const transporter = createTransport({
+      host: "smtp.gmail.com",
+      auth: {
+        user: process.env.EMAIL_ADDRESS,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.Gmail,
+      to: member.email,
+      subject: `Registration Confirmation for ${event.name}`,
+      text: `Dear ${member.fullName},\n\nYou have successfully registered for the event '${event.name}' scheduled from ${event.startDate} to ${event.endDate}. The event will be held at ${event.location}. We look forward to your participation!\n\nBest Regards,\nNGO Stream Team`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    // console.log("Registration email sent successfully.");
+  } catch (error) {
+    console.error("Error sending registration email:", error);
+  }
+};

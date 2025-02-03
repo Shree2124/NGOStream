@@ -19,6 +19,8 @@ const stripePromise = loadStripe(
 
 const DonationForm: React.FC = () => {
   const { goalId } = useParams<{ goalId: string }>();
+  console.log(goalId);
+  
   const [step, setStep] = useState(1);
   const [donationType, setDonationType] = useState<string | null>(null);
 
