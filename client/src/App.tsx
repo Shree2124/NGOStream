@@ -10,6 +10,7 @@ import {
   EventsPage,
   DonorFormPage,
   EventFrontPage,
+  FeedbackForm,
 } from "./pages";
 import {
   AuthLayout,
@@ -38,6 +39,7 @@ const App: React.FC = () => {
           <Route path="/predict" element={<FundraisingMetrics />} />
           <Route path="/donor-form/:goalId" element={<DonorFormPage />} />
           <Route path="/donation-success" element={<PaymentSuccessPage />} />
+          <Route path="/feedback/:eventId" element={<FeedbackForm />} />
           <Route
             path={`/events/:eventId`}
             element={<EventRegistrationForm />}
