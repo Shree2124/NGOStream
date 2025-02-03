@@ -2,6 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import io
 import base64
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 def generate_donation_trends_graph(db):
     donations = list(
@@ -79,3 +83,16 @@ def save_plot(data):
     plt.savefig(path)
     plt.close()
     return path
+
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words('english'))
+
+def preprocess_text(text):
+    text = re.sub(r'\W', ' ', text)
+
+    tokens = text.lower().split()
+    tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
+    return ' '.join(tokens)

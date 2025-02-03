@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, current_app, send_file, make_response
-from .model import train_model, predict_donations
-from .utils import get_donation_data, save_plot, generate_donation_trends_graph
+from flask import Blueprint, jsonify, current_app, request
+from .model import train_model, predict_donations,train_feedback_model
+from .utils import get_donation_data
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+import joblib
 
 api = Blueprint('api', __name__)
 
@@ -59,3 +60,20 @@ def train():
     db = current_app.config['db']
     model_path = train_model(db)
     return jsonify({'message': 'Model trained and saved', 'model_path': model_path}), 200
+
+
+@api.route("/api/analyze", methods=['POST'])
+def analyze_sentiment():
+    train_feedback_model()
+    model = joblib.load('app/static/sentiment_model.pkl')
+    data = request.get_json()
+    texts = data.get('texts')
+    if not texts or not isinstance(texts, list):
+        return jsonify({'error': 'Invalid input. Expected a list of texts.'}), 400
+    sentiments = []
+    for text in texts:
+        sentiment = model.predict([text])[0]
+        print(sentiment)
+        sentiment_label = 'positive' if sentiment == 4 else 'negative'
+        sentiments.append({'text': text, 'sentiment': sentiment_label})
+    return jsonify({'sentiments': sentiments})

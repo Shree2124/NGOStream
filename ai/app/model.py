@@ -1,10 +1,18 @@
 import pandas as pd
+import os
 import numpy as np
+from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from joblib import dump, load
+import urllib.request
+import zipfile
 from datetime import datetime
+from .utils import preprocess_text
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import classification_report
 
 MODEL_PATH = 'app/static/model.joblib'
 
@@ -85,3 +93,81 @@ def predict_donations(db):
     avg_donation = monthly_totals['amount'].mean()
 
     return avg_donation, predicted_amount, monthly_totals.to_dict(orient="records")
+
+# def download_dataset():
+#     dataset_url = 'https://cs.stanford.edu/people/alecmgo/trainingandtestdata.zip'
+#     dataset_path = 'trainingandtestdata.zip'
+#     if not os.path.exists(dataset_path):
+#         print("Dataset not found. Downloading...")
+#         urllib.request.urlretrieve(dataset_url, dataset_path)
+#         print("Download complete.")
+#     else:
+#         print("Dataset already exists. Skipping download.")
+#     with zipfile.ZipFile(dataset_path, 'r') as zip_ref:
+#         zip_ref.extractall('data')
+#     print("Dataset extracted.")
+
+def load_and_preprocess_data():
+    dataset_path = 'data/coustome1.csv'
+    print("Dataset path loaded")
+    
+
+    # if not os.path.exists(dataset_path):
+    #     download_dataset()
+    
+    columns = ['sentiment', 'id', 'date', 'query', 'user', 'text']
+    df = pd.read_csv(dataset_path, names=columns, on_bad_lines='skip')
+    df = df[df['sentiment'].isin([0, 4])]
+    
+    df['processed_text'] = df['text'].apply(preprocess_text)
+
+    positive_samples = df[df['sentiment'] == 4]
+    negative_samples = df[df['sentiment'] == 0]
+    
+
+    # if len(positive_samples) < 50 or len(negative_samples) < 50:
+    #     raise ValueError("Not enough samples for positive or negative classes.")
+    
+
+    # positive_samples = positive_samples.sample(n=30, random_state=42)
+    # negative_samples = negative_samples.sample(n=30, random_state=42)
+    
+    print(f"Number of positive samples: {len(positive_samples)}")
+    print(f"Number of negative samples: {len(negative_samples)}")
+    
+
+    df_subset = pd.concat([positive_samples, negative_samples])
+    
+    return df_subset
+
+def train_feedback_model():
+    model_path = 'app/static/sentiment_model.pkl'
+    
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    
+    if os.path.exists(model_path):
+        # load_and_preprocess_data()
+        print("Model already exists. Loading the existing model.")
+        return
+    
+    df = load_and_preprocess_data()
+    
+    X = df['processed_text']
+    y = df['sentiment']
+    
+    model = Pipeline([
+        ('tfidf', TfidfVectorizer()),
+        ('classifier', LogisticRegression(max_iter=1000))
+    ])
+    
+    model.fit(X, y)
+    
+    dump(model, model_path)
+    print(f"Model trained and saved to {model_path}.")
+
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+    print(len(X_train), len(X_val), len(y_train), len(y_val))
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_val)
+    print(classification_report(y_val, y_pred))
