@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Card, CardContent, CircularProgress, Container, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Box, Typography, Card, CardContent, CircularProgress, Container, Button, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { motion } from 'framer-motion';
 import { api } from '../../api/api';
 
@@ -32,8 +32,8 @@ export const Events: React.FC = () => {
     loadEvents();
   }, []);
 
-  const handleFilterChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setFilter(event.target.value as string);
+  const handleFilterChange = (event: SelectChangeEvent) => {
+    setFilter(event.target.value);
   };
 
   const cardVariants = {
