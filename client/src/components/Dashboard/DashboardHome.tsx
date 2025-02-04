@@ -34,8 +34,9 @@ interface FundraisingMetricsData {
     name: string;
     amount: number;
   };
-  averageMonthlyDonations: number;
-  predictedNextMonthDonations: number;
+  monthly_totals: MonthlyTotals[];
+  average: number;
+  predicted: number;
 }
 
 interface MonthlyTotals {
@@ -78,7 +79,7 @@ const DashboardHome: React.FC = () => {
 
   const chartData = {
     labels: fundraisingMetrics
-      ? fundraisingMetrics.monthly_totals.map((item: MonthlyTotals) => `Month ${item.month}`)
+      ? fundraisingMetrics.monthly_totals?.map((item: MonthlyTotals) => `Month ${item.month}`)
       : [],
     datasets: [
       {

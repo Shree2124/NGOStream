@@ -12,7 +12,6 @@ import {
   InputLabel,
   Card,
   CardContent,
-  CardActions,
   Tooltip,
   Dialog,
   DialogTitle,
@@ -26,13 +25,12 @@ import {
   Add,
   Edit,
   Delete,
-  Search,
   BarChart,
   Close,
 } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -54,29 +52,50 @@ ChartJS.register(
   Legend
 );
 
+interface IMember{
+  role: string;
+}
+
+interface IParticipant {
+  memberId: string;
+  role: string;
+}
+
+interface IEvent {
+  id: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  eventType: string;
+  status: "Upcoming" | "Happening" | "Completed";
+  participants: IParticipant[];
+}
+
 const Events: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [events, setEvents] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [filterType, setFilterType] = useState("All");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
+  const [events, setEvents] = useState<IEvent[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("All");
+  const [filterType, setFilterType] = useState<string>("All");
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [currentEvent, setCurrentEvent] = useState<IEvent | null>(null);
   const [visualModalOpen, setVisualModalOpen] = useState<boolean>(false);
-  const [visualEventId, setVisualEventId] = useState<string | null>(null);
   const [systemParticipants, setSystemParticipants] = useState([]);
-  const [assignedRoles, setAssignedRoles] = useState({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [assignedRoles, setAssignedRoles] = useState<string | any>();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [location, setLocation] = useState("");
   const [eventType, setEventType] = useState("");
-  const [participantIds, setParticipantIds] = useState([]);
+  const [participantIds, setParticipantIds] = useState<string[]>();
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
   const resetForm = () => {
     setName("");
@@ -91,7 +110,7 @@ const Events: React.FC = () => {
     try {
       const res = await api.get("/users/all-members");
       const participants = res.data?.data?.filter(
-        (member) => member.role !== "Attendee"
+        (member: IMember) => member.role !== "Attendee"
       );
       console.log("p", participants);
       setSystemParticipants(participants);
@@ -129,15 +148,15 @@ const Events: React.FC = () => {
     closeAssignRolesModal();
   };
 
-  const handleRoleChange = (participantId, newRole) => {
-    setAssignedRoles((prevRoles) => ({
+  const handleRoleChange = (participantId: string, newRole: string) => {
+    setAssignedRoles((prevRoles: string[]) => ({
       ...prevRoles,
       [participantId]: newRole,
     }));
   };
 
-  const handleParticipantsChange = (event) => {
-    const { value } = event.target;
+  const handleParticipantsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const {value} = event.target;
     setParticipantIds(value);
     setAssignedRoles((prev) =>
       Object.keys(prev)
@@ -175,7 +194,7 @@ const Events: React.FC = () => {
     setFilteredEvents(filtered);
   };
 
-  const handleDialogOpen = (event: Event | null = null) => {
+  const handleDialogOpen = (event: IEvent) => {
     setCurrentEvent(event);
     console.log("visual ", event);
 
@@ -205,7 +224,7 @@ const Events: React.FC = () => {
   };
 
   const handleSaveEvent = async () => {
-    if (participantIds.some((id) => !assignedRoles[id])) {
+    if (participantIds?.some((id:string) => !assignedRoles[id])) {
       alert("All participants must have a role assigned.");
       return;
     }

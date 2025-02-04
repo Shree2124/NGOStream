@@ -16,6 +16,16 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { api } from "../../api/api";
 
+interface IDonation {
+  _id: string;
+  donorInfo: {name: string};
+  amount: number;
+  paymentStatus: string;
+  paymentMethod: string;
+  goalInfo: {name: string};
+  currency: string;
+}
+
 const DonationDetails: React.FC = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -24,7 +34,7 @@ const DonationDetails: React.FC = () => {
   const [donationData, setDonationData] = useState<any>([]);
 
   const filteredDonations = donationData.filter(
-    (donation: any) =>
+    (donation: IDonation) =>
       donation.donorInfo.name.toLowerCase().includes(search.toLowerCase()) ||
       donation.amount.toString().includes(search) ||
       donation.paymentStatus.toLowerCase().includes(search.toLowerCase()) ||
@@ -46,7 +56,7 @@ const DonationDetails: React.FC = () => {
     fetchDetails();
   }, []);
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (newPage: number) => {
     setPage(newPage);
   };
 
@@ -111,7 +121,7 @@ const DonationDetails: React.FC = () => {
           <TableBody>
             {filteredDonations
               ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              ?.map((donation) => (
+              ?.map((donation: IDonation) => (
                 <TableRow key={donation._id}>
                   <TableCell>
                     {donation?.donorInfo?.name || "Unknown"}
