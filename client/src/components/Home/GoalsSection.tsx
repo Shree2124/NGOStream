@@ -64,7 +64,7 @@ const GoalsSection: React.FC = () => {
       id="goals"
     >
       <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
-        Our Goals
+        Our Campaigns
       </Typography>
       <Typography
         variant="body1"
@@ -87,7 +87,7 @@ const GoalsSection: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Carousel opts={{ align: "start" }} className="lg:min-w-[40rem] lg:max-w-[70rem] md:min-w-[25rem]">
+        <Carousel opts={{ align: "start" }} className="md:min-w-[25rem] lg:min-w-[40rem] lg:max-w-[70rem]">
           <CarouselContent>
             {visibleGoals.map((goal, index) => (
               <CarouselItem

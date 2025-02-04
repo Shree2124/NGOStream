@@ -18,7 +18,7 @@ const EventRegistrationForm: React.FC = () => {
     phone: "",
     address: "",
     gender: "Male",
-    age: 18,
+    age: 0,
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);

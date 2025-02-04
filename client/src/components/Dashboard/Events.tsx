@@ -464,7 +464,7 @@ const Events: React.FC = () => {
             required
           />
           <TextField
-            label="Date"
+            label="Start Date"
             variant="outlined"
             fullWidth
             type="datetime-local"
@@ -474,7 +474,7 @@ const Events: React.FC = () => {
             required
           />
           <TextField
-            label="Date"
+            label="End Date"
             variant="outlined"
             fullWidth
             type="datetime-local"

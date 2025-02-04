@@ -568,7 +568,6 @@ const MemberManagement: React.FC = () => {
             <MenuItem value="" disabled>
               Select Role
             </MenuItem>
-            <MenuItem value="Admin">Admin</MenuItem>
             <MenuItem value="Staff">Staff</MenuItem>
             <MenuItem value="Volunteer">Volunteer</MenuItem>
           </Select>

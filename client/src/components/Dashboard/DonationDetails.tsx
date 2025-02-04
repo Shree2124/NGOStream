@@ -105,7 +105,7 @@ const DonationDetails: React.FC = () => {
               <TableCell>Currency</TableCell>
               <TableCell>Payment Status</TableCell>
               <TableCell>Payment Method</TableCell>
-              <TableCell>Goal</TableCell>
+              <TableCell>Campaign</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

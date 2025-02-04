@@ -119,20 +119,20 @@ const DashboardHome: React.FC = () => {
   };
 
   return (
-    <div className="lg:p-6 sm:p-0">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-      <h2 className="text-xl mb-4">
+    <div className="sm:p-0 lg:p-6">
+      <h1 className="mb-6 font-bold text-3xl">Admin Dashboard</h1>
+      <h2 className="mb-4 text-xl">
         Welcome, <span className="text-blue-600">{user?.username}</span>!
       </h2>
 
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+      <div className="bg-white shadow-md p-6 rounded-lg">
+        <h2 className="mb-4 font-semibold text-2xl text-gray-800">
           Fundraising Insights
         </h2>
-        <p className="text-gray-600 mb-6">
+        {/* <p className="mb-6 text-gray-600">
           Utilize machine learning to predict donation trends and optimize
           campaigns for better fundraising outcomes.
-        </p>
+        </p> */}
 
         {loading ? (
           <div className="flex justify-center items-center">
@@ -142,27 +142,27 @@ const DashboardHome: React.FC = () => {
           <p className="text-red-500">{error}</p>
         ) : (
           <>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+             <div className="gap-6 grid grid-cols-1 md:grid-cols-2 mb-6">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-700">
+                <h3 className="font-medium text-gray-700 text-lg">
                   Average Monthly Donations
                 </h3>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="font-bold text-2xl text-blue-600">
                   ${fundraisingMetrics?.average?.toFixed(2)}
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-700">
+                <h3 className="font-medium text-gray-700 text-lg">
                   Predicted Next Month Donations
                 </h3>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="font-bold text-2xl text-green-600">
                   ${fundraisingMetrics?.predicted?.toFixed(2)}
                 </p>
               </div>
             </div>
 
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-medium text-gray-700 mb-4">
+              <h3 className="mb-4 font-medium text-gray-700 text-lg">
                 Donation Trends
               </h3>
               <Line data={chartData} options={chartOptions} />
@@ -171,37 +171,37 @@ const DashboardHome: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-sm text-gray-500">Total Donations This Year</h3>
-          <p className="text-2xl font-bold text-blue-600">
+          <h3 className="text-gray-500 text-sm">Total Donations This Year</h3>
+          <p className="font-bold text-2xl text-blue-600">
             ${adminMetrics?.data?.totalDonations.toFixed(2)}
           </p>
         </div>
         <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-sm text-gray-500">Active Campaigns</h3>
-          <p className="text-2xl font-bold text-green-600">
+          <h3 className="text-gray-500 text-sm">Active Campaigns</h3>
+          <p className="font-bold text-2xl text-green-600">
             {adminMetrics?.data?.activeCampaigns}
           </p>
         </div>
         <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-sm text-gray-500">Number of Donors</h3>
-          <p className="text-2xl font-bold text-purple-600">
+          <h3 className="text-gray-500 text-sm">Number of Donors</h3>
+          <p className="font-bold text-2xl text-purple-600">
             {adminMetrics?.data?.totalDonors}
           </p>
         </div>
         <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-sm text-gray-500">Top Donor</h3>
-          <p className="text-lg font-bold text-yellow-600">
+          <h3 className="text-gray-500 text-sm">Top Donor</h3>
+          <p className="font-bold text-lg text-yellow-600">
             {adminMetrics?.data?.topDonor.name} - $
             {adminMetrics?.data?.topDonor.amount}
           </p>
         </div>
       </div>
 
-      {/* <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-2xl font-semibold mb-4">Campaign Performance</h2>
-        <table className="w-full border-collapse text-left">
+      {/* <div className="bg-white shadow-md mb-6 p-6 rounded-lg">
+        <h2 className="mb-4 font-semibold text-2xl">Campaign Performance</h2>
+        <table className="border-collapse w-full text-left">
           <thead>
             <tr className="border-b">
               <th className="py-2">Campaign Name</th>
@@ -216,9 +216,9 @@ const DashboardHome: React.FC = () => {
               <td className="py-2">$50,000</td>
               <td className="py-2">$40,000</td>
               <td className="py-2">
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div className="bg-gray-200 rounded-full w-full h-2.5">
                   <div
-                    className="bg-blue-500 h-2.5 rounded-full"
+                    className="bg-blue-500 rounded-full h-2.5"
                     style={{ width: "80%" }}
                   ></div>
                 </div>
