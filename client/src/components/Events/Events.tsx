@@ -14,15 +14,17 @@ import {
   Modal,
   Fade,
   Backdrop,
+  SelectChangeEvent,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { api } from "../../api/api";
 import { useNavigate } from "react-router-dom";
 
 interface Event {
-  id: string;
+  _id: string;
   name: string;
-  date: string;
+  endDate: string;
+  startDate: string;
   location: string;
   description: string;
   status: string;
@@ -53,7 +55,7 @@ export const Events: React.FC = () => {
     loadEvents();
   }, []);
 
-  const handleFilterChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleFilterChange = (event: SelectChangeEvent<string>) => {
     setFilter(event.target.value as string);
   };
 
@@ -129,9 +131,9 @@ export const Events: React.FC = () => {
           gap={3}
           mt={4}
         >
-          {filteredEvents.map((event) => (
+          {filteredEvents.map((event: Event) => (
             <motion.div
-              key={event.id}
+              key={event._id}
               initial="hidden"
               animate="visible"
               variants={cardVariants}
