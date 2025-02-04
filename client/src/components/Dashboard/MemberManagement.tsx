@@ -20,7 +20,7 @@ import { Add, Delete, Edit, Search, Visibility } from "@mui/icons-material";
 import { api } from "../../api/api";
 import { Toast, ToastContent, ToastProvider, ToastViewport } from "../ui/toast";
 interface NewUser {
-  _id?: any;
+  _id?: string;
   avatar?: File | string;
   gender: string;
   age: string;
@@ -61,7 +61,8 @@ const addUser = async (userData: NewUser) => {
     }
 
     return response.data?.data;
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     console.error("Error adding user:", error.message || error);
     throw new Error(error.response?.data?.message || "Error adding the user.");
   }
@@ -70,6 +71,7 @@ const addUser = async (userData: NewUser) => {
 const updateUser = async (
   userId: string,
   updatedUser: NewUser,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   existingUser: NewUser | any
 ) => {
   try {
@@ -78,7 +80,7 @@ const updateUser = async (
     const updatedFields = Object.entries(updatedUser).reduce(
       (acc, [key, value]) => {
         if (existingUser[key as keyof NewUser] !== value) {
-          acc[key] = value;
+          acc[key as keyof NewUser] = value;
         }
         return acc;
       },
@@ -105,7 +107,8 @@ const updateUser = async (
       throw new Error("Failed to update user. Please try again.");
     }
     return response.data?.data;
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     console.error("Error updating user:", error.message || error);
     throw new Error(
       error.response?.data?.message || "Error updating the user."
@@ -120,7 +123,8 @@ const deleteUser = async (userId: string) => {
       throw new Error("Failed to delete user. Please try again.");
     }
     return response;
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     console.error("Error deleting user:", error.message || error);
     throw new Error(
       error.response?.data?.message || "Error deleting the user."
@@ -129,7 +133,6 @@ const deleteUser = async (userId: string) => {
 };
 
 const MemberManagement: React.FC = () => {
-  const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("All");
   const [showModal, setShowModal] = useState(false);
@@ -140,13 +143,13 @@ const MemberManagement: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedMember, setSelectedMember] = useState<NewUser | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVariant, setToastVariant] = useState<"success" | "error">(
     "success"
   );
 
-  const handleViewDetails = (member: Member) => {
+  const handleViewDetails = (member: NewUser) => {
     setSelectedMember(member);
     setShowViewModal(true);
   };
@@ -170,7 +173,7 @@ const MemberManagement: React.FC = () => {
     try {
       const res = await api.get("/users/all-members");
       const participants = res.data?.data?.filter(
-        (member) => member.role !== "Attendee"
+        (member: NewUser) => member.role !== "Attendee"
       );
       setMembers(participants);
     } catch (error) {
@@ -181,11 +184,13 @@ const MemberManagement: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const handleConfirmDelete = (userId: string) => {
-    console.log(userId);
+  const handleConfirmDelete = (userId: string | null) => {
+    if (userId) {
+      console.log(userId);
 
-    setDeleteMemberId(userId);
-    setShowDeleteModal(true);
+      setDeleteMemberId(userId);
+      setShowDeleteModal(true);
+    }
   };
 
   const handleCancelDelete = () => {
@@ -193,7 +198,7 @@ const MemberManagement: React.FC = () => {
     setDeleteMemberId(null);
   };
 
-  const handleOpenModal = (user?: Member, id?: string) => {
+  const handleOpenModal = (user?: NewUser, id?: string) => {
     console.log("Incoming ID:", id);
 
     if (user && id) {
@@ -264,7 +269,8 @@ const MemberManagement: React.FC = () => {
         setToastVariant("success");
       }
       handleCloseModal();
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.error("Error saving user:", error);
       setToastMessage(error.message || "An error occurred.");
       setToastVariant("error");
@@ -275,10 +281,11 @@ const MemberManagement: React.FC = () => {
     try {
       const res = await deleteUser(userId);
       if (res.status === 200) setShowDeleteModal(false);
-      setMembers((prev) => prev.filter((member) => member.id !== userId));
+      setMembers((prev) => prev.filter((member) => member._id !== userId));
       setToastMessage("Member deleted successfully!");
       setToastVariant("success");
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.error("Error deleting user:", error);
       setToastMessage(error.message || "An error occurred.");
       setToastVariant("error");
@@ -343,10 +350,17 @@ const MemberManagement: React.FC = () => {
         </Grid>
 
         <List>
-          {filteredMembers.map((member) => (
-            <ListItem key={member.id}>
+          {filteredMembers.map((member: NewUser) => (
+            <ListItem key={member._id}>
               <ListItemAvatar>
-                <Avatar src={member.avatar || ""} alt={member.fullName} />
+                <Avatar
+                  src={
+                    member?.avatar instanceof File
+                      ? URL.createObjectURL(member.avatar)
+                      : member?.avatar || ""
+                  }
+                  alt={member.fullName}
+                />
               </ListItemAvatar>
               <ListItemText
                 primary={member.fullName}
@@ -367,7 +381,7 @@ const MemberManagement: React.FC = () => {
                 </IconButton>
                 <IconButton
                   title="Delete"
-                  onClick={() => handleConfirmDelete(member._id)}
+                  onClick={() => handleConfirmDelete(member?._id?.toString() || "")}
                   color="error"
                 >
                   <Delete />
@@ -399,10 +413,12 @@ const MemberManagement: React.FC = () => {
                 <Stack direction="row" spacing={2} mb={2}>
                   <Avatar
                     src={
-                      selectedMember?.avatar ||
-                      "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+                      selectedMember?.avatar instanceof File
+                        ? URL.createObjectURL(selectedMember.avatar)
+                        : selectedMember?.avatar ||
+                          "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
                     }
-                    alt={selectedMember.fullName}
+                    alt={selectedMember?.fullName}
                     sx={{ width: 100, height: 100 }}
                   />
                   <Box>
