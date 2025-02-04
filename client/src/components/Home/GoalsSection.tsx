@@ -18,6 +18,19 @@ import {
 } from "../ui/carousel";
 
 
+interface IGoal {
+  _id: string;
+  name: string;
+  description: string;
+  targetAmount: number;
+  startDate: string;
+  status: string;
+  image?: string;
+  currentAmount: number;
+}
+
+
+
 const GoalsSection: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
@@ -27,7 +40,7 @@ const GoalsSection: React.FC = () => {
     const fetchGoalsData = async () => {
       try {
         const res = await api.get("/goals/all-goals");
-        const filteredGoals = res.data.data.filter((goal) => {
+        const filteredGoals = res.data.data.filter((goal: IGoal) => {
           return (
             goal.status === "Active" && new Date(goal.startDate) <= new Date()
           );
@@ -89,7 +102,7 @@ const GoalsSection: React.FC = () => {
       >
         <Carousel opts={{ align: "start" }} className="md:min-w-[25rem] lg:min-w-[40rem] lg:max-w-[70rem]">
           <CarouselContent>
-            {visibleGoals.map((goal, index) => (
+            {visibleGoals.map((goal: IGoal) => (
               <CarouselItem
                 key={goal._id}
                 className="md:basis-1/2 lg:basis-1/3 p-2"
