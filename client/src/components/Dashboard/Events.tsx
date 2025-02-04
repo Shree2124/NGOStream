@@ -21,13 +21,7 @@ import {
   Checkbox,
   ListItemText,
 } from "@mui/material";
-import {
-  Add,
-  Edit,
-  Delete,
-  BarChart,
-  Close,
-} from "@mui/icons-material";
+import { Add, Edit, Delete, BarChart, Close } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Bar } from "react-chartjs-2";
@@ -52,7 +46,7 @@ ChartJS.register(
   Legend
 );
 
-interface IMember{
+interface IMember {
   role: string;
 }
 
@@ -62,15 +56,20 @@ interface IParticipant {
 }
 
 interface IEvent {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   startDate: string;
   endDate: string;
   location: string;
   eventType: string;
-  status: "Upcoming" | "Happening" | "Completed";
+  status: "upcoming" | "happening" | "completed";
   participants: IParticipant[];
+  kpis: {
+    attendance: number;
+    fundsRaised?: number;
+    successMetrics?: string[];
+  };
 }
 
 const Events: React.FC = () => {
@@ -155,13 +154,18 @@ const Events: React.FC = () => {
     }));
   };
 
-  const handleParticipantsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const {value} = event.target;
-    setParticipantIds(value);
-    setAssignedRoles((prev) =>
+  const handleParticipantsChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { value } = event.target;
+    setParticipantIds(value ? value.split(",") : []);
+    setAssignedRoles((prev: Record<string, string>) =>
       Object.keys(prev)
         .filter((id) => value.includes(id))
-        .reduce((acc, id) => ({ ...acc, [id]: prev[id] }), {})
+        .reduce<Record<string, string>>(
+          (acc, id) => ({ ...acc, [id]: prev[id] }),
+          {}
+        )
     );
   };
 
@@ -194,7 +198,7 @@ const Events: React.FC = () => {
     setFilteredEvents(filtered);
   };
 
-  const handleDialogOpen = (event: IEvent) => {
+  const handleDialogOpen = (event: IEvent | null) => {
     setCurrentEvent(event);
     console.log("visual ", event);
 
@@ -205,11 +209,13 @@ const Events: React.FC = () => {
       setEndDate(event.endDate);
       setLocation(event.location);
       setEventType(event.eventType);
-      setParticipantIds(event?.participants?.map((p) => p.memberId));
-      const roles = event.participants.reduce((acc, participant) => {
-        acc[participant.memberId] = participant.role;
-        return acc;
-      }, {});
+      const roles = event.participants.reduce(
+        (acc: { [key: string]: string }, participant) => {
+          acc[participant.memberId] = participant.role;
+          return acc;
+        },
+        {}
+      );
       setAssignedRoles(roles);
     } else {
       resetForm();
@@ -224,13 +230,13 @@ const Events: React.FC = () => {
   };
 
   const handleSaveEvent = async () => {
-    if (participantIds?.some((id:string) => !assignedRoles[id])) {
+    if (participantIds?.some((id: string) => !assignedRoles[id])) {
       alert("All participants must have a role assigned.");
       return;
     }
 
     try {
-      const participantsWithRoles = participantIds.map((id) => ({
+      const participantsWithRoles = participantIds?.map((id) => ({
         memberId: id,
         role: assignedRoles[id],
       }));
@@ -253,7 +259,6 @@ const Events: React.FC = () => {
             event.id === currentEvent.id ? res.data.data : event
           )
         );
-        
       } else {
         const res = await api.post("/event/create", {
           name,
@@ -266,7 +271,7 @@ const Events: React.FC = () => {
         });
         setEvents((prev) => [...prev, res.data.data]);
       }
-      fetchEvents()
+      fetchEvents();
     } catch (error) {
       console.error("Error saving event:", error);
     }
@@ -287,11 +292,9 @@ const Events: React.FC = () => {
 
   const handleCloseVisuals = () => {
     setVisualModalOpen(false);
-    setVisualEventId(null);
   };
 
-  const getEventChartData = (event: any) => ({
-    
+  const getEventChartData = (event: IEvent) => ({
     labels: ["Attendance"],
     datasets: [
       {
@@ -302,15 +305,15 @@ const Events: React.FC = () => {
     ],
   });
 
-  const getSuccessMetricsChartData = (event: Event) => ({
-    labels: event?.kpis?.successMetrics,
-    datasets: [
-      {
-        data: event.kpis?.successMetrics?.map(() => 1),
-        backgroundColor: ["#f44336", "#ff9800", "#ffeb3b"],
-      },
-    ],
-  });
+  // const getSuccessMetricsChartData = (event: Event) => ({
+  //   labels: event?.kpis?.successMetrics,
+  //   datasets: [
+  //     {
+  //       data: event.kpis?.successMetrics?.map(() => 1),
+  //       backgroundColor: ["#f44336", "#ff9800", "#ffeb3b"],
+  //     },
+  //   ],
+  // });
 
   return (
     <Box p={3}>
@@ -363,7 +366,7 @@ const Events: React.FC = () => {
           }}
           variant="contained"
           startIcon={<Add />}
-          onClick={() => handleDialogOpen()}
+          onClick={() => handleDialogOpen(null)}
         >
           Add Event
         </Button>
@@ -385,7 +388,20 @@ const Events: React.FC = () => {
                   <strong>end date:</strong> {event.endDate}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Status:</strong>{"  "}<Badge variant={event?.status?.toLowerCase()} className="">{event.status}</Badge> 
+                  <strong>Status:</strong>
+                  {"  "}
+                  <Badge
+                    variant={
+                      event.status.toLowerCase() as
+                        | "outline"
+                        | "upcoming"
+                        | "happening"
+                        | "completed"
+                        | undefined
+                    }
+                  >
+                    {event.status}
+                  </Badge>
                 </Typography>
                 <Divider sx={{ my: 2 }} />
 
