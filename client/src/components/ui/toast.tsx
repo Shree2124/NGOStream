@@ -1,4 +1,3 @@
-// src/components/ui/toast.tsx
 import * as React from "react";
 import {
   ToastProps,
@@ -18,14 +17,14 @@ const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
         "fixed bottom-4 right-4 z-50 w-full max-w-sm rounded-lg bg-white p-4 shadow-lg",
         className
       )}
-      {...props}
+      {...(props as React.HTMLAttributes<HTMLDivElement>)}
     />
   )
 );
 Toast.displayName = "Toast";
 
 const toastVariants = cva(
-  "flex items-center justify-between p-4 rounded-lg shadow-lg",
+  "flex justify-between items-center shadow-lg p-4 rounded-lg",
   {
     variants: {
       variant: {
@@ -57,9 +56,9 @@ const ToastContent = React.forwardRef<HTMLDivElement, ToastContentProps>(
       <span>{message}</span>
       <button
         onClick={onClose}
-        className="ml-4 rounded-full p-1 hover:bg-black/10"
+        className="hover:bg-black/10 ml-4 p-1 rounded-full"
       >
-        <X className="h-4 w-4" />
+        <X className="w-4 h-4" />
       </button>
     </div>
   )
