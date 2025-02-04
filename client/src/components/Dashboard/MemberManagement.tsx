@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { Add, Delete, Edit, Search, Visibility } from "@mui/icons-material";
 import { api } from "../../api/api";
-
+import { Toast, ToastContent, ToastProvider, ToastViewport } from "../ui/toast";
 interface NewUser {
   _id?: any;
   avatar?: File | string;
@@ -141,6 +141,10 @@ const MemberManagement: React.FC = () => {
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVariant, setToastVariant] = useState<"success" | "error">(
+    "success"
+  );
 
   const handleViewDetails = (member: Member) => {
     setSelectedMember(member);
@@ -249,15 +253,21 @@ const MemberManagement: React.FC = () => {
             member._id === currentUserId ? updatedUser : member
           )
         );
+        setToastMessage("Member updated successfully!");
+        setToastVariant("success");
       } else {
         const addedUser = await addUser(newUser);
         setMembers((prev) => [...prev, addedUser]);
         setShowModal(false);
         fetchUsers();
+        setToastMessage("Member added successfully!");
+        setToastVariant("success");
       }
       handleCloseModal();
     } catch (error) {
       console.error("Error saving user:", error);
+      setToastMessage(error.message || "An error occurred.");
+      setToastVariant("error");
     }
   };
 
@@ -266,8 +276,12 @@ const MemberManagement: React.FC = () => {
       const res = await deleteUser(userId);
       if (res.status === 200) setShowDeleteModal(false);
       setMembers((prev) => prev.filter((member) => member.id !== userId));
+      setToastMessage("Member deleted successfully!");
+      setToastVariant("success");
     } catch (error) {
       console.error("Error deleting user:", error);
+      setToastMessage(error.message || "An error occurred.");
+      setToastVariant("error");
     }
   };
 
@@ -288,345 +302,363 @@ const MemberManagement: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-       <Grid container spacing={2} alignItems="center" mb={2}>
-        <Grid item xs={12} sm={6} md={8}>
-          <TextField
-            fullWidth
-            placeholder="Search members..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <IconButton>
-                  <Search />
-                </IconButton>
-              ),
-            }}
-          />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <Select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="Staff">Staff</MenuItem>
-            <MenuItem value="Volunteer">Volunteer</MenuItem>
-          </Select>
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            fullWidth
-            onClick={() => setShowModal(true)}
-          >
-            Add Member
-          </Button>
-        </Grid>
-      </Grid>
-
-      <List>
-        {filteredMembers.map((member) => (
-          <ListItem key={member.id}>
-            <ListItemAvatar>
-              <Avatar src={member.avatar || ""} alt={member.fullName} />
-            </ListItemAvatar>
-            <ListItemText
-              primary={member.fullName}
-              secondary={`Role: ${member.role}`}
-            />
-            <Stack direction="row" spacing={1}>
-              <IconButton
-                title="View"
-                onClick={() => handleViewDetails(member)}
-              >
-                <Visibility />
-              </IconButton>
-              <IconButton
-                title="Edit"
-                onClick={() => handleOpenModal(member, member._id)}
-              >
-                <Edit />
-              </IconButton>
-              <IconButton
-                title="Delete"
-                onClick={() => handleConfirmDelete(member._id)}
-                color="error"
-              >
-                <Delete />
-              </IconButton>
-            </Stack>
-          </ListItem>
-        ))}
-      </List>
-
-      <Modal open={showViewModal} onClose={handleCloseViewModal}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            bgcolor: "background.paper",
-            p: 4,
-            borderRadius: 2,
-            boxShadow: 24,
-          }}
-        >
-          <Typography variant="h6" mb={2}>
-            Member Details
-          </Typography>
-          {selectedMember && (
-            <Box>
-              <Stack direction="row" spacing={2} mb={2}>
-                <Avatar
-                  src={
-                    selectedMember?.avatar ||
-                    "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
-                  }
-                  alt={selectedMember.fullName}
-                  sx={{ width: 100, height: 100 }}
-                />
-                <Box>
-                  <Typography variant="body1">
-                    <strong>Full Name:</strong> {selectedMember.fullName}
-                  </Typography>
-                  <Typography variant="body1">
-                    <strong>Gender:</strong> {selectedMember.gender}
-                  </Typography>
-                  <Typography variant="body1">
-                    <strong>Age:</strong> {selectedMember.age}
-                  </Typography>
-                </Box>
-              </Stack>
-              <Typography variant="body1" mb={1}>
-                <strong>Email:</strong> {selectedMember.email}
-              </Typography>
-              <Typography variant="body1" mb={1}>
-                <strong>Phone:</strong> {selectedMember.phone}
-              </Typography>
-              <Typography variant="body1" mb={1}>
-                <strong>Address:</strong> {selectedMember.address}
-              </Typography>
-              <Typography variant="body1" mb={1}>
-                <strong>Role:</strong> {selectedMember.role}
-              </Typography>
-              {selectedMember.bio && (
-                <Typography variant="body1" mb={1}>
-                  <strong>Bio:</strong> {selectedMember.bio}
-                </Typography>
-              )}
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                onClick={handleCloseViewModal}
-              >
-                Close
-              </Button>
-            </Box>
-          )}
-        </Box>
-      </Modal>
-
-      <Modal open={showModal} onClose={handleCloseModal}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            bgcolor: "background.paper",
-            p: 4,
-            borderRadius: 2,
-            boxShadow: 24,
-          }}
-        >
-          <Typography variant="h6" mb={2}>
-            {isEdit ? "Edit User" : "Add New User"}
-          </Typography>
-          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-            <Box
-              sx={{
-                width: "100px",
-                height: "100px",
-                border: "1px dashed gray",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                cursor: "pointer",
+      <ToastProvider>
+        <Grid container spacing={2} alignItems="center" mb={2}>
+          <Grid item xs={12} sm={6} md={8}>
+            <TextField
+              fullWidth
+              placeholder="Search members..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <IconButton>
+                    <Search />
+                  </IconButton>
+                ),
               }}
-              onClick={() => document.getElementById("avatarUpload")?.click()}
+            />
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <Select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              fullWidth
             >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  style={{ width: "100%", height: "100%" }}
-                />
-              ) : (
-                "+"
-              )}
-              <input
-                id="avatarUpload"
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setNewUser({ ...newUser, avatar: file });
-                    setImagePreview(URL.createObjectURL(file));
-                  }
-                }}
-              />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <TextField
-                fullWidth
-                label="Full Name"
-                variant="outlined"
-                value={newUser.fullName}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, fullName: e.target.value })
-                }
-                sx={{ mb: 2 }}
-                required
-              />
-              <TextField
-                fullWidth
-                label="Age"
-                type="number"
-                variant="outlined"
-                value={newUser.age}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, age: e.target.value })
-                }
-                sx={{ mb: 2 }}
-                required
-              />
-              <Select
-                fullWidth
-                value={newUser.gender}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, gender: e.target.value })
-                }
-                sx={{ mb: 2 }}
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  Select Gender
-                </MenuItem>
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-                <MenuItem value="Other">Other</MenuItem>
-              </Select>
-            </Box>
-          </Box>
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            variant="outlined"
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-            sx={{ mb: 2 }}
-            required
-          />
-          <TextField
-            fullWidth
-            label="Phone"
-            type="tel"
-            variant="outlined"
-            value={newUser.phone}
-            onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-            sx={{ mb: 2 }}
-            required
-          />
-          <TextField
-            fullWidth
-            label="Address"
-            variant="outlined"
-            value={newUser.address}
-            onChange={(e) =>
-              setNewUser({ ...newUser, address: e.target.value })
-            }
-            sx={{ mb: 2 }}
-            required
-          />
-          <Select
-            fullWidth
-            value={newUser.role}
-            onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-            sx={{ mb: 2 }}
-            displayEmpty
-          >
-            <MenuItem value="" disabled>
-              Select Role
-            </MenuItem>
-            <MenuItem value="Staff">Staff</MenuItem>
-            <MenuItem value="Volunteer">Volunteer</MenuItem>
-          </Select>
-          <TextField
-            fullWidth
-            label="Bio"
-            variant="outlined"
-            value={newUser.bio || ""}
-            onChange={(e) => setNewUser({ ...newUser, bio: e.target.value })}
-            sx={{ mb: 2 }}
-            multiline
-            rows={3}
-          />
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={!isFormValid}
-          >
-            {isEdit ? "Update" : "Add"}
-          </Button>
-        </Box>
-      </Modal>
-
-      <Modal open={showDeleteModal} onClose={handleCancelDelete}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
-            p: 4,
-            borderRadius: 2,
-            boxShadow: 24,
-          }}
-        >
-          <Typography variant="h6" mb={2}>
-            Confirm Delete
-          </Typography>
-          <Typography variant="body1" mb={3}>
-            Are you sure you want to delete this member? This action cannot be
-            undone.
-          </Typography>
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button variant="outlined" onClick={handleCancelDelete}>
-              Cancel
-            </Button>
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="Staff">Staff</MenuItem>
+              <MenuItem value="Volunteer">Volunteer</MenuItem>
+            </Select>
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
             <Button
               variant="contained"
-              color="error"
-              onClick={() => deleteMemberId && handleDelete(deleteMemberId)}
+              startIcon={<Add />}
+              fullWidth
+              onClick={() => setShowModal(true)}
             >
-              Delete
+              Add Member
             </Button>
-          </Stack>
-        </Box>
-      </Modal>
+          </Grid>
+        </Grid>
+
+        <List>
+          {filteredMembers.map((member) => (
+            <ListItem key={member.id}>
+              <ListItemAvatar>
+                <Avatar src={member.avatar || ""} alt={member.fullName} />
+              </ListItemAvatar>
+              <ListItemText
+                primary={member.fullName}
+                secondary={`Role: ${member.role}`}
+              />
+              <Stack direction="row" spacing={1}>
+                <IconButton
+                  title="View"
+                  onClick={() => handleViewDetails(member)}
+                >
+                  <Visibility />
+                </IconButton>
+                <IconButton
+                  title="Edit"
+                  onClick={() => handleOpenModal(member, member._id)}
+                >
+                  <Edit />
+                </IconButton>
+                <IconButton
+                  title="Delete"
+                  onClick={() => handleConfirmDelete(member._id)}
+                  color="error"
+                >
+                  <Delete />
+                </IconButton>
+              </Stack>
+            </ListItem>
+          ))}
+        </List>
+
+        <Modal open={showViewModal} onClose={handleCloseViewModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 500,
+              bgcolor: "background.paper",
+              p: 4,
+              borderRadius: 2,
+              boxShadow: 24,
+            }}
+          >
+            <Typography variant="h6" mb={2}>
+              Member Details
+            </Typography>
+            {selectedMember && (
+              <Box>
+                <Stack direction="row" spacing={2} mb={2}>
+                  <Avatar
+                    src={
+                      selectedMember?.avatar ||
+                      "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+                    }
+                    alt={selectedMember.fullName}
+                    sx={{ width: 100, height: 100 }}
+                  />
+                  <Box>
+                    <Typography variant="body1">
+                      <strong>Full Name:</strong> {selectedMember.fullName}
+                    </Typography>
+                    <Typography variant="body1">
+                      <strong>Gender:</strong> {selectedMember.gender}
+                    </Typography>
+                    <Typography variant="body1">
+                      <strong>Age:</strong> {selectedMember.age}
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Typography variant="body1" mb={1}>
+                  <strong>Email:</strong> {selectedMember.email}
+                </Typography>
+                <Typography variant="body1" mb={1}>
+                  <strong>Phone:</strong> {selectedMember.phone}
+                </Typography>
+                <Typography variant="body1" mb={1}>
+                  <strong>Address:</strong> {selectedMember.address}
+                </Typography>
+                <Typography variant="body1" mb={1}>
+                  <strong>Role:</strong> {selectedMember.role}
+                </Typography>
+                {selectedMember.bio && (
+                  <Typography variant="body1" mb={1}>
+                    <strong>Bio:</strong> {selectedMember.bio}
+                  </Typography>
+                )}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCloseViewModal}
+                >
+                  Close
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </Modal>
+
+        <Modal open={showModal} onClose={handleCloseModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 500,
+              bgcolor: "background.paper",
+              p: 4,
+              borderRadius: 2,
+              boxShadow: 24,
+            }}
+          >
+            <Typography variant="h6" mb={2}>
+              {isEdit ? "Edit User" : "Add New User"}
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: "100px",
+                  height: "100px",
+                  border: "1px dashed gray",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+                onClick={() => document.getElementById("avatarUpload")?.click()}
+              >
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                ) : (
+                  "+"
+                )}
+                <input
+                  id="avatarUpload"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setNewUser({ ...newUser, avatar: file });
+                      setImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Full Name"
+                  variant="outlined"
+                  value={newUser.fullName}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, fullName: e.target.value })
+                  }
+                  sx={{ mb: 2 }}
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Age"
+                  type="number"
+                  variant="outlined"
+                  value={newUser.age}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, age: e.target.value })
+                  }
+                  sx={{ mb: 2 }}
+                  required
+                />
+                <Select
+                  fullWidth
+                  value={newUser.gender}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, gender: e.target.value })
+                  }
+                  sx={{ mb: 2 }}
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    Select Gender
+                  </MenuItem>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </Box>
+            </Box>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              variant="outlined"
+              value={newUser.email}
+              onChange={(e) =>
+                setNewUser({ ...newUser, email: e.target.value })
+              }
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Phone"
+              type="tel"
+              variant="outlined"
+              value={newUser.phone}
+              onChange={(e) =>
+                setNewUser({ ...newUser, phone: e.target.value })
+              }
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Address"
+              variant="outlined"
+              value={newUser.address}
+              onChange={(e) =>
+                setNewUser({ ...newUser, address: e.target.value })
+              }
+              sx={{ mb: 2 }}
+              required
+            />
+            <Select
+              fullWidth
+              value={newUser.role}
+              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              sx={{ mb: 2 }}
+              displayEmpty
+            >
+              <MenuItem value="" disabled>
+                Select Role
+              </MenuItem>
+              <MenuItem value="Admin">Admin</MenuItem>
+              <MenuItem value="Staff">Staff</MenuItem>
+              <MenuItem value="Volunteer">Volunteer</MenuItem>
+            </Select>
+            <TextField
+              fullWidth
+              label="Bio"
+              variant="outlined"
+              value={newUser.bio || ""}
+              onChange={(e) => setNewUser({ ...newUser, bio: e.target.value })}
+              sx={{ mb: 2 }}
+              multiline
+              rows={3}
+            />
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={!isFormValid}
+            >
+              {isEdit ? "Update" : "Add"}
+            </Button>
+          </Box>
+        </Modal>
+
+        <Modal open={showDeleteModal} onClose={handleCancelDelete}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              p: 4,
+              borderRadius: 2,
+              boxShadow: 24,
+            }}
+          >
+            <Typography variant="h6" mb={2}>
+              Confirm Delete
+            </Typography>
+            <Typography variant="body1" mb={3}>
+              Are you sure you want to delete this member? This action cannot be
+              undone.
+            </Typography>
+            <Stack direction="row" spacing={2} justifyContent="flex-end">
+              <Button variant="outlined" onClick={handleCancelDelete}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => deleteMemberId && handleDelete(deleteMemberId)}
+              >
+                Delete
+              </Button>
+            </Stack>
+          </Box>
+        </Modal>
+
+        {toastMessage && (
+          <Toast>
+            <ToastContent
+              variant={toastVariant}
+              message={toastMessage}
+              onClose={() => setToastMessage(null)}
+            />
+          </Toast>
+        )}
+        <ToastViewport />
+      </ToastProvider>
     </Box>
   );
 };

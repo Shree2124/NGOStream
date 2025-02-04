@@ -10,6 +10,7 @@ import {
   EventsPage,
   DonorFormPage,
   EventFrontPage,
+  FeedbackForm,
 } from "./pages";
 import {
   AuthLayout,
@@ -23,7 +24,6 @@ import { AppDispatch } from "./redux/store";
 import GoalsPage from "./pages/Dashboard/GoalsPage";
 import PaymentSuccessPage from "./components/constants/PaymentSuccess";
 import FundraisingMetrics from "./pages/predicted";
-import { Layout } from "./components/Layouts/DashboardLayout";
 
 const App: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -38,6 +38,7 @@ const App: React.FC = () => {
           <Route path="/predict" element={<FundraisingMetrics />} />
           <Route path="/donor-form/:goalId" element={<DonorFormPage />} />
           <Route path="/donation-success" element={<PaymentSuccessPage />} />
+          <Route path="/feedback/:eventId" element={<FeedbackForm />} />
           <Route
             path={`/events/:eventId`}
             element={<EventRegistrationForm />}

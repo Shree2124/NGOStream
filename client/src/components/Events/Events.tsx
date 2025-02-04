@@ -26,8 +26,8 @@ interface Event {
   location: string;
   description: string;
   status: string;
-  attendees?: number; 
-  organizer?: string; 
+  attendees?: number;
+  organizer?: string;
 }
 
 export const Events: React.FC = () => {
@@ -36,7 +36,7 @@ export const Events: React.FC = () => {
   const [filter, setFilter] = useState<string>("All");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -57,10 +57,10 @@ export const Events: React.FC = () => {
     setFilter(event.target.value as string);
   };
 
-  const handleRegister = (eventId: string)=>{
+  const handleRegister = (eventId: string) => {
     console.log(eventId);
-    navigate(`/events/${eventId}`)
-  }
+    navigate(`/events/${eventId}`);
+  };
 
   const handleViewDetails = (event: Event) => {
     setSelectedEvent(event);

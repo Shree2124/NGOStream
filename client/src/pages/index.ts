@@ -7,15 +7,17 @@ import DonationDetailsPage from "./Dashboard/DonationDetailsPage";
 import EventsPage from "./Dashboard/EventsPage";
 import DonorFormPage from "./Forms/DonorFormPage";
 import { EventsPage as EventFrontPage } from "./Events/EventsPage";
+import FeedbackForm from "./FeedbackForm/FeedbackForm";
 
 export {
-    LoginPage,
-    RegisterPage,
-    HomePage,
-    DashboardHomePage,
-    MemberManagementPage,
-    DonationDetailsPage,
-    EventsPage,
-    DonorFormPage,
-    EventFrontPage
-}
+  LoginPage,
+  RegisterPage,
+  HomePage,
+  DashboardHomePage,
+  MemberManagementPage,
+  DonationDetailsPage,
+  EventsPage,
+  DonorFormPage,
+  EventFrontPage,
+  FeedbackForm,
+};
