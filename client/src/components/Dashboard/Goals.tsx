@@ -36,7 +36,7 @@ interface IDonations {
 }
 
 interface IGoal {
-  donations: IDonations;
+  donations: IDonations[];
   _id: string;
   name: string;
   description: string;
@@ -57,7 +57,7 @@ const Goals: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
   const [selectedGoal, setSelectedGoal] = useState<IGoal | null>(null);
 
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goals, setGoals] = useState<IGoal[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [name, setName] = useState<string>("");
@@ -69,7 +69,7 @@ const Goals: React.FC = () => {
   const [status, setStatus] = useState<string>("Active");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [goal, setGoal] = useState<IGoal>();
+  const [goal, setGoal] = useState<IGoal[]>([]);
 
   const fetchGoalInfo = async (id: string) => {
     try {
@@ -499,8 +499,9 @@ const Goals: React.FC = () => {
                           typeof donation.amount === "number"
                       )
                     ) ? (
-                      goal?.map((goalItem:IGoal, goalIndex: string) =>
-                        goalItem.donations?.map((donation:IDonations, donationIndex: string) => {
+                      
+                      goal?.map((goalItem:IGoal, goalIndex: number) =>
+                        goalItem?.donations?.map((donation:IDonations, donationIndex: number) => {
                           const donorName =
                             donation.donorName?.trim() || "Unknown";
                           const donorEmail =
