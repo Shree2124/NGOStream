@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ChangeEvent, useState } from "react";
 import {
   Box,
   TextField,
@@ -8,6 +8,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import { loadStripe } from "@stripe/stripe-js";
 import { useParams } from "react-router-dom";
@@ -20,7 +21,7 @@ const stripePromise = loadStripe(
 const DonationForm: React.FC = () => {
   const { goalId } = useParams<{ goalId: string }>();
   console.log(goalId);
-  
+
   const [step, setStep] = useState(1);
   const [donationType, setDonationType] = useState<string | null>(null);
 
@@ -45,15 +46,13 @@ const DonationForm: React.FC = () => {
     description: "",
   });
 
-  const handleDonationTypeChange = (
-    event: React.ChangeEvent<{ value: unknown }>
-  ) => {
+  const handleDonationTypeChange = (event: SelectChangeEvent<string>) => {
     setDonationType(event.target.value as string);
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "donor" | "monetary" | "inKind"
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    type: string
   ) => {
     if (type === "donor") {
       setDonorData({ ...donorData, [e.target.name]: e.target.value });
@@ -126,7 +125,7 @@ const DonationForm: React.FC = () => {
             <InputLabel id="donation-type-label">Donation Type</InputLabel>
             <Select
               labelId="donation-type-label"
-              value={donationType}
+              value={donationType ?? undefined}
               onChange={handleDonationTypeChange}
             >
               <MenuItem value="Monetary">Monetary</MenuItem>
