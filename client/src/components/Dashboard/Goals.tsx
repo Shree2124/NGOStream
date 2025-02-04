@@ -12,7 +12,6 @@ import {
   MenuItem,
   Select,
   Stack,
-  Avatar,
   TableContainer,
   Paper,
   Table,
@@ -30,30 +29,49 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const Goals: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentGoal, setCurrentGoal] = useState<any | null>(null);
-  const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<any>();
+interface IDonations {
+  donorName: string;
+  donorEmail: string;
+  amount: number | null;
+}
 
-  const [goals, setGoals] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [targetAmount, setTargetAmount] = useState<number | undefined>();
-  const [startDate, setStartDate] = useState(
+interface IGoal {
+  donations: IDonations;
+  _id: string;
+  name: string;
+  description: string;
+  targetAmount: number;
+  startDate: string;
+  status: string;
+  image?: string;
+  currentAmount?: number;
+}
+
+
+const Goals: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [currentGoal, setCurrentGoal] = useState<IGoal | null>(null);
+  const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
+  const [selectedGoal, setSelectedGoal] = useState<IGoal | null>(null);
+
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [name, setName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [targetAmount, setTargetAmount] = useState<number | "">("");
+  const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [status, setStatus] = useState("Active");
+  const [status, setStatus] = useState<string>("Active");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [goal, setGoal] = useState(null);
+  const [goal, setGoal] = useState<IGoal>();
 
-  const fetchGoalInfo = async (id: any) => {
+  const fetchGoalInfo = async (id: string) => {
     try {
       console.log(selectedGoal);
 
@@ -73,7 +91,7 @@ const Goals: React.FC = () => {
     }
   }, [selectedGoal]);
 
-  const handleOpenModal = (goal: any = null) => {
+  const handleOpenModal = (goal: IGoal | null) => {
     if (goal) {
       setIsEditing(true);
       setCurrentGoal(goal);
@@ -86,7 +104,7 @@ const Goals: React.FC = () => {
       setIsEditing(false);
       setName("");
       setDescription("");
-      setTargetAmount(undefined);
+      setTargetAmount("");
       setStartDate(new Date().toISOString().split("T")[0]);
       setStatus("Active");
       setImage(null);
@@ -154,7 +172,7 @@ const Goals: React.FC = () => {
     }
   };
 
-  const handleViewGoal = async (goal: any) => {
+  const handleViewGoal = async (goal: IGoal) => {
     setSelectedGoal(goal);
     setIsViewModalOpen(true);
   };
@@ -211,13 +229,14 @@ const Goals: React.FC = () => {
     plugins: {
       tooltip: {
         callbacks: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           label: function (tooltipItem: any) {
             return `${tooltipItem.label}: ${tooltipItem.raw}`;
           },
         },
       },
     },
-    rotation: [45, 45],
+    rotation: 45,
     animation: {
       animateScale: true,
       animateRotate: true,
@@ -269,7 +288,7 @@ const Goals: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => handleOpenModal()}
+          onClick={() => handleOpenModal(null)}
         >
           Add Goal
         </Button>
@@ -470,9 +489,9 @@ const Goals: React.FC = () => {
                   </TableHead>
                   <TableBody>
                     {goal?.length > 0 &&
-                    goal.some((goalItem) =>
-                      goalItem.donations.some(
-                        (donation) =>
+                    goal?.some((goalItem: IGoal) =>
+                      goalItem.donations?.some(
+                        (donation: IDonations) =>
                           donation.donorName?.trim() &&
                           donation.donorEmail?.trim() &&
                           donation.amount !== null &&
@@ -480,8 +499,8 @@ const Goals: React.FC = () => {
                           typeof donation.amount === "number"
                       )
                     ) ? (
-                      goal.map((goalItem, goalIndex) =>
-                        goalItem.donations.map((donation, donationIndex) => {
+                      goal?.map((goalItem:IGoal, goalIndex: string) =>
+                        goalItem.donations?.map((donation:IDonations, donationIndex: string) => {
                           const donorName =
                             donation.donorName?.trim() || "Unknown";
                           const donorEmail =
