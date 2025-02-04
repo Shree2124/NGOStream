@@ -1,46 +1,41 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarMenuSub,
     SidebarMenuSubItem,
 } from "../ui/sidebar";
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+// import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 
 export function AppSidebar() {
-  const items = [
-    {
-      title: "Home",
-      url: "#",
-      icon: Home,
-    },
-    {
-      title: "Inbox",
-      url: "#",
-      icon: Inbox,
-    },
-    {
-      title: "Calendar",
-      url: "#",
-      icon: Calendar,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: Search,
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-    },
-  ];
+  // const items = [
+  //   {
+  //     title: "Home",
+  //     url: "#",
+  //     icon: Home,
+  //   },
+  //   {
+  //     title: "Inbox",
+  //     url: "#",
+  //     icon: Inbox,
+  //   },
+  //   {
+  //     title: "Calendar",
+  //     url: "#",
+  //     icon: Calendar,
+  //   },
+  //   {
+  //     title: "Search",
+  //     url: "#",
+  //     icon: Search,
+  //   },
+  //   {
+  //     title: "Settings",
+  //     url: "#",
+  //     icon: Settings,
+  //   },
+  // ];
 
 
 

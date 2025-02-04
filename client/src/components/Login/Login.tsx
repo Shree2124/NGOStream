@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Box, Grid, TextField, Button, Typography } from "@mui/material";
-import google from "../../assets/svgs/google.svg";
 import login from "../../assets/login.jpg";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../api/api";
 import { fetchUser } from "../../redux/slices/authSlice";
 import { useDispatch } from "react-redux";
@@ -11,33 +10,33 @@ import { AppDispatch } from "../../redux/store";
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [usernameError, setUsernameError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [generalError, setGeneralError] = useState("");
+  // const [usernameError, setUsernameError] = useState("");
+  // const [passwordError, setPasswordError] = useState("");
+  // const [generalError, setGeneralError] = useState("");
   const dispatch: AppDispatch = useDispatch();
 
   const navigate = useNavigate();
 
-  const validateForm = () => {
-    let isValid = true;
+  // const validateForm = () => {
+  //   let isValid = true;
 
-    if (!/^[a-zA-Z0-9]{3,}$/.test(username)) {
-      setUsernameError("Username must be at least 3 alphanumeric characters.");
-      isValid = false;
-    } else {
-      setUsernameError("");
-    }
+  //   if (!/^[a-zA-Z0-9]{3,}$/.test(username)) {
+  //     setUsernameError("Username must be at least 3 alphanumeric characters.");
+  //     isValid = false;
+  //   } else {
+  //     setUsernameError("");
+  //   }
 
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(password)) {
-      setPasswordError(
-        "Password must be at least 6 characters long and include at least 1 letter and 1 number."
-      );
-      isValid = false;
-    } else {
-      setPasswordError("");
-    }
-    return isValid;
-  };
+  //   if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(password)) {
+  //     setPasswordError(
+  //       "Password must be at least 6 characters long and include at least 1 letter and 1 number."
+  //     );
+  //     isValid = false;
+  //   } else {
+  //     setPasswordError("");
+  //   }
+  //   return isValid;
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +50,6 @@ const Login: React.FC = () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error:any) {
         console.log(error);
-        setGeneralError(error.message);
       }
     // }
   };
@@ -118,8 +116,8 @@ const Login: React.FC = () => {
                 margin="normal"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                error={!!usernameError}
-                helperText={usernameError}
+                // error={!!usernameError}
+                // helperText={usernameError}
                 aria-describedby="username-error"
               />
               <TextField
