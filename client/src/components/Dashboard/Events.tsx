@@ -20,6 +20,7 @@ import {
   Divider,
   Checkbox,
   ListItemText,
+  SelectChangeEvent,
 } from "@mui/material";
 import { Add, Edit, Delete, BarChart, Close } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
@@ -47,7 +48,9 @@ ChartJS.register(
 );
 
 interface IMember {
+  _id: string;
   role: string;
+  fullName: string;
 }
 
 interface IParticipant {
@@ -83,7 +86,7 @@ const Events: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [currentEvent, setCurrentEvent] = useState<IEvent | null>(null);
   const [visualModalOpen, setVisualModalOpen] = useState<boolean>(false);
-  const [systemParticipants, setSystemParticipants] = useState([]);
+  const [systemParticipants, setSystemParticipants] = useState<IMember[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [assignedRoles, setAssignedRoles] = useState<string | any>();
   const [name, setName] = useState("");
@@ -155,10 +158,12 @@ const Events: React.FC = () => {
   };
 
   const handleParticipantsChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: SelectChangeEvent<string[]> // Use SelectChangeEvent with string[] as the type
   ) => {
-    const { value } = event.target;
-    setParticipantIds(value ? value.split(",") : []);
+    const { value } = event.target; // value is a string[] now
+    setParticipantIds(Array.isArray(value) ? value : [value]);
+    
+    // Update assigned roles based on the selected participants
     setAssignedRoles((prev: Record<string, string>) =>
       Object.keys(prev)
         .filter((id) => value.includes(id))
@@ -282,7 +287,7 @@ const Events: React.FC = () => {
     setEvents((prev) => prev.filter((e) => e._id !== id));
   };
 
-  const handleShowVisuals = (event: any) => {
+  const handleShowVisuals = (event: IEvent) => {
     setCurrentEvent(event);
     console.log("Event", event);
 
@@ -418,7 +423,7 @@ const Events: React.FC = () => {
                   )}
 
                   <Box>
-                    {event?.status === "Upcoming" && (
+                    {event?.status?.toLowerCase() === "upcoming" && (
                       <Tooltip title="Edit">
                         <IconButton
                           color="primary"
@@ -553,17 +558,17 @@ const Events: React.FC = () => {
                 selected
                   .map((id) => {
                     const participant = systemParticipants?.find(
-                      (member) =>
+                      (member: IMember) =>
                         member._id === id && member?.role !== "Attendee"
                     );
-                    return participant ? participant.fullName : "";
+                    return participant ? participant?.fullName : "";
                   })
                   .join(",")
               }
             >
-              {systemParticipants?.map((member) => (
+              {systemParticipants?.map((member:IMember) => (
                 <MenuItem key={member._id} value={member._id}>
-                  <Checkbox checked={participantIds.includes(member._id)} />
+                  <Checkbox checked={participantIds?.includes(member._id)} />
                   <ListItemText primary={member.fullName} />
                 </MenuItem>
               ))}
