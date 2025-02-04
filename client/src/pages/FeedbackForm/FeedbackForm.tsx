@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import {
   Card,
   CardContent,
@@ -8,15 +8,7 @@ import {
   CardTitle,
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../../components/ui/Form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../components/ui/Form";
 import { Textarea } from "../../components/ui/TextArea";
 import { RadioGroup, RadioGroupItem } from "../../components/ui/RadioGroup";
 import { Slider } from "../../components/ui/Slider";
@@ -37,12 +29,7 @@ interface FeedbackFormData {
 }
 
 const FeedbackForm: React.FC = () => {
-  const [eventDetails, setEventDetails] = useState<EventDetails | null>({
-    id: "EVENT_001",
-    name: "Community Sustainability Workshop",
-    date: "2024-03-15",
-    location: "City Community Center",
-  });
+  const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,46 +40,46 @@ const FeedbackForm: React.FC = () => {
       suggestions: "",
       wouldRecommend: "Maybe",
     },
-    // Manual validation
     mode: "onBlur",
   });
 
-  //   useEffect(() => {
-  //     // Function to fetch event details
-  //     const fetchEventDetails = async () => {
-  //       try {
-  //         // Extract event ID from URL
-  //         const urlParams = new URLSearchParams(window.location.search);
-  //         const eventId = urlParams.get('eventId');
+  // Fetch event details
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      setIsLoading(true);
+      try {
+        // Extract event ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('eventId');
 
-  //         if (!eventId) {
-  //           throw new Error('No event ID provided');
-  //         }
+        if (!eventId) {
+          throw new Error('No event ID provided');
+        }
 
-  //         // Simulated API call - replace with your actual backend endpoint
-  //         const response = await fetch(`/api/events/${eventId}`);
+        // Simulated API call - replace with your actual backend endpoint
+        const response = await fetch(`/api/events/${eventId}`);
 
-  //         if (!response.ok) {
-  //           throw new Error('Failed to fetch event details');
-  //         }
+        if (!response.ok) {
+          throw new Error('Failed to fetch event details');
+        }
 
-  //         const data: EventDetails = await response.json();
-  //         setEventDetails(data);
-  //         setIsLoading(false);
-  //       } catch (error) {
-  //         console.error('Error fetching event details:', error);
-  //         setIsLoading(false);
-  //       }
-  //     };
+        const data: EventDetails = await response.json();
+        setEventDetails(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching event details:', error);
+        setIsLoading(false);
+      }
+    };
 
-  //     fetchEventDetails();
-  //   }, []);
+    fetchEventDetails();
+  }, []);
 
   // Handle form submission
   const onSubmit = async (data: FeedbackFormData) => {
     if (!eventDetails) return;
 
-    // Validation
+    // Validation for overallSatisfaction
     if (data.overallSatisfaction < 1 || data.overallSatisfaction > 5) {
       form.setError("overallSatisfaction", {
         type: "manual",
@@ -118,7 +105,7 @@ const FeedbackForm: React.FC = () => {
   // Loading state
   if (isLoading) {
     return (
-      <Card className="max-w-md mx-auto mt-10 text-center">
+      <Card className="mx-auto mt-10 max-w-md text-center">
         <CardHeader>
           <CardTitle>Loading Event Details...</CardTitle>
         </CardHeader>
@@ -128,7 +115,7 @@ const FeedbackForm: React.FC = () => {
 
   if (!eventDetails) {
     return (
-      <Card className="max-w-md mx-auto mt-10 text-center">
+      <Card className="mx-auto mt-10 max-w-md text-center">
         <CardHeader>
           <CardTitle>Error</CardTitle>
           <CardDescription>
@@ -142,7 +129,7 @@ const FeedbackForm: React.FC = () => {
   // Submission confirmation
   if (isSubmitted) {
     return (
-      <Card className="max-w-md mx-auto mt-10 text-center">
+      <Card className="mx-auto mt-10 max-w-md text-center">
         <CardHeader>
           <CardTitle>Thank You!</CardTitle>
           <CardDescription>
@@ -159,7 +146,7 @@ const FeedbackForm: React.FC = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
+    <div className="flex justify-center items-center bg-gray-50 p-4 min-h-screen">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="text-2xl text-primary">
@@ -182,7 +169,7 @@ const FeedbackForm: React.FC = () => {
                     <FormControl>
                       <div className="flex items-center space-x-4">
                         <Slider
-                          defaultValue={[field.value]}
+                          value={[field.value]}
                           min={1}
                           max={5}
                           step={1}
@@ -217,8 +204,8 @@ const FeedbackForm: React.FC = () => {
                     <FormLabel>Would You Recommend This Event?</FormLabel>
                     <FormControl>
                       <RadioGroup
+                        value={field.value}
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
                         className="flex space-x-4"
                       >
                         <FormItem className="flex items-center space-x-2">
