@@ -31,7 +31,7 @@ const DonationDetails: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [showSearch, setShowSearch] = useState(false);
-  const [donationData, setDonationData] = useState<any>([]);
+  const [donationData, setDonationData] = useState<IDonation[]>([]);
 
   const filteredDonations = donationData.filter(
     (donation: IDonation) =>
@@ -56,9 +56,12 @@ const DonationDetails: React.FC = () => {
     fetchDetails();
   }, []);
 
-  const handleChangePage = (newPage: number) => {
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    console.log(event?.type);
+    
     setPage(newPage);
   };
+  
 
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
