@@ -374,7 +374,7 @@ const Events: React.FC = () => {
 
       <Grid container spacing={3}>
         {filteredEvents?.map((event) => (
-          <Grid item xs={12} sm={6} md={4} key={event.id}>
+          <Grid item xs={12} sm={6} md={4} key={event._id}>
             <Card>
               <CardContent>
                 <Typography variant="h6">{event.name}</Typography>
@@ -431,7 +431,7 @@ const Events: React.FC = () => {
                     <Tooltip title="Delete">
                       <IconButton
                         color="error"
-                        onClick={() => handleDeleteEvent(event.id)}
+                        onClick={() => handleDeleteEvent(event._id)}
                       >
                         <Delete />
                       </IconButton>
