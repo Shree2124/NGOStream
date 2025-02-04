@@ -256,7 +256,7 @@ const Events: React.FC = () => {
 
         setEvents((prev) =>
           prev.map((event) =>
-            event.id === currentEvent.id ? res.data.data : event
+            event._id === currentEvent._id ? res.data.data : event
           )
         );
       } else {
@@ -279,7 +279,7 @@ const Events: React.FC = () => {
   };
 
   const handleDeleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+    setEvents((prev) => prev.filter((e) => e._id !== id));
   };
 
   const handleShowVisuals = (event: any) => {
@@ -406,7 +406,7 @@ const Events: React.FC = () => {
                 <Divider sx={{ my: 2 }} />
 
                 <Box display="flex" justifyContent="space-evenly">
-                  {event?.status === "Completed" && (
+                  {event?.status?.toLowerCase() === "completed" && (
                     <Tooltip title="Show Visuals">
                       <IconButton
                         color="primary"
