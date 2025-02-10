@@ -21,9 +21,8 @@ export interface IEvent extends Document {
   };
   donations: mongoose.Types.ObjectId[];
   feedback: {
-    participantId: mongoose.Types.ObjectId;
     feedbackText: string;
     rating: number;
-    date: Date;
+    date?: Date;
   }[];
 }

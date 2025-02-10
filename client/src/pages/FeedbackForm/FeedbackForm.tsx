@@ -8,16 +8,26 @@ import {
   CardTitle,
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../components/ui/Form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../../components/ui/Form";
 import { Textarea } from "../../components/ui/TextArea";
 import { RadioGroup, RadioGroupItem } from "../../components/ui/RadioGroup";
 import { Slider } from "../../components/ui/Slider";
 import { Star } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { api } from "../../api/api";
+import { SkipPrevious } from "@mui/icons-material";
 
 interface EventDetails {
   id: string;
   name: string;
-  date: string;
+  startDate: string;
   location: string;
 }
 
@@ -32,6 +42,9 @@ const FeedbackForm: React.FC = () => {
   const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { eventId } = useParams();
+  
+  const navigate = useNavigate()
 
   // Initialize the form
   const form = useForm<FeedbackFormData>({
@@ -50,24 +63,29 @@ const FeedbackForm: React.FC = () => {
       try {
         // Extract event ID from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const eventId = urlParams.get('eventId');
+        console.log(urlParams);
+        // const eventId = urlParams.get('eventId');
+
+        console.log(eventId);
 
         if (!eventId) {
-          throw new Error('No event ID provided');
+          throw new Error("No event ID provided");
         }
 
         // Simulated API call - replace with your actual backend endpoint
-        const response = await fetch(`/api/events/${eventId}`);
+        const response = await api.get(`/event/${eventId}`);
+        console.log(response);
+        
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch event details');
-        }
+        // if (!response.ok) {
+        //   throw new Error("Failed to fetch event details");
+        // }
 
-        const data: EventDetails = await response.json();
+        const data: EventDetails = await response.data.data;
         setEventDetails(data);
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching event details:', error);
+        console.error("Error fetching event details:", error);
         setIsLoading(false);
       }
     };
@@ -89,18 +107,22 @@ const FeedbackForm: React.FC = () => {
     }
 
     try {
-      const submissionData = {
-        ...data,
-        eventId: eventDetails.id,
-      };
-
+      const submissionData = await api.post(`/event/${eventId}`,
+        {
+          rating: data.overallSatisfaction,
+          feedbackText: data.suggestions
+        }
+      )
       console.log("Feedback Submitted:", submissionData);
-
       setIsSubmitted(true);
     } catch (error) {
       console.error("Submission failed", error);
     }
   };
+
+  const handleGoBack = ()=> {
+    navigate("/events")
+  }
 
   // Loading state
   if (isLoading) {
@@ -136,9 +158,12 @@ const FeedbackForm: React.FC = () => {
             Your feedback for "{eventDetails.name}" has been submitted.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Button onClick={() => setIsSubmitted(false)} className="w-full">
             Submit Another Feedback
+          </Button>
+          <Button onClick={() => handleGoBack()} className="bg-white hover:bg-[#D9D9D9] w-full text-black">
+            <SkipPrevious></SkipPrevious>Back
           </Button>
         </CardContent>
       </Card>
@@ -149,11 +174,11 @@ const FeedbackForm: React.FC = () => {
     <div className="flex justify-center items-center bg-gray-50 p-4 min-h-screen">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-2xl text-primary">
+          <CardTitle className="text-primary text-2xl">
             Feedback for {eventDetails.name}
           </CardTitle>
           <CardDescription>
-            {`Event Date: ${eventDetails.date} | Location: ${eventDetails.location}`}
+            {`Event Date: ${new Date(eventDetails.startDate).toLocaleDateString()} | Location: ${eventDetails.location}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -180,7 +205,7 @@ const FeedbackForm: React.FC = () => {
                           {[...Array(field.value)].map((_, i) => (
                             <Star
                               key={i}
-                              className="text-yellow-500 fill-current"
+                              className="fill-current text-yellow-500"
                             />
                           ))}
                         </div>

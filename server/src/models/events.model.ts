@@ -47,11 +47,6 @@ const EventSchema: Schema = new Schema<IEvent>(
     ],
     feedback: [
       {
-        participantId: {
-          type: mongoose.Types.ObjectId,
-          ref: "Member",
-          required: true,
-        },
         feedbackText: { type: String },
         rating: { type: Number, min: 1, max: 5, validate: Number.isInteger },
         date: { type: Date, default: Date.now },

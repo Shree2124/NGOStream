@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Card,
+  // Card,
   CardContent,
   CircularProgress,
   Container,
@@ -130,6 +130,12 @@ export const Events: React.FC = () => {
           gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }}
           gap={3}
           mt={4}
+          sx={{
+            padding: 2,
+            borderRadius: 3,
+            backgroundColor: "#f7f7f7",
+            boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+          }}
         >
           {filteredEvents.map((event: Event) => (
             <motion.div
@@ -138,53 +144,89 @@ export const Events: React.FC = () => {
               animate="visible"
               variants={cardVariants}
               transition={{ duration: 0.5, delay: Math.random() * 0.5 }}
+              style={{
+                padding: 2,
+                borderRadius: 3,
+                backgroundColor: "#fff",
+                boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+              }}
             >
-              <Card elevation={3} sx={{ padding: 2, borderRadius: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {event.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Start Date:</strong>{" "}
-                    {new Date(event.startDate).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>End Date:</strong>{" "}
-                    {new Date(event.endDate).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Location:</strong> {event.location}
-                  </Typography>
-                  <Typography variant="body2" mt={2}>
-                    <strong>Description:</strong> {event.description}
-                  </Typography>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mt={2}
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ fontSize: 18, fontWeight: 600 }}
+                >
+                  {event.name}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: 14 }}
+                >
+                  <strong>Start Date:</strong>{" "}
+                  {new Date(event.startDate).toLocaleDateString()}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: 14 }}
+                >
+                  <strong>End Date:</strong>{" "}
+                  {new Date(event.endDate).toLocaleDateString()}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: 14 }}
+                >
+                  <strong>Location:</strong> {event.location}
+                </Typography>
+                <Typography variant="body2" mt={2} sx={{ fontSize: 14 }}>
+                  <strong>Description:</strong> {event.description}
+                </Typography>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mt={2}
+                  sx={{
+                    padding: 2,
+                    backgroundColor: "#f7f7f7",
+                    borderRadius: 3,
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    sx={{ marginRight: 1 }}
+                    onClick={() => handleViewDetails(event)}
                   >
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="small"
-                      onClick={() => handleViewDetails(event)}
-                    >
-                      View Details
-                    </Button>
-                    {event.status === "Upcoming" && (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        onClick={() => handleRegister(event._id)}
-                      >
-                        Register
-                      </Button>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
+                    View Details
+                  </Button>
+                  {event.status === "Upcoming" && (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    sx={{ marginRight: 1 }}
+                    onClick={() => handleRegister(event._id)}
+                  >
+                    Register
+                  </Button>
+                  )}
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    sx={{ backgroundColor: "#4CAF50", color: "#fff" }}
+                    onClick={() => navigate(`/feedback/${event._id}`)}
+                  >
+                    Give Feedback
+                  </Button>
+                </Box>
+              </CardContent>
             </motion.div>
           ))}
         </Box>

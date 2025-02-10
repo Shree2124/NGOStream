@@ -5,6 +5,8 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
 import { sendRegistrationMail } from "../utils/sendMail";
+import { isValidObjectId } from "mongoose";
+import { IEvent } from "../types/event.types";
 
 const createEvent = asyncHandler(async (req: any, res: Response) => {
   const {
@@ -319,4 +321,43 @@ export const registerForEvent = asyncHandler(
   }
 );
 
-export { createEvent, getAllEvents, editEvent };
+const getEvent = asyncHandler(async (req: any, res: Response) => {
+  const { eventId } = req.params;
+
+  if (!isValidObjectId(eventId))
+    throw new ErrorResponse(400, "Invalid event id");
+
+  const event = await Event.findById(eventId);
+
+  console.log(event);
+  
+
+  res
+    .status(200)
+    .json(new SuccessResponse(200, event, "Event fetched successfully"));
+});
+
+const addEventFeedback = asyncHandler(async (req: any, res: Response) => {
+  const { eventId } = req.params;
+  const { rating, feedbackText } = req.body;
+
+  if (!isValidObjectId(eventId))
+    throw new ErrorResponse(400, "Invalid event id");
+
+  if (!rating || !feedbackText) throw new ErrorResponse(400, "rating and feedback is required");
+
+  const event = await Event.findById(eventId);
+
+  event?.feedback.push(
+    {
+      feedbackText: feedbackText,
+      rating: rating,
+    }
+  )
+
+  await event?.save();
+
+  res.status(200).json(new SuccessResponse(200, "Event feedback added successfully"));
+});
+
+export { createEvent, getAllEvents, editEvent, getEvent, addEventFeedback };

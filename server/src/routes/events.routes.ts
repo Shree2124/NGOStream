@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { createEvent, editEvent, getAllEvents, registerForEvent } from "../controllers/event.controller";
+import { createEvent, editEvent, getAllEvents, registerForEvent, getEvent, addEventFeedback } from "../controllers/event.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
 const router = Router()
+
+router.route("/:eventId").get(getEvent)
+router.route("/:eventId").post(addEventFeedback)
 
 router.use(verifyJWT)
 router.route("/create").post(createEvent)
