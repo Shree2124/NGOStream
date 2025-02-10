@@ -8,6 +8,7 @@ import EventsPage from "./Dashboard/EventsPage";
 import DonorFormPage from "./Forms/DonorFormPage";
 import { EventsPage as EventFrontPage } from "./Events/EventsPage";
 import FeedbackForm from "./FeedbackForm/FeedbackForm";
+import SchemesPage from "./Dashboard/SchemesPage";
 
 export {
   LoginPage,
@@ -20,4 +21,5 @@ export {
   DonorFormPage,
   EventFrontPage,
   FeedbackForm,
+  SchemesPage
 };

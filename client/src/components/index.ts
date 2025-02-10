@@ -14,6 +14,7 @@ import DonorForm from "./forms/donorForm";
 import { Events as EventsComponent } from "./Events/Events";
 import { SidebarProvider, SidebarTrigger } from "./ui/sidebar"
 import EventRegistrationForm from "./forms/eventRegistrationForm";
+import Schemes from "./Dashboard/Schemes";
 
 export {
   Login,
@@ -32,5 +33,6 @@ export {
   EventsComponent,
   SidebarProvider, 
   SidebarTrigger,
-  EventRegistrationForm
+  EventRegistrationForm,
+  Schemes
 };

@@ -11,6 +11,7 @@ import {
   DonorFormPage,
   EventFrontPage,
   FeedbackForm,
+  SchemesPage,
 } from "./pages";
 import {
   AuthLayout,
@@ -62,6 +63,7 @@ const App: React.FC = () => {
                       />
                       <Route path="/events" element={<EventsPage />} />
                       <Route path="/goals" element={<GoalsPage />} />
+                      <Route path="/schemes" element={<SchemesPage />} />
                     </Routes>
                   </DashboardLayout>
                 </SidebarProvider>

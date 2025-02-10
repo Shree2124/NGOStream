@@ -158,7 +158,7 @@ const Events: React.FC = () => {
   };
 
   const handleParticipantsChange = (
-    event: SelectChangeEvent<string[]> // Use SelectChangeEvent with string[] as the type
+    event: SelectChangeEvent<string[]>
   ) => {
     const { value } = event.target; // value is a string[] now
     setParticipantIds(Array.isArray(value) ? value : [value]);

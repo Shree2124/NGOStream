@@ -57,14 +57,14 @@
 //   const toggleSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
 
 //   return (
-//     <div className="flex h-screen bg-gray-100">
+//     <div className="flex bg-gray-100 h-screen">
 //       <div
 //         className={`${
 //           isSidebarOpen ? "w-64" : "w-20"
 //         } hidden lg:flex flex-col bg-gradient-to-b from-blue-700 to-blue-800 text-white shadow-lg transition-all duration-300`}
 //       >
 //         <div
-//           className="p-6 text-center font-bold text-xl cursor-pointer tracking-wide"
+//           className="p-6 font-bold text-xl text-center tracking-wide cursor-pointer"
 //           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
 //         >
 //           {isSidebarOpen ? "NGOStream" : "NGO"}
@@ -76,14 +76,14 @@
 //                 <SidebarMenuItem
 //                   to={tab.path}
 //                   icon={tab.icon}
-//                   className="hover:bg-blue-700 hover:text-white transition-colors flex items-center gap-4"
+//                   className="flex items-center gap-4 hover:bg-blue-700 hover:text-white transition-colors"
 //                 >
 //                   {isSidebarOpen && tab.name}
 //                 </SidebarMenuItem>
 //               ) : (
 //                 <SidebarMenuSub>
 //                   <div
-//                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-blue-700 hover:text-white transition-colors"
+//                     className="flex justify-between items-center hover:bg-blue-700 px-4 py-3 hover:text-white transition-colors cursor-pointer"
 //                     onClick={() => toggleMenu(tab.name)}
 //                   >
 //                     <div className="flex items-center space-x-3">
@@ -98,13 +98,13 @@
 //                       ))}
 //                   </div>
 //                   {expandedMenus.includes(tab.name) && (
-//                     <div className="pl-8 bg-blue-700/20">
+//                     <div className="bg-blue-700/20 pl-8">
 //                       {tab.children.map((subTab) => (
 //                         <SidebarMenuItem
 //                           key={subTab.name}
 //                           to={subTab.path}
 //                           icon={subTab.icon}
-//                           className="hover:bg-blue-600 hover:text-white transition-colors flex items-center gap-4"
+//                           className="flex items-center gap-4 hover:bg-blue-600 hover:text-white transition-colors"
 //                         >
 //                           {subTab.name}
 //                         </SidebarMenuItem>
@@ -120,7 +120,7 @@
 //           <SidebarMenuItem
 //             to="#"
 //             icon={<LogOut />}
-//             className="hover:bg-red-600 hover:text-white transition-colors flex items-center gap-4"
+//             className="flex items-center gap-4 hover:bg-red-600 hover:text-white transition-colors"
 //           >
 //             {isSidebarOpen && "Logout"}
 //           </SidebarMenuItem>
@@ -134,7 +134,7 @@
 //       <div
 //         className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-blue-700 to-blue-800 text-white shadow-lg w-64 transform transition-transform duration-300 lg:hidden ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
 //       >
-//         <div className="p-6 text-center font-bold text-xl tracking-wide">
+//         <div className="p-6 font-bold text-xl text-center tracking-wide">
 //           NGOStream
 //         </div>
 //         <SidebarMenu>
@@ -144,14 +144,14 @@
 //                 <SidebarMenuItem
 //                   to={tab.path}
 //                   icon={tab.icon}
-//                   className="hover:bg-blue-700 hover:text-white transition-colors flex items-center gap-4"
+//                   className="flex items-center gap-4 hover:bg-blue-700 hover:text-white transition-colors"
 //                 >
 //                   {tab.name}
 //                 </SidebarMenuItem>
 //               ) : (
 //                 <SidebarMenuSub>
 //                   <div
-//                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-blue-700 hover:text-white transition-colors"
+//                     className="flex justify-between items-center hover:bg-blue-700 px-4 py-3 hover:text-white transition-colors cursor-pointer"
 //                     onClick={() => toggleMenu(tab.name)}
 //                   >
 //                     <div className="flex items-center space-x-3">
@@ -165,13 +165,13 @@
 //                     )}
 //                   </div>
 //                   {expandedMenus.includes(tab.name) && (
-//                     <div className="pl-8 bg-blue-700/20">
+//                     <div className="bg-blue-700/20 pl-8">
 //                       {tab.children.map((subTab) => (
 //                         <SidebarMenuItem
 //                           key={subTab.name}
 //                           to={subTab.path}
 //                           icon={subTab.icon}
-//                           className="hover:bg-blue-600 hover:text-white transition-colors flex items-center gap-4"
+//                           className="flex items-center gap-4 hover:bg-blue-600 hover:text-white transition-colors"
 //                         >
 //                           {subTab.name}
 //                         </SidebarMenuItem>
@@ -187,7 +187,7 @@
 //           <SidebarMenuItem
 //             to="#"
 //             icon={<LogOut />}
-//             className="hover:bg-red-600 hover:text-white transition-colors flex items-center gap-4"
+//             className="flex items-center gap-4 hover:bg-red-600 hover:text-white transition-colors"
 //           >
 //             Logout
 //           </SidebarMenuItem>
@@ -195,9 +195,9 @@
 //       </div>
 
 //       <div className="flex-1 bg-gray-50 overflow-y-auto">
-//         <div className="lg:hidden fixed top-4 left-4 z-50">
+//         <div className="lg:hidden top-4 left-4 z-50 fixed">
 //           <button
-//             className="p-2 bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 focus:outline-none"
+//             className="bg-blue-600 hover:bg-blue-700 shadow-md p-2 rounded-md focus:outline-none text-white"
 //             onClick={toggleSidebar}
 //           >
 //             {isMobileSidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -232,6 +232,7 @@ import {
   VolunteerActivism,
   Event,
   Flag,
+  AccountBalance,
 } from "@mui/icons-material";
 import { ReactNode, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
@@ -258,6 +259,8 @@ const fitNotesTabs: Tab[] = [
   },
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
   { name: "Campaign", path: "/dashboard/goals", icon: <Flag /> },
+  // mui icon for schemes
+  { name: "Schemes", path: "/dashboard/schemes", icon: <AccountBalance /> },
 ];
 
 const Link = styled(RouterLink)(({ theme }) => ({
