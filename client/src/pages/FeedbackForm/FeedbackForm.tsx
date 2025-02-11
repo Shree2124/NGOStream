@@ -23,6 +23,7 @@ import { Star } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../api/api";
 import { SkipPrevious } from "@mui/icons-material";
+import toast from "react-hot-toast";
 
 interface EventDetails {
   id: string;
@@ -43,8 +44,8 @@ const FeedbackForm: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { eventId } = useParams();
-  
-  const navigate = useNavigate()
+
+  const navigate = useNavigate();
 
   // Initialize the form
   const form = useForm<FeedbackFormData>({
@@ -75,7 +76,6 @@ const FeedbackForm: React.FC = () => {
         // Simulated API call - replace with your actual backend endpoint
         const response = await api.get(`/event/${eventId}`);
         console.log(response);
-        
 
         // if (!response.ok) {
         //   throw new Error("Failed to fetch event details");
@@ -107,22 +107,22 @@ const FeedbackForm: React.FC = () => {
     }
 
     try {
-      const submissionData = await api.post(`/event/${eventId}`,
-        {
-          rating: data.overallSatisfaction,
-          feedbackText: data.suggestions
-        }
-      )
+      const submissionData = await api.post(`/event/${eventId}`, {
+        rating: data.overallSatisfaction,
+        feedbackText: data.suggestions,
+      });
       console.log("Feedback Submitted:", submissionData);
       setIsSubmitted(true);
+      toast.success("Feedback submitted successfully!");
     } catch (error) {
+      toast.error("Something went wrong while submitting the feedback!");
       console.error("Submission failed", error);
     }
   };
 
-  const handleGoBack = ()=> {
-    navigate("/events")
-  }
+  const handleGoBack = () => {
+    navigate("/events");
+  };
 
   // Loading state
   if (isLoading) {
@@ -162,7 +162,10 @@ const FeedbackForm: React.FC = () => {
           <Button onClick={() => setIsSubmitted(false)} className="w-full">
             Submit Another Feedback
           </Button>
-          <Button onClick={() => handleGoBack()} className="bg-white hover:bg-[#D9D9D9] w-full text-black">
+          <Button
+            onClick={() => handleGoBack()}
+            className="bg-white hover:bg-[#D9D9D9] w-full text-black"
+          >
             <SkipPrevious></SkipPrevious>Back
           </Button>
         </CardContent>
@@ -178,7 +181,9 @@ const FeedbackForm: React.FC = () => {
             Feedback for {eventDetails.name}
           </CardTitle>
           <CardDescription>
-            {`Event Date: ${new Date(eventDetails.startDate).toLocaleDateString()} | Location: ${eventDetails.location}`}
+            {`Event Date: ${new Date(
+              eventDetails.startDate
+            ).toLocaleDateString()} | Location: ${eventDetails.location}`}
           </CardDescription>
         </CardHeader>
         <CardContent>

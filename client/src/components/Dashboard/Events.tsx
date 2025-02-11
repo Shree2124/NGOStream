@@ -157,12 +157,10 @@ const Events: React.FC = () => {
     }));
   };
 
-  const handleParticipantsChange = (
-    event: SelectChangeEvent<string[]>
-  ) => {
+  const handleParticipantsChange = (event: SelectChangeEvent<string[]>) => {
     const { value } = event.target; // value is a string[] now
     setParticipantIds(Array.isArray(value) ? value : [value]);
-    
+
     // Update assigned roles based on the selected participants
     setAssignedRoles((prev: Record<string, string>) =>
       Object.keys(prev)
@@ -566,7 +564,7 @@ const Events: React.FC = () => {
                   .join(",")
               }
             >
-              {systemParticipants?.map((member:IMember) => (
+              {systemParticipants?.map((member: IMember) => (
                 <MenuItem key={member._id} value={member._id}>
                   <Checkbox checked={participantIds?.includes(member._id)} />
                   <ListItemText primary={member.fullName} />
