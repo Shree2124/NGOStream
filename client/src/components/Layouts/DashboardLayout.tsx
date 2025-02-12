@@ -245,7 +245,7 @@ const fontFamily = "'Poppins', sans-serif";
 interface Tab {
   name: string;
   path: string;
-  icon: JSX.Element;
+  icon?: JSX.Element;
   subTabs?: Tab[];
 }
 
@@ -261,8 +261,8 @@ const navTabs: Tab[] = [
     path: "/dashboard/donation-details",
     icon: <VolunteerActivism />,
     subTabs: [
-      { name: "In-Kind", path: "/inkind", icon: <VolunteerActivism /> },
-      { name: "Monetary", path: "/monetary", icon: <VolunteerActivism /> },
+      { name: "In-Kind", path: "/inkind" },
+      { name: "Monetary", path: "/monetary" },
     ],
   },
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
@@ -280,8 +280,8 @@ const Link = styled(RouterLink)(({ theme }) => ({
   fontFamily: fontFamily,
   transition: "all 0.3s ease-in-out",
   "&:hover": {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.background.paper,
+    backgroundColor:" rgba(0, 0, 0, 0.1)",
+    // color: "",
   },
 }));
 
@@ -330,12 +330,13 @@ const SideBar: React.FC<{w: string}> = ({w}) => {
                   onClick={() => toggleDropdown(tab.name)}
                   sx={{
                     display: "flex",
-                    justifyContent: "space-evenly",
+                    justifyContent: "space-between",
                     width: "100%",
                     textAlign: "left",
                     color: "black",
+                    padding: "0.8rem 1rem",
                     bgcolor: openTabs[tab.name] ? "rgba(0, 0, 0, 0.1)" : "transparent",
-                    "&:hover": { bgcolor: "rgba(0, 0, 0, 0.2)" },
+                    "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
                   }}
                 >
                   <Stack direction="row" alignItems="center" spacing="1rem">

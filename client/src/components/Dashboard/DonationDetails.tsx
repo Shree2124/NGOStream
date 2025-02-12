@@ -218,7 +218,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                 </>
               )}
               <TableCell>Campaign</TableCell>
-              {type === "Monetary" && <TableCell>Actions</TableCell>}
+              {type === "In-Kind" && <TableCell>Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
