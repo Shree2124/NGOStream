@@ -12,6 +12,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { generatePDFReceipt } from "../utils/receiptCreation";
 import uploadOnCloudinary from "../utils/cloudinary";
 import { sendReceiptEmail } from "../utils/sendMail";
+import { isValidObjectId } from "mongoose";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-12-18.acacia",
@@ -170,12 +171,12 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         "Session created successfully"
       )
     );
-  } else if(donationType === "In-Kind"){
-    res.status(200).json(new SuccessResponse(
-      200,
-      donation,
-      "Donation created successfully"
-    ))
+  } else if (donationType === "In-Kind") {
+    res
+      .status(200)
+      .json(
+        new SuccessResponse(200, donation, "Donation created successfully")
+      );
   }
 };
 
@@ -271,68 +272,69 @@ export const handlePaymentSuccess = asyncHandler(
 
 export const getDonationInformation = asyncHandler(
   async (req: any, res: Response) => {
-    const {type} = req.params
+    const { type } = req.params;
 
-    console.log(type)
+    console.log(type);
 
-    if(type !== "Monetary" && type !== "In-Kind") throw new ErrorResponse(400, "Not a valid type")
+    if (type !== "Monetary" && type !== "In-Kind")
+      throw new ErrorResponse(400, "Not a valid type");
 
-      const donationInfo = await Donation.aggregate([
-        {
-          $match: { donationType: type }, 
+    const donationInfo = await Donation.aggregate([
+      {
+        $match: { donationType: type },
+      },
+      {
+        $lookup: {
+          from: "donors",
+          localField: "donorId",
+          foreignField: "_id",
+          as: "donorInfo",
         },
-        {
-          $lookup: {
-            from: "donors",
-            localField: "donorId",
-            foreignField: "_id",
-            as: "donorInfo",
-          },
+      },
+      {
+        $lookup: {
+          from: "goals",
+          localField: "goalId",
+          foreignField: "_id",
+          as: "goalInfo",
         },
-        {
-          $lookup: {
-            from: "goals",
-            localField: "goalId",
-            foreignField: "_id",
-            as: "goalInfo",
-          },
+      },
+      {
+        $lookup: {
+          from: "events",
+          localField: "eventId",
+          foreignField: "_id",
+          as: "eventInfo",
         },
-        {
-          $lookup: {
-            from: "events",
-            localField: "eventId",
-            foreignField: "_id",
-            as: "eventInfo",
-          },
+      },
+      {
+        $project: {
+          _id: 1,
+          donationType: 1,
+          stripeSessionId: 1,
+          stripePaymentId: 1,
+          donorInfo: { $arrayElemAt: ["$donorInfo", 0] },
+          goalInfo: { $arrayElemAt: ["$goalInfo", 0] },
+          createdAt: 1,
+          updatedAt: 1,
+          ...(type === "Monetary"
+            ? {
+                amount: "$monetaryDetails.amount",
+                currency: "$monetaryDetails.currency",
+                paymentStatus: "$monetaryDetails.paymentStatus",
+                paymentMethod: "$monetaryDetails.paymentMethod",
+                monetaryDetails: 1,
+              }
+            : {
+                estimatedValue: "$inKindDetails.estimatedValue",
+                currency: "$inKindDetails.currency",
+                status: "$inKindDetails.status",
+                itemDetails: "$inKindDetails.items",
+                inKindDetails: 1,
+              }),
         },
-        {
-          $project: {
-            _id: 1,
-            donationType: 1,
-            stripeSessionId: 1,
-            stripePaymentId: 1,
-            donorInfo: { $arrayElemAt: ["$donorInfo", 0] },
-            goalInfo: { $arrayElemAt: ["$goalInfo", 0] },
-            createdAt: 1,
-            updatedAt: 1,
-            ...(type === "Monetary"
-              ? {
-                  amount: "$monetaryDetails.amount",
-                  currency: "$monetaryDetails.currency",
-                  paymentStatus: "$monetaryDetails.paymentStatus",
-                  paymentMethod: "$monetaryDetails.paymentMethod",
-                  monetaryDetails: 1,
-                }
-              : {
-                  estimatedValue: "$inKindDetails.estimatedValue",
-                  currency: "$inKindDetails.currency",
-                  status: "$inKindDetails.status",
-                  itemDetails: "$inKindDetails.items",
-                  inKindDetails: 1,
-                }),
-          },
-        },
-      ]);
+      },
+    ]);
 
     console.log(donationInfo);
 
@@ -342,5 +344,30 @@ export const getDonationInformation = asyncHandler(
     return res
       .status(200)
       .json(new SuccessResponse(200, donationInfo, "Donations found"));
+  }
+);
+
+export const updateDonationStatus = asyncHandler(
+  async (req: any, res: Response) => {
+    const { donationId, status } = req.body;
+    if (!isValidObjectId(donationId))
+      throw new ErrorResponse(400, "Invalid donation id");
+
+    if (!status) throw new ErrorResponse(400, "Status is required");
+
+    const donation = await Donation.findById(donationId);
+
+    if (!donation) throw new ErrorResponse(400, "Donation not found");
+
+    if (status !== "Pending" && status !== "Donated")
+      throw new ErrorResponse(400, "Invalid status");
+
+    if (donation.inKindDetails) donation.inKindDetails.status = status;
+
+    await donation.save();
+
+    return res
+      .status(200)
+      .json(new SuccessResponse(200, donation, "Donation status updated"));
   }
 );

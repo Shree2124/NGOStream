@@ -14,10 +14,17 @@ import {
   Box,
   Typography,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { api } from "../../api/api";
 import { Edit } from "@mui/icons-material";
+import { Button } from "../ui/button";
 
 interface IDonation {
   _id: string;
@@ -41,7 +48,6 @@ interface IDonation {
   }; // Additional details for In-Kind donations
 }
 
-
 interface IDonationDetailsProps {
   type: string;
 }
@@ -53,6 +59,22 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [donationData, setDonationData] = useState<IDonation[]>([]);
   const [isValidType, setIsValidType] = useState(true);
+  const [selectedDonation, setSelectedDonation] = useState<IDonation | null>(
+    null
+  );
+  const [editModal, setEditModal] = useState<boolean>(false);
+  const [selectedValue, setSelectedValue] = useState<string | null>(
+    selectedDonation?.inKindDetails?.status || "Pending"
+  );
+
+  const fetchDetails = async () => {
+    try {
+      const res = await api.get(`/donation/get-donation-info/${type}`);
+      setDonationData(res.data.data);
+    } catch (error) {
+      console.error("Error fetching donation data:", error);
+    }
+  };
 
   useEffect(() => {
     if (type !== "Monetary" && type !== "In-Kind") {
@@ -60,14 +82,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       return;
     }
 
-    const fetchDetails = async () => {
-      try {
-        const res = await api.get(`/donation/get-donation-info/${type}`);
-        setDonationData(res.data.data);
-      } catch (error) {
-        console.error("Error fetching donation data:", error);
-      }
-    };
+    
 
     fetchDetails();
   }, [type]);
@@ -92,7 +107,10 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       donation.goalInfo.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
     console.log(event?.target);
     setPage(newPage);
   };
@@ -102,6 +120,34 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleEdit = (donation: IDonation) => {
+    setSelectedDonation(donation);
+    setEditModal(true);
+  };
+
+  const handleCloseEdit = () => {
+    setSelectedDonation(null);
+    setEditModal(false);
+  };
+
+  const handleSave = async (selectedValue: string) => {
+    try {
+      console.log(selectedValue);
+      console.log(selectedDonation?._id);
+      
+      const res = await api.put(`/donation/update-donation-status`, {
+        status: selectedValue,
+        donationId: selectedDonation?._id,
+      });
+      console.log(res.data);
+      fetchDetails()
+    } catch (e) {
+      console.log(e);
+    }
+
+    setEditModal(false);
   };
 
   return (
@@ -181,7 +227,9 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
               .map((donation) => (
                 <TableRow key={donation._id}>
                   <TableCell>{donation.donorInfo?.name || "Unknown"}</TableCell>
-                  <TableCell>{donation.donorInfo?.email || "Unknown"}</TableCell>
+                  <TableCell>
+                    {donation.donorInfo?.email || "Unknown"}
+                  </TableCell>
                   {type === "Monetary" ? (
                     <>
                       <TableCell>{donation.amount || "Unknown"}</TableCell>
@@ -218,9 +266,9 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                   {type === "In-Kind" && (
                     <TableCell>
                       <Tooltip title="Edit status">
-                      <IconButton>
-                        <Edit />
-                      </IconButton>
+                        <IconButton onClick={() => handleEdit(donation)}>
+                          <Edit />
+                        </IconButton>
                       </Tooltip>
                     </TableCell>
                   )}
@@ -239,6 +287,43 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+
+      <Dialog open={editModal} onClose={handleCloseEdit}>
+        <DialogTitle sx={{ textAlign: "center" }}>Update status</DialogTitle>
+        <DialogContent sx={{
+          minWidth: "10rem"
+        }}>
+          
+          
+          {selectedDonation && (
+            <>
+            <div className="mt-2 p-5">
+          <Typography variant="body1"><strong>Donor name:</strong> {selectedDonation?.donorInfo?.name}</Typography>
+          <Typography variant="body1"><strong>Item name:</strong> {selectedDonation?.inKindDetails?.itemName}</Typography>
+          <Typography variant="body1"><strong>Estimate value:</strong> {selectedDonation?.inKindDetails?.estimatedValue}</Typography>
+          <Typography variant="body1"><strong>Item name:</strong> {selectedDonation?.goalInfo?.name}</Typography>
+          <Typography variant="body1"><strong>Select a status:</strong></Typography>
+              <Select
+                value={selectedValue}
+                onChange={(e) => setSelectedValue(e.target.value)}
+                sx={{ marginBottom: 2 }}
+              >
+                <MenuItem value="Pending">Pending</MenuItem>
+                <MenuItem value="Donated">Donated</MenuItem>
+              </Select>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <Button onClick={() => handleSave(selectedValue || "")}>
+                  Save changes
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEdit}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
