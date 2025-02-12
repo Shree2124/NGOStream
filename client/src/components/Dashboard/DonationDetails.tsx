@@ -92,7 +92,8 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       donation.goalInfo.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    console.log(event?.target);
     setPage(newPage);
   };
 
