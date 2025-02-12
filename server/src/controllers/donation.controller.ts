@@ -106,6 +106,12 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     });
   }
 
+  const imagePath = req.file?.path;
+  let uploadedImage;
+  if (imagePath) {
+    uploadedImage = await uploadOnCloudinary(imagePath);
+  }
+
   const donation = await Donation.create({
     donorId: donor._id,
     donationType,
@@ -127,7 +133,14 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         : undefined,
     inKindDetails:
       donationType === "In-Kind"
-        ? { itemName, quantity, image, estimatedValue, description }
+        ? {
+            itemName,
+            quantity,
+            image: uploadedImage ? uploadedImage.url : "",
+            estimatedValue,
+            description,
+            status: "Pending",
+          }
         : undefined,
   });
 
@@ -145,17 +158,25 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     }
   }
 
-  res.status(200).json(
-    new SuccessResponse(
+  if (donationType === "Monetary") {
+    res.status(200).json(
+      new SuccessResponse(
+        200,
+        {
+          sessionId: session?.id,
+          url: session?.url,
+          donorId: donor._id,
+        },
+        "Session created successfully"
+      )
+    );
+  } else if(donationType === "In-Kind"){
+    res.status(200).json(new SuccessResponse(
       200,
-      {
-        sessionId: session?.id,
-        url: session?.url,
-        donorId: donor._id,
-      },
-      "Session created successfully"
-    )
-  );
+      donation,
+      "Donation created successfully"
+    ))
+  }
 };
 
 export const handlePaymentSuccess = asyncHandler(
@@ -195,7 +216,7 @@ export const handlePaymentSuccess = asyncHandler(
         );
 
         if (isDonationAdded) {
-          throw new ErrorResponse(400, "donation already exist")
+          throw new ErrorResponse(400, "donation already exist");
         }
         goal.currentAmount =
           (Number(goal.currentAmount) || 0) +
@@ -223,13 +244,13 @@ export const handlePaymentSuccess = asyncHandler(
       }
     }
 
-    // Update event if associated with the donation
     if (donation.eventId) {
       const event = await Event.findById(donation.eventId);
 
       if (event) {
         event.kpis.fundsRaised =
-          (event.kpis.fundsRaised || 0) + (Number(donation.monetaryDetails.amount) || 0);
+          (event.kpis.fundsRaised || 0) +
+          (Number(donation.monetaryDetails.amount) || 0);
         const isDonationAdded = event.donations.some(
           (id) => id.toString() === donation._id.toString()
         );
@@ -250,58 +271,68 @@ export const handlePaymentSuccess = asyncHandler(
 
 export const getDonationInformation = asyncHandler(
   async (req: any, res: Response) => {
-    const donationInfo = await Donation.aggregate([
-      {
-        $lookup: {
-          from: "donors",
-          localField: "donorId",
-          foreignField: "_id",
-          as: "donorInfo",
+    const {type} = req.params
+
+    console.log(type)
+
+    if(type !== "Monetary" && type !== "In-Kind") throw new ErrorResponse(400, "Not a valid type")
+
+      const donationInfo = await Donation.aggregate([
+        {
+          $match: { donationType: type }, 
         },
-      },
-      {
-        $lookup: {
-          from: "goals",
-          localField: "goalId",
-          foreignField: "_id",
-          as: "goalInfo",
+        {
+          $lookup: {
+            from: "donors",
+            localField: "donorId",
+            foreignField: "_id",
+            as: "donorInfo",
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "events",
-          localField: "eventId",
-          foreignField: "_id",
-          as: "eventInfo",
+        {
+          $lookup: {
+            from: "goals",
+            localField: "goalId",
+            foreignField: "_id",
+            as: "goalInfo",
+          },
         },
-      },
-      // {
-      //   $lookup: {
-      //     from: "beneficiaries",
-      //     localField: "beneficiaryId",
-      //     foreignField: "_id",
-      //     as: "beneficiaryInfo",
-      //   },
-      // },
-      {
-        $project: {
-          _id: 1,
-          donationType: 1,
-          monetaryDetails: 1,
-          stripeSessionId: 1,
-          stripePaymentId: 1,
-          donorInfo: { $arrayElemAt: ["$donorInfo", 0] },
-          goalInfo: { $arrayElemAt: ["$goalInfo", 0] },
-          // eventInfo: { $arrayElemAt: ["$eventInfo", 0] },
-          amount: "$monetaryDetails.amount",
-          currency: "$monetaryDetails.currency",
-          paymentStatus: "$monetaryDetails.paymentStatus",
-          paymentMethod: "$monetaryDetails.paymentMethod",
-          createdAt: 1,
-          updatedAt: 1,
+        {
+          $lookup: {
+            from: "events",
+            localField: "eventId",
+            foreignField: "_id",
+            as: "eventInfo",
+          },
         },
-      },
-    ]);
+        {
+          $project: {
+            _id: 1,
+            donationType: 1,
+            stripeSessionId: 1,
+            stripePaymentId: 1,
+            donorInfo: { $arrayElemAt: ["$donorInfo", 0] },
+            goalInfo: { $arrayElemAt: ["$goalInfo", 0] },
+            createdAt: 1,
+            updatedAt: 1,
+            ...(type === "Monetary"
+              ? {
+                  amount: "$monetaryDetails.amount",
+                  currency: "$monetaryDetails.currency",
+                  paymentStatus: "$monetaryDetails.paymentStatus",
+                  paymentMethod: "$monetaryDetails.paymentMethod",
+                  monetaryDetails: 1,
+                }
+              : {
+                  estimatedValue: "$inKindDetails.estimatedValue",
+                  currency: "$inKindDetails.currency",
+                  status: "$inKindDetails.status",
+                  itemDetails: "$inKindDetails.items",
+                  inKindDetails: 1,
+                }),
+          },
+        },
+      ]);
 
     console.log(donationInfo);
 

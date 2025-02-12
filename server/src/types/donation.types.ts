@@ -15,6 +15,7 @@ export interface IDonation extends Document {
     quantity: number;
     estimatedValue: number;
     description: string;
+    status: "Donated" | "Pending";
   };
   goalId?: mongoose.Types.ObjectId;
   eventId?: mongoose.Types.ObjectId;

@@ -21,11 +21,18 @@ const DonationSchema: Schema = new Schema<IDonation>(
           return this.donationType === "Monetary";
         },
       },
-      currency: { type: String, default: "USD" },
+      currency: {
+        type: String,
+        default: function () {
+          return this.donationType === "Monetary" ? "USD" : null;
+        },
+      },
       paymentStatus: {
         type: String,
         enum: ["Successful", "Pending", "Failed"],
-        default: "Pending",
+        default: function () {
+          return this.donationType === "Monetary" ? "Pending" : null;
+        },
       },
       paymentMethod: {
         type: String,
@@ -54,6 +61,11 @@ const DonationSchema: Schema = new Schema<IDonation>(
       },
       estimatedValue: { type: Number },
       description: { type: String },
+      status: {
+        type: String,
+        enum: ["Donated", "Pending"],
+        default: "Pending",
+      },
     },
     goalId: { type: mongoose.Schema.Types.ObjectId, ref: "Goal", index: true },
     currency: { type: String },
@@ -61,7 +73,7 @@ const DonationSchema: Schema = new Schema<IDonation>(
     stripeSessionId: { type: String },
     eventId: { type: Schema.Types.ObjectId, ref: "Event" },
     beneficiaryId: { type: Schema.Types.ObjectId, ref: "Beneficiary" },
-    sendReceipt: {type: Boolean, default: false}
+    sendReceipt: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

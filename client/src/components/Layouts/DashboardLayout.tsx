@@ -216,12 +216,14 @@
 
 import {
   Box,
-  Drawer,
-  Grid,
-  IconButton,
   Stack,
   Typography,
   styled,
+  Button,
+  Collapse,
+  Grid,
+  IconButton,
+  Drawer,
 } from "@mui/material";
 import {
   Close,
@@ -233,6 +235,7 @@ import {
   Event,
   Flag,
   AccountBalance,
+  ArrowDropDown,
 } from "@mui/icons-material";
 import { ReactNode, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
@@ -243,9 +246,10 @@ interface Tab {
   name: string;
   path: string;
   icon: JSX.Element;
+  subTabs?: Tab[];
 }
 
-const fitNotesTabs: Tab[] = [
+const navTabs: Tab[] = [
   { name: "Home", path: "/dashboard", icon: <Home /> },
   {
     name: "Member Management",
@@ -256,10 +260,13 @@ const fitNotesTabs: Tab[] = [
     name: "Donations",
     path: "/dashboard/donation-details",
     icon: <VolunteerActivism />,
+    subTabs: [
+      { name: "In-Kind", path: "/inkind", icon: <VolunteerActivism /> },
+      { name: "Monetary", path: "/monetary", icon: <VolunteerActivism /> },
+    ],
   },
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
   { name: "Campaign", path: "/dashboard/goals", icon: <Flag /> },
-  // mui icon for schemes
   { name: "Schemes", path: "/dashboard/schemes", icon: <AccountBalance /> },
 ];
 
@@ -278,28 +285,24 @@ const Link = styled(RouterLink)(({ theme }) => ({
   },
 }));
 
-interface SideBarProps {
-  w?: string;
-  h?: string;
-}
-
-const SideBar: React.FC<SideBarProps> = ({ w = "100%", h = "" }) => {
+const SideBar: React.FC<{w: string}> = ({w}) => {
   const location = useLocation();
+  const [openTabs, setOpenTabs] = useState<Record<string, boolean>>({});
 
-  const logoutHandler = () => {
-    console.log("User logged out");
+  const toggleDropdown = (tabName: string) => {
+    setOpenTabs((prev) => ({ ...prev, [tabName]: !prev[tabName] }));
   };
 
   return (
     <Stack
       width={w}
       bgcolor="whitesmoke"
-      height={h || "100vh"}
-      direction={"column"}
-      justifyContent={"space-between"}
-      p={"2rem"}
-      spacing={"2rem"}
-      alignItems={"center"}
+      height="100vh"
+      direction="column"
+      justifyContent="space-between"
+      p="2rem"
+      spacing="2rem"
+      alignItems="center"
       sx={{
         color: "black",
         fontFamily: fontFamily,
@@ -318,31 +321,65 @@ const SideBar: React.FC<SideBarProps> = ({ w = "100%", h = "" }) => {
         NGOStream
       </Typography>
 
-      <Stack spacing={"0.7rem"}>
-        {fitNotesTabs.map((tab) => (
-          <Link
-            key={tab.path}
-            to={tab.path}
-            sx={
-              location.pathname === tab.path
-                ? {
-                    bgcolor: "black",
-                    color: "white",
-                  }
-                : undefined
-            }
-          >
-            <Stack direction={"row"} alignItems={"center"} spacing={"1rem"}>
-              {tab.icon}
-              <Typography>{tab.name}</Typography>
-            </Stack>
-          </Link>
+      <Stack spacing="0.7rem" width="100%">
+        {navTabs.map((tab) => (
+          <Box key={tab.path} width="100%">
+            {tab.subTabs ? (
+              <>
+                <Button
+                  onClick={() => toggleDropdown(tab.name)}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-evenly",
+                    width: "100%",
+                    textAlign: "left",
+                    color: "black",
+                    bgcolor: openTabs[tab.name] ? "rgba(0, 0, 0, 0.1)" : "transparent",
+                    "&:hover": { bgcolor: "rgba(0, 0, 0, 0.2)" },
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing="1rem">
+                    {tab.icon}
+                    <Typography>{tab.name}</Typography>
+                  </Stack>
+                  <ArrowDropDown
+                    sx={{
+                      transform: openTabs[tab.name] ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.3s ease-in-out",
+                    }}
+                  />
+                </Button>
+                <Collapse in={openTabs[tab.name]} timeout="auto">
+                  <Stack pl="2rem">
+                    {tab.subTabs.map((subTab) => (
+                      <Link key={subTab.path} to={tab.path + subTab.path}>
+                        <Stack direction="row" alignItems="center" spacing="1rem">
+                          {subTab.icon}
+                          <Typography>{subTab.name}</Typography>
+                        </Stack>
+                      </Link>
+                    ))}
+                  </Stack>
+                </Collapse>
+              </>
+            ) : (
+              <Link
+                to={tab.path}
+                sx={location.pathname === tab.path ? { bgcolor: "black", color: "white" } : undefined}
+              >
+                <Stack direction="row" alignItems="center" spacing="1rem">
+                  {tab.icon}
+                  <Typography>{tab.name}</Typography>
+                </Stack>
+              </Link>
+            )}
+          </Box>
         ))}
       </Stack>
 
       <Stack>
-        <Link onClick={logoutHandler} to={"#"}>
-          <Stack direction={"row"} alignItems={"center"} spacing={"1rem"}>
+        <Link to="#">
+          <Stack direction="row" alignItems="center" spacing="1rem">
             <ExitToApp />
             <Typography>Logout</Typography>
           </Stack>
@@ -351,6 +388,7 @@ const SideBar: React.FC<SideBarProps> = ({ w = "100%", h = "" }) => {
     </Stack>
   );
 };
+
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -404,7 +442,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           height: "100vh",
         }}
       >
-        <SideBar />
+        <SideBar w="100%"/>
       </Grid>
 
       <Grid

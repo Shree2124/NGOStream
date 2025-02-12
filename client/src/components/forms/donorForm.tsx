@@ -24,6 +24,7 @@ const DonationForm: React.FC = () => {
 
   const [step, setStep] = useState(1);
   const [donationType, setDonationType] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [donorData, setDonorData] = useState({
     name: "",
@@ -40,7 +41,7 @@ const DonationForm: React.FC = () => {
 
   const [inKindData, setInKindData] = useState({
     itemName: "",
-    image: "",
+    image: null as File | null,
     quantity: 0,
     estimatedValue: 0,
     description: "",
@@ -57,6 +58,7 @@ const DonationForm: React.FC = () => {
     if (type === "donor") {
       setDonorData({ ...donorData, [e.target.name]: e.target.value });
     } else if (type === "monetary") {
+      console.log(e.target.name);
       setMonetaryData({ ...monetaryData, [e.target.name]: e.target.value });
     } else {
       setInKindData({ ...inKindData, [e.target.name]: e.target.value });
@@ -89,25 +91,49 @@ const DonationForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setInKindData({ ...inKindData, image: file });
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const donationData = {
-      name: donorData.name,
-      email: donorData.email,
-      phone: donorData.phone,
-      address: donorData.address,
-      goalId,
-      donationType,
-      amount: donationType === "Monetary" ? monetaryData.amount : undefined,
-    };
-
-    // Handle form submission based on the donation type
     if (donationType === "Monetary") {
-      makePayment();
-    } else {
-      console.log("In-Kind Donation Data Submitted:", donationData);
-      alert("In-Kind Donation Submitted!");
+      return makePayment();
+    }
+
+
+
+    console.log(inKindData)
+
+    // Handle in-kind donation submission
+    const formData = new FormData();
+    formData.append("name", donorData.name);
+    formData.append("email", donorData.email);
+    formData.append("phone", donorData.phone);
+    formData.append("address", donorData.address);
+    formData.append("goalId", goalId ?? "");
+    formData.append("donationType", donationType ?? "");
+    formData.append("itemName", inKindData.itemName);
+    formData.append("quantity", inKindData.quantity.toString());
+    formData.append("estimatedValue", inKindData.estimatedValue.toString());
+    formData.append("description", inKindData.description);
+    if (inKindData.image) {
+      formData.append("image", inKindData.image);
+    }
+
+    try {
+      const res = await api.post("/donation/checkout", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      console.log(res.data);
+      
+    } catch (error) {
+      console.error("Error submitting in-kind donation:", error);
     }
   };
 
@@ -209,19 +235,84 @@ const DonationForm: React.FC = () => {
               </>
             ) : (
               <>
-                <TextField
-                  fullWidth
-                  label="Item Name"
-                  name="itemName"
-                  value={inKindData.itemName}
-                  onChange={(e) => handleChange(e, "inKind")}
-                  required
-                  sx={{ marginBottom: 2 }}
-                />
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Item Name"
+                    name="itemName"
+                    value={inKindData.itemName}
+                    onChange={(e) => handleChange(e, "inKind")}
+                    required
+                    sx={{ marginBottom: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Item Description"
+                    name="description"
+                    value={inKindData.description}
+                    onChange={(e) => handleChange(e, "inKind")}
+                    required
+                    sx={{ marginBottom: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Quantity"
+                    name="quantity"
+                    value={inKindData.quantity}
+                    onChange={(e) => handleChange(e, "inKind")}
+                    required
+                    sx={{ marginBottom: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Estimate Value"
+                    name="estimatedValue"
+                    value={inKindData.estimatedValue}
+                    onChange={(e) => handleChange(e, "inKind")}
+                    required
+                    sx={{ marginBottom: 2 }}
+                  />
+
+                  <Box
+                    sx={{
+                      width: "100px",
+                      height: "100px",
+                      border: "1px dashed gray",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      document.getElementById("inkindImg")?.click()
+                    }
+                  >
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    ) : (
+                      "+"
+                    )}
+                    <input
+                      id="inkindImg"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        handleImageUpload(e);
+                      }}
+                    />
+                  </Box>
+                </div>
               </>
             )}
 
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
+            >
               <Button variant="outlined" onClick={() => setStep(1)}>
                 Back
               </Button>
