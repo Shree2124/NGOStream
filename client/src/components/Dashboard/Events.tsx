@@ -133,10 +133,6 @@ const Events: React.FC = () => {
     fetchMembers();
   }, []);
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
-
   const openAssignRolesModal = () => {
     setRolesModalOpen(true);
   };
