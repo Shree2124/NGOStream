@@ -1,22 +1,26 @@
 import React, { useState } from "react";
 import {
-  Grid,
-  CardContent,
-  TextField,
-  Button,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  IconButton,
-  Modal,
-  Paper,
-  Typography,
   Box,
+  Button,
+  TextField,
+  Typography,
+  Grid,
+  IconButton,
+  MenuItem,
+  Modal,
+  Select,
+  Card,
+  List,
+  ListItem,
+  ListItemText,
+  Stack,
+  Divider,
+  useMediaQuery,
+  useTheme,
+  Container,
 } from "@mui/material";
-import { Visibility, Edit, Delete, Add } from "@mui/icons-material";
+import { Add, Edit, Delete, Visibility, Search } from "@mui/icons-material";
+import toast from "react-hot-toast";
 
 interface Scheme {
   id: number;
@@ -25,153 +29,266 @@ interface Scheme {
 }
 
 const Schemes: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [schemes, setSchemes] = useState<Scheme[]>([
-    { id: 1, name: "Health Scheme", description: "This scheme is for health support." },
-    { id: 2, name: "Education Scheme", description: "Provides educational benefits." },
+    {
+      id: 1,
+      name: "Health Scheme",
+      description: "This scheme is for health support.",
+    },
+    {
+      id: 2,
+      name: "Education Scheme",
+      description: "Provides educational benefits.",
+    },
   ]);
 
-  const [openModal, setOpenModal] = useState<"add" | "edit" | "view" | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"add" | "edit" | "view" | null>(
+    null
+  );
   const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [newScheme, setNewScheme] = useState<Scheme>({
+    id: 0,
+    name: "",
+    description: "",
+  });
 
+  // Open Modal
   const handleOpenModal = (type: "add" | "edit" | "view", scheme?: Scheme) => {
+    setModalType(type);
     setSelectedScheme(scheme || null);
-    setOpenModal(type);
+    setNewScheme(scheme || { id: 0, name: "", description: "" });
+    setShowModal(true);
   };
 
-  const handleCloseModal = () => setOpenModal(null);
-
-  const handleDeleteScheme = (schemeId: number) => {
-    setSchemes(schemes.filter((s) => s.id !== schemeId));
+  // Close Modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalType(null);
+    setSelectedScheme(null);
+    setNewScheme({ id: 0, name: "", description: "" });
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
+  // Handle Add or Edit Scheme
+  const handleSubmit = () => {
+    if (!newScheme.name || !newScheme.description) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
 
-    if (openModal === "add") {
-      const newScheme: Scheme = { id: schemes.length + 1, name, description };
-      setSchemes([...schemes, newScheme]);
-    } else if (openModal === "edit" && selectedScheme) {
+    if (modalType === "add") {
+      setSchemes([...schemes, { ...newScheme, id: schemes.length + 1 }]);
+      toast.success("Scheme added successfully!");
+    } else if (modalType === "edit" && selectedScheme) {
       setSchemes(
-        schemes.map((scheme) => (scheme.id === selectedScheme.id ? { ...scheme, name, description } : scheme))
+        schemes.map((scheme) =>
+          scheme.id === selectedScheme.id ? { ...newScheme } : scheme
+        )
       );
+      toast.success("Scheme updated successfully!");
     }
 
     handleCloseModal();
   };
 
+  // Handle Delete Scheme
+  const handleDeleteScheme = (schemeId: number) => {
+    setSchemes(schemes.filter((scheme) => scheme.id !== schemeId));
+    toast.success("Scheme deleted successfully!");
+  };
+
+  const filteredSchemes = schemes.filter((scheme) =>
+    scheme.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div>
-      <CardContent>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={8}>
-            <TextField
-              label="Search Schemes"
-              variant="outlined"
-              fullWidth
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+    <Container
+      maxWidth="lg"
+      sx={{
+        py: { xs: 2, sm: 3 },
+      }}
+    >
+      {/* Search and Add Section */}
+      <Card sx={{ mb: 3, p: 2 }}>
+        <Grid
+          container
+          spacing={2}
+          alignItems="center"
+          sx={{ display: "flex" }}
+        >
+          {/* Search Bar */}
+          <Grid item xs={12} md={9}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <TextField
+                fullWidth
+                placeholder="Search schemes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <IconButton>
+                      <Search />
+                    </IconButton>
+                  ),
+                }}
+                sx={{
+                  height: "44px",
+                  "& .MuiInputBase-root": { height: "44px" },
+                }}
+                size="medium"
+              />
+            </Box>
           </Grid>
-          <Grid item xs={12} sm={4} display="flex" justifyContent="flex-end">
-            <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenModal("add")}>
+
+          {/* Add Scheme Button */}
+          <Grid
+            item
+            xs={12}
+            md={3}
+            sx={{ display: "flex", justifyContent: "flex-end" }}
+          >
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenModal("add")}
+              sx={{
+                height: "44px",
+                whiteSpace: "nowrap",
+                px: 3,
+                fontWeight: 600,
+              }}
+            >
               Add Scheme
             </Button>
           </Grid>
         </Grid>
+      </Card>
 
-        <TableContainer component={Paper} sx={{ mt: 3 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Description</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {schemes
-                .filter((scheme) => scheme.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                .map((scheme) => (
-                  <TableRow key={scheme.id}>
-                    <TableCell>{scheme.name}</TableCell>
-                    <TableCell>{scheme.description}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenModal("view", scheme)}>
-                        <Visibility />
-                      </IconButton>
-                      <IconButton onClick={() => handleOpenModal("edit", scheme)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => handleDeleteScheme(scheme.id)}>
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      {/* Schemes List */}
+      <Card>
+        <List sx={{ p: 0 }}>
+          {filteredSchemes.map((scheme, index) => (
+            <React.Fragment key={scheme.id}>
+              <ListItem
+                sx={{
+                  flexDirection: isMobile ? "column" : "row",
+                  alignItems: isMobile ? "flex-start" : "center",
+                  py: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    mb: isMobile ? 2 : 0,
+                  }}
+                >
+                  <ListItemText
+                    primary={
+                      <Typography variant={isMobile ? "subtitle1" : "h6"}>
+                        {scheme.name}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="text.secondary">
+                        {scheme.description}
+                      </Typography>
+                    }
+                  />
+                </Box>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    width: isMobile ? "100%" : "auto",
+                    justifyContent: isMobile ? "center" : "flex-end",
+                  }}
+                >
+                  <Button
+                    startIcon={<Visibility />}
+                    onClick={() => handleOpenModal("view", scheme)}
+                    size={isMobile ? "small" : "medium"}
+                    variant="outlined"
+                  >
+                    {!isMobile && "View"}
+                  </Button>
+                  <Button
+                    startIcon={<Edit />}
+                    onClick={() => handleOpenModal("edit", scheme)}
+                    size={isMobile ? "small" : "medium"}
+                    variant="outlined"
+                  >
+                    {!isMobile && "Edit"}
+                  </Button>
+                  <Button
+                    startIcon={<Delete />}
+                    onClick={() => handleDeleteScheme(scheme.id)}
+                    size={isMobile ? "small" : "medium"}
+                    variant="outlined"
+                    color="error"
+                  >
+                    {!isMobile && "Delete"}
+                  </Button>
+                </Stack>
+              </ListItem>
+              {index < filteredSchemes.length - 1 && <Divider />}
+            </React.Fragment>
+          ))}
+        </List>
+      </Card>
 
-        <Modal open={openModal === "add" || openModal === "edit"} onClose={handleCloseModal}>
-          <Box sx={modalStyle}>
-            <Typography variant="h6" mb={2}>
-              {openModal === "add" ? "Add New Scheme" : "Edit Scheme"}
-            </Typography>
-            <form onSubmit={handleSubmit}>
-              <TextField
-                label="Name"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                name="name"
-                defaultValue={selectedScheme?.name || ""}
-                required
-              />
-              <TextField
-                label="Description"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                name="description"
-                multiline
-                rows={3}
-                defaultValue={selectedScheme?.description || ""}
-                required
-              />
-              <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
-                {openModal === "add" ? "Add Scheme" : "Update Scheme"}
-              </Button>
-            </form>
-          </Box>
-        </Modal>
-
-        <Modal open={openModal === "view"} onClose={handleCloseModal}>
-          <Box sx={modalStyle}>
-            <Typography variant="h6">Scheme Details</Typography>
-            <Typography variant="subtitle1" mt={2}><strong>Name:</strong> {selectedScheme?.name}</Typography>
-            <Typography variant="body1" mt={1}><strong>Description:</strong> {selectedScheme?.description}</Typography>
-          </Box>
-        </Modal>
-      </CardContent>
-    </div>
+      {/* Add/Edit Modal */}
+      <Modal open={showModal} onClose={handleCloseModal}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: isMobile ? "95%" : 400,
+            bgcolor: "background.paper",
+            p: 3,
+            borderRadius: 2,
+            boxShadow: 24,
+          }}
+        >
+          <Typography variant="h6" mb={2}>
+            {modalType === "add" ? "Add Scheme" : "Edit Scheme"}
+          </Typography>
+          <TextField
+            fullWidth
+            label="Scheme Name"
+            value={newScheme.name}
+            onChange={(e) =>
+              setNewScheme({ ...newScheme, name: e.target.value })
+            }
+            required
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Description"
+            value={newScheme.description}
+            onChange={(e) =>
+              setNewScheme({ ...newScheme, description: e.target.value })
+            }
+            multiline
+            rows={3}
+            required
+            sx={{ mb: 2 }}
+          />
+          <Button fullWidth variant="contained" onClick={handleSubmit}>
+            {modalType === "add" ? "Add Scheme" : "Update Scheme"}
+          </Button>
+        </Box>
+      </Modal>
+    </Container>
   );
-};
-
-// Modal Styling
-const modalStyle = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  boxShadow: 24,
-  p: 4,
-  borderRadius: 2,
 };
 
 export default Schemes;

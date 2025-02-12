@@ -363,8 +363,8 @@ const Goals: React.FC = () => {
             fullWidth={isMobile}
             size={isMobile ? "small" : "medium"}
             sx={{
-              flex: isMobile ? 1 : 0.5,
-              whiteSpace: "nowrap",
+              paddingTop: isMobile ? "auto" : 2,
+              paddingBottom: isMobile ? "auto" : 2,
             }}
           >
             Add Goal
@@ -423,42 +423,42 @@ const Goals: React.FC = () => {
                   }}
                 />
               </Box>
-
               <Stack
                 direction="row"
                 spacing={1}
                 sx={{
-                  mt: isMobile ? 1 : 0,
                   width: isMobile ? "100%" : "auto",
-                  justifyContent: isMobile ? "flex-end" : "flex-start",
-                  flexShrink: 0,
+                  justifyContent: isMobile ? "center" : "flex-end",
                 }}
               >
-                <IconButton
+                <Button
+                  startIcon={<Visibility />}
                   onClick={() => handleViewGoal(goal)}
-                  title="View"
                   size={isMobile ? "small" : "medium"}
+                  variant="outlined"
                 >
-                  <Visibility />
-                </IconButton>
-                <IconButton
+                  {!isMobile && "View"}
+                </Button>
+                <Button
+                  startIcon={<Edit />}
                   onClick={() => handleOpenModal(goal)}
-                  title="Edit"
                   size={isMobile ? "small" : "medium"}
+                  variant="outlined"
                 >
-                  <Edit />
-                </IconButton>
-                <IconButton
-                  title="Delete"
-                  color="error"
+                  {!isMobile && "Edit"}
+                </Button>
+                <Button
+                  startIcon={<Delete />}
                   onClick={() => {
                     setSelectedGoal(goal);
                     setIsDeleteModalOpen(true);
                   }}
                   size={isMobile ? "small" : "medium"}
+                  variant="outlined"
+                  color="error"
                 >
-                  <Delete />
-                </IconButton>
+                  {!isMobile && "Delete"}
+                </Button>
               </Stack>
             </ListItem>
           ))}
