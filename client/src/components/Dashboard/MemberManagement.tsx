@@ -62,11 +62,10 @@ const addUser = async (userData: NewUser) => {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    if (response.status !== 200) {
+    if (response.status !== 201) {
       throw new Error("Failed to add member. Please try again.");
     }
 
-    toast.success("User added successfully!");
     return response.data?.data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -82,8 +81,6 @@ const updateUser = async (
   existingUser: NewUser | any
 ) => {
   try {
-    console.log(userId);
-
     const updatedFields = Object.entries(updatedUser).reduce(
       (acc, [key, value]) => {
         if (existingUser[key as keyof NewUser] !== value) {
@@ -93,8 +90,6 @@ const updateUser = async (
       },
       {} as Partial<NewUser>
     );
-
-    console.log(updatedFields);
 
     const response = await api.put(
       `/users/edit-member/${userId}`,
@@ -107,8 +102,6 @@ const updateUser = async (
         },
       }
     );
-
-    console.log(response.data.data);
 
     if (response.status !== 200) {
       throw new Error("Failed to update user. Please try again.");
@@ -193,8 +186,6 @@ const MemberManagement: React.FC = () => {
 
   const handleConfirmDelete = (userId: string | null) => {
     if (userId) {
-      console.log(userId);
-
       setDeleteMemberId(userId);
       setShowDeleteModal(true);
     }
@@ -206,12 +197,10 @@ const MemberManagement: React.FC = () => {
   };
 
   const handleOpenModal = (user?: NewUser, id?: string) => {
-    console.log("Incoming ID:", id);
-
     if (user && id) {
       setIsEdit(true);
       setCurrentUserId(id);
-      console.log("Set Current User ID:", id);
+
       setNewUser(user);
       setSelectedMember(user);
       setImagePreview(
@@ -265,9 +254,10 @@ const MemberManagement: React.FC = () => {
         );
       } else {
         const addedUser = await addUser(newUser);
+        toast.success("User added successfully!");
         setMembers((prev) => [...prev, addedUser]);
         setShowModal(false);
-        fetchUsers();
+        await fetchUsers();
       }
       handleCloseModal();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -343,20 +333,23 @@ const MemberManagement: React.FC = () => {
           </Grid>
           <Grid item xs={6} md={3}>
             <Button
-              sx={{
-                paddingTop: isMobile ? "auto" : 2,
-                paddingBottom: isMobile ? "auto" : 2,
-              }}
+              fullWidth
               variant="contained"
-              startIcon={<Add />}
               onClick={() => setShowModal(true)}
+              sx={{
+                padding: (!isMobile && 2) || 0,
+                display: "flex",
+                flexDirection: "row",
+                fontSize: isMobile ? "0.75rem" : "1rem",
+                gap: 1,
+              }}
             >
+              <Add />
               Add Member
             </Button>
           </Grid>
         </Grid>
       </Card>
-
       {/* Members List */}
       <Card>
         <List sx={{ p: 0 }}>
@@ -410,30 +403,51 @@ const MemberManagement: React.FC = () => {
                   }}
                 >
                   <Button
-                    startIcon={<Visibility />}
                     onClick={() => handleViewDetails(member)}
                     size={isMobile ? "small" : "medium"}
                     variant="outlined"
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      textAlign: "center",
+                      gap: 1,
+                    }}
                   >
+                    <Visibility />
                     {!isMobile && "View"}
                   </Button>
                   <Button
-                    startIcon={<Edit />}
                     onClick={() => handleOpenModal(member, member._id)}
                     size={isMobile ? "small" : "medium"}
                     variant="outlined"
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      textAlign: "center",
+                      gap: 1,
+                    }}
                   >
+                    <Edit />
                     {!isMobile && "Edit"}
                   </Button>
                   <Button
-                    startIcon={<Delete />}
                     onClick={() =>
                       handleConfirmDelete(member?._id?.toString() || "")
                     }
                     size={isMobile ? "small" : "medium"}
                     variant="outlined"
                     color="error"
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      textAlign: "center",
+                      gap: 1,
+                    }}
                   >
+                    <Delete />
                     {!isMobile && "Delete"}
                   </Button>
                 </Stack>
