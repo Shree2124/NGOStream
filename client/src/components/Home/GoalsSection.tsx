@@ -17,7 +17,6 @@ import {
   CarouselPrevious,
 } from "../ui/carousel";
 
-
 interface IGoal {
   _id: string;
   name: string;
@@ -29,12 +28,20 @@ interface IGoal {
   currentAmount: number;
 }
 
-
-
 const GoalsSection: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
-  const [goalsData, setGoalsData] = useState([]);
+  const [goalsData, setGoalsData] = useState<IGoal[]>([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchGoalsData = async () => {
@@ -45,9 +52,7 @@ const GoalsSection: React.FC = () => {
             goal.status === "Active" && new Date(goal.startDate) <= new Date()
           );
         });
-  
         setGoalsData(filteredGoals);
-        console.log(filteredGoals);
       } catch (error) {
         console.log(error);
       }
@@ -56,146 +61,197 @@ const GoalsSection: React.FC = () => {
     fetchGoalsData();
   }, []);
 
-  const itemsPerView = () => {
-    if (window.innerWidth < 600) return 1;
-    if (window.innerWidth < 960) return 2;
-    return 3;
+  const truncateText = (text: string, maxLength: number) => {
+    return text.length > maxLength
+      ? `${text.substring(0, maxLength)}...`
+      : text;
   };
 
-  const visibleGoals = goalsData.slice(
-    currentIndex,
-    currentIndex + itemsPerView()
+  const GoalCard = ({ goal }: { goal: IGoal }) => (
+    <Card
+      className="h-[420px] flex flex-col mb-6 mx-auto max-w-md"
+      sx={{
+        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+        borderRadius: 2,
+        "&:hover": {
+          boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+        },
+        transition: "box-shadow 0.3s ease",
+        background: "rgba(255, 255, 255, 0.9)",
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      <Box
+        className="relative h-44"
+        sx={{
+          borderRadius: "8px 8px 0 0",
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={goal.image || "/placeholder-image.jpg"}
+          alt={goal.name}
+          className="w-full h-full object-cover"
+        />
+        <Box className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/50 to-transparent" />
+      </Box>
+
+      <CardContent className="flex-1 flex flex-col p-5">
+        <Typography
+          variant="h6"
+          className="text-lg font-semibold mb-2 line-clamp-2"
+          sx={{ minHeight: "3.5rem" }}
+        >
+          {truncateText(goal.name, 60)}
+        </Typography>
+
+        <Typography
+          variant="body2"
+          className="text-gray-600 mb-4 line-clamp-3"
+          sx={{ minHeight: "4.5rem" }}
+        >
+          {truncateText(goal.description, 120)}
+        </Typography>
+
+        <Box className="mt-auto">
+          <Box className="flex justify-between items-center mb-1.5">
+            <Typography variant="body2" className="font-medium text-gray-900">
+              ₹{goal.currentAmount.toLocaleString()} raised
+            </Typography>
+            <Typography
+              variant="body2"
+              className="text-green-600 font-semibold"
+            >
+              {((goal.currentAmount / goal.targetAmount) * 100).toFixed(1)}%
+            </Typography>
+          </Box>
+
+          <LinearProgress
+            variant="determinate"
+            value={(goal.currentAmount / goal.targetAmount) * 100}
+            sx={{
+              height: 6,
+              borderRadius: 3,
+              mb: 3,
+              bgcolor: "#f0f0f0",
+              "& .MuiLinearProgress-bar": {
+                background: "linear-gradient(45deg, #4CAF50 30%, #2196F3 90%)",
+              },
+            }}
+          />
+
+          <Button
+            onClick={() => navigate(`/donor-form/${goal._id}`)}
+            variant="contained"
+            fullWidth
+            sx={{
+              textTransform: "none",
+              py: 1.5,
+              background: "linear-gradient(45deg, #4CAF50 30%, #2196F3 90%)",
+              borderRadius: 1.5,
+              fontSize: "0.95rem",
+              fontWeight: 600,
+              "&:hover": {
+                background: "linear-gradient(45deg, #45a049 30%, #1e88e5 90%)",
+              },
+            }}
+            className="transform-transition duration-300 hover:scale-105 ease-in-out"
+          >
+            Support This Campaign
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
   );
 
   return (
     <Box
+      className="py-6 md:py-8"
       sx={{
-        width: "100%",
-        textAlign: "center",
-        backgroundColor: "#f9f9f9",
+        background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(76, 175, 80, 0.1) 0%, rgba(33, 150, 243, 0.1) 100%)",
+          pointerEvents: "none",
+        },
       }}
       id="goals"
     >
-      <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
-        Our Campaigns
-      </Typography>
-      <Typography
-        variant="body1"
-        sx={{
-          mb: 4,
-          color: "text.secondary",
-          maxWidth: "800px",
-          mx: "auto",
-        }}
-      >
-        Discover the impactful goals we’re working towards. Your support helps
-        make a difference.
-      </Typography>
+      <Box className="max-w-6xl mx-auto px-4">
+        <Typography
+          variant="h4"
+          className="text-center mb-3 font-bold"
+          sx={{
+            background: "linear-gradient(45deg, #4CAF50 30%, #2196F3 90%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          Current Campaigns
+        </Typography>
 
-      <Box
-        sx={{
-          position: "relative",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Carousel opts={{ align: "start" }} className="md:min-w-[25rem] lg:min-w-[40rem] lg:max-w-[70rem]">
-          <CarouselContent>
-            {visibleGoals.map((goal: IGoal) => (
-              <CarouselItem
-                key={goal._id}
-                className="md:basis-1/2 lg:basis-1/3 p-2"
-              >
-                <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                  <img
-                    src={goal.image}
-                    alt={goal.name}
-                    style={{
-                      width: "100%",
-                      height: "150px",
-                      objectFit: "cover",
-                      borderRadius: "8px 8px 0 0",
-                    }}
-                  />
-                  <CardContent sx={{ textAlign: "left" }}>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                      {goal.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary", mb: 2 }}
-                    >
-                      {goal.description}
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Target: ₹{goal.targetAmount}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: "bold", color: "green" }}
-                      >
-                        {((goal.currentAmount / goal.targetAmount) * 100).toFixed(
-                          2
-                        )}%
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={(goal.currentAmount / goal.targetAmount) * 100}
-                      sx={{
-                        height: 8,
-                        borderRadius: 5,
-                        backgroundColor: "#e0e0e0",
-                        "& .MuiLinearProgress-bar": {
-                          backgroundColor: "#4caf50",
-                        },
-                      }}
-                    />
-                    <Button
-                      onClick={() => navigate(`/donor-form/${goal?._id}`)}
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      sx={{ mt: 2, borderRadius: 5 }}
-                    >
-                      Donate Now
-                    </Button>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
+        {isMobile ? (
+          // Mobile view - stack cards vertically
+          <Box className="space-y-6 py-4">
+            {goalsData.map((goal) => (
+              <GoalCard key={goal._id} goal={goal} />
             ))}
-          </CarouselContent>
-          <CarouselPrevious
-            onClick={() =>
-              setCurrentIndex(
-                currentIndex === 0
-                  ? goalsData.length - itemsPerView()
-                  : currentIndex - 1
-              )
-            }
-          />
-          <CarouselNext
-            onClick={() =>
-              setCurrentIndex(
-                currentIndex === goalsData.length - itemsPerView()
-                  ? 0
-                  : currentIndex + 1
-              )
-            }
-          />
-        </Carousel>
+          </Box>
+        ) : (
+          // Desktop view - carousel
+          <Carousel className="w-full p-4">
+            <CarouselContent>
+              {goalsData.map((goal: IGoal) => (
+                <CarouselItem
+                  key={goal._id}
+                  className="md:basis-1/2 lg:basis-1/3 pl-4"
+                >
+                  <GoalCard goal={goal} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious
+              className="left-0 lg:-left-12 bg-white/90 hover:bg-white"
+              sx={{
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                },
+              }}
+            />
+            <CarouselNext
+              className="right-0 lg:-right-12 bg-white/90 hover:bg-white"
+              sx={{
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                },
+              }}
+            />
+          </Carousel>
+        )}
+
+        <Typography
+          variant="h5"
+          className="text-center py-8"
+          sx={{
+            fontWeight: "bold",
+            fontFamily: "monospace",
+            background: "linear-gradient(45deg, #4CAF50 30%, #2196F3 90%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            cursor: "pointer",
+          }}
+        >
+          Join us in making a difference through these active campaigns
+        </Typography>
       </Box>
     </Box>
   );

@@ -2,20 +2,15 @@ import { Box } from "@mui/material";
 import { GoalsSection, HeroSection, Navbar } from "../../components";
 
 const HomePage: React.FC = () => {
-
   return (
-    <Box
-      sx={{
-        
-      }}
-    >
+    <Box sx={{}}>
       <div>
         <Navbar />
       </div>
       <div className="shadow-lg h-screen min-w-screen" id="#home">
-      <HeroSection />
+        <HeroSection />
       </div>
-      <div className="w-full mt-8" id="goals">
+      <div className="w-full " id="goals">
         <GoalsSection />
       </div>
     </Box>
