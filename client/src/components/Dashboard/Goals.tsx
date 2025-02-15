@@ -10,7 +10,7 @@ import {
   IconButton,
   List,
   ListItem,
-  ListItemText,
+  // ListItemText,
   MenuItem,
   Select,
   Stack,
@@ -67,7 +67,7 @@ const Goals: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [currentGoal, setCurrentGoal] = useState<IGoal | null>(null);
-  const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
+  // const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
   const [selectedGoal, setSelectedGoal] = useState<IGoal | null>(null);

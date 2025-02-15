@@ -135,7 +135,7 @@ const deleteUser = async (userId: string) => {
 const MemberManagement: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+  // const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("All");

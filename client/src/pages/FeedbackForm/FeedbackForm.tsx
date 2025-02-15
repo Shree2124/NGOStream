@@ -107,7 +107,7 @@ const FeedbackForm: React.FC = () => {
     }
 
     try {
-      const submissionData = await api.post(`/event/${eventId}`, {
+      const submissionData = await api.post(`/event/feedback/${eventId}`, {
         rating: data.overallSatisfaction,
         feedbackText: data.suggestions,
       });

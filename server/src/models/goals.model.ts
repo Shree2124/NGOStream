@@ -31,7 +31,7 @@ const goalSchema = new mongoose.Schema<IGoals>(
       enum: ["Active", "Inactive", "Completed"],
       default: "Active",
     },
-    donations: [ { type: Types.ObjectId, ref: "Donor", unique: true } ],
+    donations: [ { type: Types.ObjectId, ref: "Donor" } ],
   },
   {
     timestamps: true,

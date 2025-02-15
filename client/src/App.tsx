@@ -25,6 +25,7 @@ import { AppDispatch } from "./redux/store";
 import GoalsPage from "./pages/Dashboard/GoalsPage";
 import PaymentSuccessPage from "./components/constants/PaymentSuccess";
 import FundraisingMetrics from "./pages/predicted";
+import EventDetailsPage from "./pages/Dashboard/EventDetailsPage";
 
 const App: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -66,6 +67,7 @@ const App: React.FC = () => {
                         element={<DonationDetailsPage type={"Monetary"}/>}
                       />
                       <Route path="/events" element={<EventsPage />} />
+                      <Route path="/event-details/:eventId" element={<EventDetailsPage />} />
                       <Route path="/goals" element={<GoalsPage />} />
                       <Route path="/schemes" element={<SchemesPage />} />
                     </Routes>

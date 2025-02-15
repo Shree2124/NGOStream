@@ -12,7 +12,7 @@ import {
   InputLabel,
   Card,
   CardContent,
-  Tooltip,
+  // Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -22,7 +22,11 @@ import {
   ListItemText,
   SelectChangeEvent,
 } from "@mui/material";
-import { Add, Edit, Delete, BarChart, Close } from "@mui/icons-material";
+import {
+  Add,
+  //  Edit, Delete, BarChart,
+  Close,
+} from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Bar } from "react-chartjs-2";
@@ -37,6 +41,7 @@ import {
 } from "chart.js";
 import { api } from "../../api/api";
 import { Badge } from "../ui/badge";
+import { useNavigate } from "react-router-dom";
 
 ChartJS.register(
   CategoryScale,
@@ -95,8 +100,9 @@ const Events: React.FC = () => {
   const [endDate, setEndDate] = useState<string>("");
   const [location, setLocation] = useState("");
   const [eventType, setEventType] = useState("");
-  const [participantIds, setParticipantIds] = useState<string[]>();
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
+  const navigate = useNavigate();
   // const [loading, setLoading] = useState(false);
 
   const resetForm = () => {
@@ -158,10 +164,10 @@ const Events: React.FC = () => {
     setParticipantIds(Array.isArray(value) ? value : [value]);
 
     // Update assigned roles based on the selected participants
-    setAssignedRoles((prev: Record<string, string>) =>
-      Object.keys(prev)
-        .filter((id) => value.includes(id))
-        .reduce<Record<string, string>>(
+    setAssignedRoles((prev: Record<string, string> = {}) =>
+      Object.keys(prev) // Now prev is always at least an empty object
+        ?.filter((id) => value.includes(id))
+        ?.reduce<Record<string, string>>(
           (acc, id) => ({ ...acc, [id]: prev[id] }),
           {}
         )
@@ -277,17 +283,17 @@ const Events: React.FC = () => {
     setDialogOpen(false);
   };
 
-  const handleDeleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e._id !== id));
-  };
+  // const handleDeleteEvent = (id: string) => {
+  //   setEvents((prev) => prev.filter((e) => e._id !== id));
+  // };
 
-  const handleShowVisuals = (event: IEvent) => {
-    setCurrentEvent(event);
-    console.log("Event", event);
+  // const handleShowVisuals = (event: IEvent) => {
+  //   setCurrentEvent(event);
+  //   console.log("Event", event);
 
-    // setVisualEventId(eventId);
-    setVisualModalOpen(true);
-  };
+  //   // setVisualEventId(eventId);
+  //   setVisualModalOpen(true);
+  // };
 
   const handleCloseVisuals = () => {
     setVisualModalOpen(false);
@@ -313,6 +319,10 @@ const Events: React.FC = () => {
   //     },
   //   ],
   // });
+
+  const handleNavigation = (id: string) => {
+    navigate(`/dashboard/event-details/${id}`);
+  };
 
   return (
     <Box p={3}>
@@ -346,17 +356,22 @@ const Events: React.FC = () => {
           </Select>
         </FormControl>
         <FormControl fullWidth>
-          <InputLabel>Type</InputLabel>
+          <InputLabel>Participants</InputLabel>
           <Select
-            value={filterType}
-            onChange={(e) => handleFilter(filterStatus, e.target.value)}
+            multiple
+            value={participantIds} // Ensure this is always an array
+            onChange={handleParticipantsChange}
+            renderValue={(selected) => selected.join(", ")} // Display selected values
           >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="Fundraiser">Fundraiser</MenuItem>
-            <MenuItem value="Workshop">Workshop</MenuItem>
-            <MenuItem value="Outreach">Outreach</MenuItem>
+            {systemParticipants.map((participant) => (
+              <MenuItem key={participant._id} value={participant._id}>
+                <Checkbox checked={participantIds.includes(participant._id)} />
+                <ListItemText primary={participant.fullName} />
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
+
         <Button
           sx={{
             width: "40%",
@@ -374,7 +389,10 @@ const Events: React.FC = () => {
       <Grid container spacing={3}>
         {filteredEvents?.map((event) => (
           <Grid item xs={12} sm={6} md={4} key={event._id}>
-            <Card>
+            <Card
+              sx={{ height: "100%", cursor: "pointer" }}
+              onClick={() => handleNavigation(event._id)}
+            >
               <CardContent>
                 <Typography variant="h6">{event.name}</Typography>
                 <Typography variant="body2" color="textSecondary">
@@ -404,7 +422,7 @@ const Events: React.FC = () => {
                 </Typography>
                 <Divider sx={{ my: 2 }} />
 
-                <Box display="flex" justifyContent="space-evenly">
+                {/* <Box display="flex" justifyContent="space-evenly">
                   {event?.status?.toLowerCase() === "completed" && (
                     <Tooltip title="Show Visuals">
                       <IconButton
@@ -436,7 +454,7 @@ const Events: React.FC = () => {
                       </IconButton>
                     </Tooltip>
                   </Box>
-                </Box>
+                </Box> */}
               </CardContent>
             </Card>
           </Grid>
@@ -619,7 +637,6 @@ const Events: React.FC = () => {
                       </MenuItem>
                       <MenuItem value="Organizer">Organizer</MenuItem>
                       <MenuItem value="Volunteer">Volunteer</MenuItem>
-                      <MenuItem value="Attendee">Attendee</MenuItem>
                       <MenuItem value="Speaker">Speaker</MenuItem>
                     </Select>
                   </FormControl>
