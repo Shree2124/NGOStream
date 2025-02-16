@@ -7,6 +7,10 @@ import { SuccessResponse } from "../utils/successResponse";
 import { sendRegistrationMail } from "../utils/sendMail";
 import mongoose, { isValidObjectId } from "mongoose";
 import { IEvent } from "../types/event.types";
+import PDFDocument from "pdfkit";
+import fs from "fs";
+import path from "path";
+import uploadOnCloudinary from "../utils/cloudinary";
 
 const createEvent = asyncHandler(async (req: any, res: Response) => {
   const {
@@ -414,5 +418,155 @@ const getEventById = asyncHandler(async(req: any, res)=>{
 
   return res.status(200).json(new SuccessResponse(200, event, ""))
 })
+
+export const generateEventReport = asyncHandler(async (req: any, res: Response) => {
+  const { eventId } = req.params;
+
+    // Fetch event from database
+    const event: IEvent | any = await Event.findById(eventId)
+      .populate("participants.memberId", "fullName email")
+      .populate("donations");
+
+    console.log(event)
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Create a PDF document
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const filePath = path.join(__dirname, `event_${eventId}_report.pdf`);
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    // Set Professional Font
+    doc.font("Times-Roman");
+
+    // Add Organization Logo
+    const logoPath = path.join(__dirname, "../../public/ngo.png");
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, 80, 35, { width: 60 });
+    }
+
+    // Organization Name (Centered, Blue)
+    doc
+      .fillColor("#003366") // Dark Blue Color
+      .font("Times-Bold")
+      .fontSize(20)
+      .text("NGO Stream", { align: "center" });
+
+      // Event Title (Centered, Dark Red)
+      doc
+        .fillColor("#800000") // Dark Red
+        .font("Times-Bold")
+        .fontSize(18)
+        .text(`Event Report: ${event.name}`, { align: "center" });
+  
+      doc.moveDown(1);
+
+    // 📅 Report Date (Right-Aligned, Gray)
+    doc
+      .fillColor("#555555") // Gray Color
+      .font("Times-Roman")
+      .fontSize(12)
+      .text(`Report Date: ${new Date().toLocaleDateString()}`, { align: "right" });
+
+    doc.moveDown(2);
+
+
+    // 📝 Event Details Section
+    doc.fillColor("#003366").font("Times-Bold").fontSize(14).text("Event Details:", { underline: true });
+    doc.moveDown(0.5);
+    
+    doc
+      .fillColor("#000000") // Black Color
+      .font("Times-Roman")
+      .fontSize(12)
+      .text(`Location: ${event.location}`)
+      .text(`Start Date: ${new Date(event.startDate).toLocaleDateString()}`)
+      .text(`End Date: ${new Date(event.endDate).toLocaleDateString()}`)
+      .text(`Type: ${event.eventType}`)
+      .text(`Status: ${event.status}`)
+      .moveDown();
+
+    // Event Description
+    doc.fillColor("#003366").font("Times-Bold").text("Event Description:", { underline: true });
+    doc.fillColor("#000000").font("Times-Roman").text(event.description || "No description provided").moveDown();
+
+    // Participants List
+    doc.fillColor("#003366").font("Times-Bold").text("Participants:", { underline: true }).moveDown(0.5);
+    event.participants.forEach((participant: any, index: number) => {
+      doc
+        .fillColor("#000000")
+        .font("Times-Roman")
+        .text(`${index + 1}. ${participant.memberId?.fullName} - ${participant.role}`);
+    });
+    doc.moveDown();
+
+    // Key Performance Indicators (KPIs)
+    doc.fillColor("#003366").font("Times-Bold").text("Key Performance Indicators:", { underline: true }).moveDown(0.5);
+    doc.fillColor("#000000").font("Times-Roman").text(`Attendance: ${event?.kpis?.attendance}`);
+    event?.kpis?.successMetrics?.forEach((metric: string, index: number) => {
+      doc.text(`${index + 1}. ${metric}`);
+    });
+    doc.moveDown();
+
+    // Donations Table (Formatted)
+    if (event.donations.length > 0) {
+      doc.fillColor("#003366").font("Times-Bold").text("Donations Received:", { underline: true }).moveDown(0.5);
+
+      const tableStartX = 50;
+      const columnWidths = [50, 250, 100];
+      const tableHeaderColor = "#003366";
+      const tableTextColor = "#000000";
+
+      // Table Header
+      doc
+        .fillColor(tableHeaderColor)
+        .font("Times-Bold")
+        .text("No.", tableStartX, doc.y)
+        .text("Donor Name", tableStartX + columnWidths[0], doc.y)
+        .text("Amount", tableStartX + columnWidths[0] + columnWidths[1], doc.y, { align: "right" });
+
+      doc.moveDown(0.5);
+
+      // Table Rows
+      event.donations.forEach((donation: any, index: number) => {
+        doc
+          .fillColor(tableTextColor)
+          .font("Times-Roman")
+          .text(`${index + 1}`, tableStartX, doc.y)
+          .text(donation.donorName, tableStartX + columnWidths[0], doc.y)
+          .text(`₹${donation.amount}`, tableStartX + columnWidths[0] + columnWidths[1], doc.y, { align: "right" });
+
+        doc.moveDown(0.5);
+      });
+
+      doc.moveDown();
+    }
+
+    // 📌 Footer
+    doc
+      .moveDown(2)
+      .fillColor("#555555")
+      .font("Times-Bold")
+      .fontSize(10)
+      .text("Generated by NGO Stream", { align: "center" });
+
+    // Finalize PDF
+    doc.end();
+
+    stream.on("finish",async () => {
+      try {
+        const pdfUrl = await uploadOnCloudinary(filePath);
+        res.json({ message: "PDF report generated", pdfUrl: pdfUrl ? pdfUrl.url : "" });
+      } catch (err) {
+        console.error("Cloudinary upload error:", err);
+        res.status(500).json({ message: "Error uploading PDF to Cloudinary" });
+      }
+    });
+  }
+);
+
 
 export { createEvent, getAllEvents, editEvent, getEvent, addEventFeedback,getEventById };

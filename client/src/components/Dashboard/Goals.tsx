@@ -220,7 +220,7 @@ const Goals: React.FC = () => {
     const fetchGoals = async () => {
       setIsLoading(true);
       try {
-        const res = await api.get("/goals/all-goals");
+        const res = await api.get("/admin/all-goals");
         setGoals(res.data.data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       } catch (error: any) {

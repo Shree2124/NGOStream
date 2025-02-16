@@ -29,7 +29,7 @@ interface IGoal {
 }
 
 const GoalsSection: React.FC = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+
   const navigate = useNavigate();
   const [goalsData, setGoalsData] = useState<IGoal[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -69,7 +69,7 @@ const GoalsSection: React.FC = () => {
 
   const GoalCard = ({ goal }: { goal: IGoal }) => (
     <Card
-      className="h-[420px] flex flex-col mb-6 mx-auto max-w-md"
+      className="flex flex-col mx-auto mb-6 max-w-md h-[420px]"
       sx={{
         boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
         borderRadius: 2,
@@ -93,13 +93,13 @@ const GoalsSection: React.FC = () => {
           alt={goal.name}
           className="w-full h-full object-cover"
         />
-        <Box className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/50 to-transparent" />
+        <Box className="right-0 bottom-0 left-0 absolute bg-gradient-to-t from-black/50 to-transparent h-16" />
       </Box>
 
-      <CardContent className="flex-1 flex flex-col p-5">
+      <CardContent className="flex flex-col flex-1 p-5">
         <Typography
           variant="h6"
-          className="text-lg font-semibold mb-2 line-clamp-2"
+          className="mb-2 font-semibold text-lg line-clamp-2"
           sx={{ minHeight: "3.5rem" }}
         >
           {truncateText(goal.name, 60)}
@@ -107,7 +107,7 @@ const GoalsSection: React.FC = () => {
 
         <Typography
           variant="body2"
-          className="text-gray-600 mb-4 line-clamp-3"
+          className="mb-4 text-gray-600 line-clamp-3"
           sx={{ minHeight: "4.5rem" }}
         >
           {truncateText(goal.description, 120)}
@@ -120,7 +120,7 @@ const GoalsSection: React.FC = () => {
             </Typography>
             <Typography
               variant="body2"
-              className="text-green-600 font-semibold"
+              className="font-semibold text-green-600"
             >
               {((goal.currentAmount / goal.targetAmount) * 100).toFixed(1)}%
             </Typography>
@@ -155,7 +155,7 @@ const GoalsSection: React.FC = () => {
                 background: "linear-gradient(45deg, #45a049 30%, #1e88e5 90%)",
               },
             }}
-            className="transform-transition duration-300 hover:scale-105 ease-in-out"
+            className="transform-transition hover:scale-105 duration-300 ease-in-out"
           >
             Support This Campaign
           </Button>
@@ -184,10 +184,10 @@ const GoalsSection: React.FC = () => {
       }}
       id="goals"
     >
-      <Box className="max-w-6xl mx-auto px-4">
+      <Box className="mx-auto px-4 max-w-6xl">
         <Typography
           variant="h4"
-          className="text-center mb-3 font-bold"
+          className="mb-3 font-bold text-center"
           sx={{
             background: "linear-gradient(45deg, #4CAF50 30%, #2196F3 90%)",
             WebkitBackgroundClip: "text",
@@ -206,12 +206,12 @@ const GoalsSection: React.FC = () => {
           </Box>
         ) : (
           // Desktop view - carousel
-          <Carousel className="w-full p-4">
+          <Carousel className="p-4 w-full">
             <CarouselContent>
               {goalsData.map((goal: IGoal) => (
                 <CarouselItem
                   key={goal._id}
-                  className="md:basis-1/2 lg:basis-1/3 pl-4"
+                  className="pl-4 md:basis-1/2 lg:basis-1/3"
                 >
                   <GoalCard goal={goal} />
                 </CarouselItem>
@@ -219,20 +219,20 @@ const GoalsSection: React.FC = () => {
             </CarouselContent>
             <CarouselPrevious
               className="left-0 lg:-left-12 bg-white/90 hover:bg-white"
-              sx={{
+              style={{
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                "&:hover": {
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                },
+                // "&:hover": {
+                //   boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                // },
               }}
             />
             <CarouselNext
               className="right-0 lg:-right-12 bg-white/90 hover:bg-white"
-              sx={{
+              style={{
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                "&:hover": {
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                },
+                // "&:hover": {
+                //   boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                // },
               }}
             />
           </Carousel>
@@ -240,7 +240,7 @@ const GoalsSection: React.FC = () => {
 
         <Typography
           variant="h5"
-          className="text-center py-8"
+          className="py-8 text-center"
           sx={{
             fontWeight: "bold",
             fontFamily: "monospace",
