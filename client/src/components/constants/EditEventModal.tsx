@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { api } from "../../api/api";
-import { AnyARecord } from "dns";
 
 interface IEditEventModal {
   event: any;
