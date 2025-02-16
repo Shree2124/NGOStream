@@ -1,33 +1,46 @@
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useEffect, useState } from "react";
 import { api } from "../../api/api";
+import { AnyARecord } from "dns";
 
-const EditEventModal = ({ event, onClose }) => {
-  const formatDateTimeLocal = (isoString) => {
+interface IEditEventModal {
+  event: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onClose: any;
+}
+
+const EditEventModal: React.FC<IEditEventModal> = ({ event, onClose }) => {
+  const formatDateTimeLocal = (isoString: string) => {
     if (!isoString) return "";
     const date = new Date(isoString);
     return date.toISOString().slice(0, 16);
   };
-  
+
   const [eventName, setEventName] = useState(event.name);
-  const [startDate, setStartDate] = useState(formatDateTimeLocal(event.startDate));
+  const [startDate, setStartDate] = useState(
+    formatDateTimeLocal(event.startDate)
+  );
   const [endDate, setEndDate] = useState(formatDateTimeLocal(event.endDate));
   const [description, setDescription] = useState(event.description);
   const [members, setMembers] = useState([]);
-  const [selectedMembers, setSelectedMembers] = useState([]);
-  const [roleMap, setRoleMap] = useState({});
+  const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
+  const [roleMap, setRoleMap] = useState<any>({});
 
-  const onUpdate = async (updatedEvent) => {
+  const onUpdate = async (updatedEvent: any) => {
     try {
-      console.log(updatedEvent)
-       const res = await api.put(`/event/edit/${event?._id}`, {...updatedEvent});
+      console.log(updatedEvent);
+      const res = await api.put(`/event/edit/${event?._id}`, {
+        ...updatedEvent,
+      });
+      console.log(res);
     } catch (error: any) {
-      console.error(error.message)
+      console.error(error.message);
     }
   };
 
   useEffect(() => {
-    console.log("event: ",event);
-    
+    console.log("event: ", event);
 
     const fetchMembers = async () => {
       try {
@@ -36,13 +49,13 @@ const EditEventModal = ({ event, onClose }) => {
 
         if (res.data) {
           const allMembers = res.data.data?.filter(
-            (member) => member.role !== "Attendee"
+            (member: any) => member.role !== "Attendee"
           ); // Exclude Attendees
           console.log(allMembers);
 
-          const updatedMembers = allMembers?.map((member) => {
+          const updatedMembers = allMembers?.map((member: any) => {
             const assignedStaff = event?.eventStaff?.find(
-              (staff) => staff.memberId === member._id
+              (staff: any) => staff.memberId === member._id
             );
 
             return {
@@ -50,19 +63,19 @@ const EditEventModal = ({ event, onClose }) => {
               fullName: member.fullName,
               email: member.email,
               role: member.role,
-              alreadyEventStaff: !!assignedStaff, 
-              eventRole: assignedStaff ? assignedStaff.eventRole : "Volunteer", 
+              alreadyEventStaff: !!assignedStaff,
+              eventRole: assignedStaff ? assignedStaff.eventRole : "Volunteer",
             };
           });
 
           setMembers(updatedMembers);
           setSelectedMembers(
             updatedMembers
-              ?.filter((m) => m.alreadyEventStaff)
-              .map((m) => m.memberId)
+              ?.filter((m: any) => m.alreadyEventStaff)
+              .map((m: any) => m.memberId)
           ); // Auto-select existing members
           setRoleMap(
-            updatedMembers.reduce((acc, member) => {
+            updatedMembers.reduce((acc: any, member: any) => {
               acc[member.memberId] = member.eventRole;
               return acc;
             }, {})
@@ -76,28 +89,28 @@ const EditEventModal = ({ event, onClose }) => {
     fetchMembers();
   }, [event]);
 
-  const handleSelectMember = (memberId) => {
-    setSelectedMembers((prev) =>
+  const handleSelectMember: any = (memberId: any) => {
+    setSelectedMembers((prev: any) =>
       prev.includes(memberId)
-        ? prev?.filter((id) => id !== memberId)
+        ? prev?.filter((id: any) => id !== memberId)
         : [...prev, memberId]
     );
   };
 
-  const handleRoleChange = (memberId, role) => {
-    setRoleMap((prev) => ({ ...prev, [memberId]: role }));
+  const handleRoleChange = (memberId: string, role: string) => {
+    setRoleMap((prev: any) => ({ ...prev, [memberId]: role }));
   };
 
-  const handleSave = () => {
+  const handleSave: any = () => {
     const newEventStaff = selectedMembers?.map((memberId) => {
-      const member = members?.find((m) => m.memberId === memberId);
+      const member: {memberId: string, role: string, fullName: string} | any = members?.find((m: any) => m?.memberId === memberId);
       return {
-        memberId: member.memberId,
+        memberId: member?.memberId,
         role: roleMap[memberId] || "Volunteer",
       };
     });
 
-    console.log("newEvent staff: ",newEventStaff)
+    console.log("newEvent staff: ", newEventStaff);
 
     const updatedEvent = {
       ...event,
@@ -108,7 +121,7 @@ const EditEventModal = ({ event, onClose }) => {
       participants: [...newEventStaff],
     };
 
-    console.log("updated event : ",updatedEvent)
+    console.log("updated event : ", updatedEvent);
 
     onUpdate(updatedEvent);
     onClose();
@@ -166,7 +179,7 @@ const EditEventModal = ({ event, onClose }) => {
         <div className="mb-4">
           <h3 className="font-medium text-md">Add Participants</h3>
           <ul>
-            {members?.map((member) => (
+            {members?.map((member: {memberId: string, fullName: string, role: string} | any) => (
               <li
                 key={member.memberId}
                 className="flex justify-between items-center py-2 border-b"
@@ -174,7 +187,7 @@ const EditEventModal = ({ event, onClose }) => {
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedMembers.includes(member.memberId)}
+                    checked={selectedMembers?.includes(member.memberId)}
                     onChange={() => handleSelectMember(member.memberId)}
                     className="mr-2"
                   />
@@ -182,8 +195,10 @@ const EditEventModal = ({ event, onClose }) => {
                 </div>
 
                 <select
-                  value={roleMap[member.memberId] || "Volunteer"}
-                  onChange={(e) => handleRoleChange(member.memberId, e.target.value)}
+                  value={roleMap[member.memberId.toString()] || "Volunteer"}
+                  onChange={(e) =>
+                    handleRoleChange(member?.memberId, e.target.value)
+                  }
                   className="p-1 border rounded"
                 >
                   <option value="Organizer">Organizer</option>
@@ -199,7 +214,10 @@ const EditEventModal = ({ event, onClose }) => {
           <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose}>
             Cancel
           </button>
-          <button className="bg-blue-500 px-4 py-2 rounded text-white" onClick={handleSave}>
+          <button
+            className="bg-blue-500 px-4 py-2 rounded text-white"
+            onClick={handleSave}
+          >
             Save Changes
           </button>
         </div>

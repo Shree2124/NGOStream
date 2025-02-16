@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import {
   Box,
@@ -80,6 +81,8 @@ const Login: React.FC = () => {
 
     try {
       const res = await api.post("/users/login", { username, password });
+      console.log(res.data);
+      
       toast.success("Welcome back to our community!", {
         id: loadingToast,
         duration: 3000,
