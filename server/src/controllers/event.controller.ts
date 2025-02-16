@@ -5,7 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
 import { sendRegistrationMail } from "../utils/sendMail";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { IEvent } from "../types/event.types";
 
 const createEvent = asyncHandler(async (req: any, res: Response) => {
@@ -20,6 +20,7 @@ const createEvent = asyncHandler(async (req: any, res: Response) => {
   } = req.body;
 
   console.log(req.body);
+  
 
   if (
     [name, startDate, endDate, description, location, eventType].some(
@@ -180,6 +181,8 @@ const editEvent = asyncHandler(async (req: any, res: Response) => {
     eventType,
     participants,
   } = req.body;
+
+  console.log(req.body.participants)
 
   const existingEvent = await Event.findById(eventId);
   if (!existingEvent) {
@@ -360,4 +363,56 @@ const addEventFeedback = asyncHandler(async (req: any, res: Response) => {
   res.status(200).json(new SuccessResponse(200, "Event feedback added successfully"));
 });
 
-export { createEvent, getAllEvents, editEvent, getEvent, addEventFeedback };
+const getEventById = asyncHandler(async(req: any, res)=>{
+  const {eventId} = req.params
+
+  const event = await Event.aggregate([
+    {
+      $match: { _id: new mongoose.Types.ObjectId(eventId) }
+    },
+    {
+      $lookup: {
+        from: "members",
+        localField: "participants.memberId",
+        foreignField: "_id",
+        as: "participantDetails",
+      },
+    },
+    {
+      $addFields: {
+        participants: {
+          $map: {
+            input: "$participants",
+            as: "participant",
+            in: {
+              memberId: "$$participant.memberId",
+              role: "$$participant.role",
+              addedAt: "$$participant.addedAt",
+              memberDetails: {
+                $arrayElemAt: [
+                  {
+                    $filter: {
+                      input: "$participantDetails",
+                      as: "detail",
+                      cond: { $eq: ["$$detail._id", "$$participant.memberId"] },
+                    },
+                  },
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        participantDetails: 0,
+      },
+    },
+  ]);
+
+  return res.status(200).json(new SuccessResponse(200, event, ""))
+})
+
+export { createEvent, getAllEvents, editEvent, getEvent, addEventFeedback,getEventById };

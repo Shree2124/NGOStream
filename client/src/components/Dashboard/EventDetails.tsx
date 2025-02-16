@@ -14,20 +14,49 @@ import {
 import { Bar } from "react-chartjs-2";
 import { motion } from "framer-motion";
 import { Edit } from "@mui/icons-material";
+import StackedLineChart from "../constants/StackedLineChart";
+import EditEventModal from "../constants/EditEventModal";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Title);
 
+
 const EventDetails: React.FC = () => {
   const { eventId } = useParams();
-  const [event, setEvent] = useState<IEvent | null>(null);
+  const [event, setEvent] = useState<IEvent | any>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
+  console.log(isModalOpen);
 
-  const [eventName, setEventName] = useState("");
-  const [eventLocation, setEventLocation] = useState("");
-  const [eventDate, setEventDate] = useState("");
-  const [eventDescription, setEventDescription] = useState("");
+  useEffect(() => {
+    const fetchEvent = async () => {
+      let event1;
+      try {
+        event1 = await api.get(`/event/get-event-by-id/${eventId}`);
+        console.log(event1.data.data);
+      } catch (e:any) {
+        console.log(e.message);
+      }
+    };
+    fetchEvent();
+  }, [event]);
+  
+
+  const labels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
+  const datasets = [
+    {
+      label: "Positive Feedback",
+      data: [50, 75, 90, 120, 150],
+      borderColor: "rgb(75, 192, 192)", 
+      backgroundColor: "rgba(75, 192, 192, 0.2)",
+    },
+    {
+      label: "Negative Feedback",
+      data: [20, 35, 50, 70, 85],
+      borderColor: "rgb(255, 99, 132)", 
+      backgroundColor: "rgba(255, 99, 132, 0.2)",
+    },
+  ];
 
   useEffect(() => {
     const getEventDetails = async () => {
@@ -35,11 +64,6 @@ const EventDetails: React.FC = () => {
       try {
         const res = await api.get(`/admin/event/${eventId}`);
         setEvent(res.data.data);
-
-        setEventName(res.data.data.name);
-        setEventLocation(res.data.data.location);
-        setEventDate(res.data.data.startDate);
-        setEventDescription(res.data.data.description);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error:any) {
         setError(error.message);
@@ -50,40 +74,25 @@ const EventDetails: React.FC = () => {
     getEventDetails();
   }, [eventId]);
 
-  const handleUpdateEvent = async () => {
-    try {
-      const updatedEvent = {
-        name: eventName,
-        location: eventLocation,
-        startDate: eventDate,
-        description: eventDescription,
-      };
 
-      await api.put(`/admin/event/${eventId}`, updatedEvent);
-      setShowEditModal(false);
-      // setEvent({ ...event, ...updatedEvent }); // Update state locally
-    } catch (err) {
-      console.error("Error updating event:", err);
-    }
-  };
 
   if (loading) return <p className="text-lg text-center">Loading...</p>;
   if (error) return <p className="text-red-500 text-center">Error: {error}</p>;
   if (!event) return <p className="text-center">Event not found.</p>;
 
   const kpiData = {
-    labels: ["Attendance", "Funds Raised"],
+    labels: ["Attendance"],
     datasets: [
       {
         label: "Event KPIs",
-        data: [event?.attendees, event?.donations || 0],
+        data: [event?.attendees],
         backgroundColor: "#3b82f6",
       },
     ],
   };
 
   return (
-    <div className="space-y-6 bg-white shadow-lg mx-auto mt-6 p-6 rounded-2xl max-w-4xl">
+    <div className="space-y-6 bg-white shadow-lg mx-auto mt-6 p-6 rounded-2xl">
       {/* Event Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -113,7 +122,7 @@ const EventDetails: React.FC = () => {
 
           {event.status === "Upcoming" && (
             <button
-              onClick={() => setShowEditModal(true)}
+              onClick={() => setModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 shadow-md px-4 py-2 rounded-lg text-white transition"
             >
               <Edit />
@@ -154,7 +163,7 @@ const EventDetails: React.FC = () => {
           <div>
             <h3 className="mb-1 font-medium text-gray-600">Attendees</h3>
             <ul className="bg-gray-50 rounded-lg divide-y">
-              {event?.attendees?.map((p: any, index) => (
+              {event?.attendees?.map((p: any, index: number) => (
                 <li
                   key={index}
                   className="flex justify-between p-3 text-gray-700"
@@ -168,7 +177,7 @@ const EventDetails: React.FC = () => {
           <div>
             <h3 className="mb-1 font-medium text-gray-600">Event Team</h3>
             <ul className="bg-gray-50 rounded-lg divide-y">
-              {event?.eventStaff?.map((p, index) => (
+              {event?.eventStaff?.map((p: any, index: any) => (
                 <li
                   key={index}
                   className="flex justify-between p-3 text-gray-700"
@@ -184,11 +193,19 @@ const EventDetails: React.FC = () => {
         </div>
       </div>
 
+      <div className="mx-auto p-4 w-full max-w-4xl">
+        <h2 className="mb-4 font-bold text-xl text-center">
+          Weekly Feedback Overview
+        </h2>
+        <div className="relative w-full h-auto">
+          <StackedLineChart labels={labels} datasets={datasets} />
+        </div>
+      </div>
+
       {/* Feedback Section */}
-      {/* Feedback Section */}
-      {event.feedback &&
-      event.feedback.length > 0 &&
-      event.feedback.some((fb) => Object.keys(fb).length > 0) ? (
+      {event?.feedback &&
+      event?.feedback?.length > 0 &&
+      event?.feedback?.some((fb: any) => Object.keys(fb).length > 0) ? (
         <div>
           <h2 className="mb-2 font-semibold text-lg">Feedback</h2>
           <motion.div
@@ -197,7 +214,7 @@ const EventDetails: React.FC = () => {
             className="space-y-2"
           >
             {event?.feedback?.map(
-              (fb: any, index) =>
+              (fb: any, index: any) =>
                 Object.keys(fb).length > 0 && (
                   <div
                     key={index}
@@ -217,65 +234,8 @@ const EventDetails: React.FC = () => {
         <p className="text-gray-500 text-center">No feedbacks available.</p>
       )}
 
-      {showEditModal && (
-        <div className="fixed inset-0 flex justify-center items-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white shadow-lg p-6 rounded-lg w-96">
-            <h2 className="mb-4 font-semibold text-xl">Edit Event</h2>
-            <label className="block font-medium text-gray-700 text-sm">
-              Event Name
-            </label>
-            <input
-              type="text"
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              className="mb-3 p-2 border rounded-md w-full"
-            />
-
-            <label className="block font-medium text-gray-700 text-sm">
-              Location
-            </label>
-            <input
-              type="text"
-              value={eventLocation}
-              onChange={(e) => setEventLocation(e.target.value)}
-              className="mb-3 p-2 border rounded-md w-full"
-            />
-
-            <label className="block font-medium text-gray-700 text-sm">
-              Date
-            </label>
-            <input
-              type="date"
-              value={eventDate.split("T")[0]}
-              onChange={(e) => setEventDate(e.target.value)}
-              className="mb-3 p-2 border rounded-md w-full"
-            />
-
-            <label className="block font-medium text-gray-700 text-sm">
-              Description
-            </label>
-            <textarea
-              value={eventDescription}
-              onChange={(e) => setEventDescription(e.target.value)}
-              className="mb-3 p-2 border rounded-md w-full"
-            ></textarea>
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="bg-gray-400 px-4 py-2 rounded-md text-white"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateEvent}
-                className="bg-blue-600 px-4 py-2 rounded-md text-white"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
+      {isModalOpen && (
+        <EditEventModal onClose={() => setModalOpen(false)} event={event} />
       )}
     </div>
   );

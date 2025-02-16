@@ -7,7 +7,7 @@ export interface IEvent {
   location: string;
   eventType: string;
   status: "Upcoming" | "Happening" | "Completed";
-  outcomes: string | null;
+  outcomes: string;
   feedback: {
     feedbackText: string[];
     rating: number[];
@@ -26,4 +26,6 @@ export interface IEvent {
     email: string;
     addedAt: string[];
   }[];
+  participants: string[];
+  assignedRoles: Record<string, string>;
 }
