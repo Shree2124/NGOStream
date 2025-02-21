@@ -1,0 +1,58 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+
+# Build outputs
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+
+# Test coverage
+coverage/
+
+# Process files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Debug files
+debug.log*
+debug/
+
+# Miscellaneous
+.nyc_output/
+.sass-cache/
+.eslintcache
+*.tgz
+
+# Local files for npm and yarn
+*.lock
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Git-related
+.gitconfig
