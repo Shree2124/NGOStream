@@ -20,6 +20,7 @@ import Vision from "./Vision/Vision";
 import Achievements from "./Achievements/Achievements";
 import BeneficiaryApplications from "./Dashboard/BeneficiaryApplications";
 import Impact from "./Dashboard/Impact";
+import {Impact as ImpactComponent} from "./Impact/Impact";
 
 export {
   Login,
@@ -44,5 +45,6 @@ export {
   Vision,
   Achievements,
   BeneficiaryApplications,
-  Impact
+  Impact,
+  ImpactComponent
 };

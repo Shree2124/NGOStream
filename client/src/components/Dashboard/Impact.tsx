@@ -24,13 +24,13 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Input,
+  // Input,
   AvatarGroup,
   Avatar,
   useMediaQuery,
   Box,
 } from "@mui/material";
-import { Add, Edit, Delete, CloudUpload } from "@mui/icons-material";
+import { Add, Edit, Delete, CloudUpload, CategoryOutlined } from "@mui/icons-material";
 import { api } from "../../api/api";
 
 const steps = [
@@ -40,43 +40,57 @@ const steps = [
   "Upload & Submit",
 ];
 
+export interface IImpact {
+  _id: string;
+  eventId?: string;
+  beneficiaryId?: string;
+  goalId?: string;
+  description: string;
+  images: string[];
+  donationType: "In-Kind" | "Monetary";
+  selectedId: string;
+  category: "Event" | "Goal";
+}
+
 const ImpactManagement = () => {
-  const [impacts, setImpacts] = useState([]);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("");
-  const [openModal, setOpenModal] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [activeStep, setActiveStep] = useState(0);
-  const [donationType, setDonationType] = useState("");
-  const [category, setCategory] = useState("");
-  const [selectedId, setSelectedId] = useState("");
-  const [description, setDescription] = useState("");
+  const [impacts, setImpacts] = useState<IImpact[]>([]);
+  const [search, setSearch] = useState<string>("");
+  const [filter, setFilter] = useState<string>("");
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [editId, setEditId] = useState<string>("");
+  const [activeStep, setActiveStep] = useState<number>(0);
+  const [donationType, setDonationType] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [images, setImages] = useState<File[]>([]);
-  const [events, setEvents] = useState<any>([{ name: "event1" }]);
-  const [goals, setGoals] = useState<any>([{ name: "goal1" }]);
-  const [beneficiaries, setBeneficiaries] = useState<any>([{ name: "b1" }]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [events, setEvents] = useState<any>([]);
+  const [goals, setGoals] = useState<any>([]);
+  const [selectedImpact, setSelectedImpact] = useState<IImpact>();
+
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     fetchImpacts();
   }, []);
 
+  const fetchNames = async () => {
+    if (category === "Event") {
+      const res = await api.get("/event/get-event-names");
+      console.log(res);
+      setEvents(res.data.data);
+    } else if (category === "Goal") {
+      const res = await api.get("/goal/get-names");
+      setGoals(res.data.data);
+    }
+  };
+
   useEffect(() => {
-    const fetchNames = async () => {
-      if (category === "event") {
-        const res = await api.get("/event/get-event-names");
-        console.log(res);
-        setEvents(res.data.data);
-      } else if (category === "goal") {
-        const res = await api.get("/goal/get-names");
-        setGoals(res.data.data);
-      } else if (category === "beneficiary") {
-        const res = await api.get("/beneficiary/get-names");
-        setBeneficiaries(res.data.data);
-      }
-    };
-    fetchNames();
-  }, [category]);
+    if (category) {
+      fetchNames();
+    }
+  }, [category, editId]);
 
   const fetchImpacts = async () => {
     const response = await api.get("/admin/get-impacts");
@@ -89,66 +103,92 @@ const ImpactManagement = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    
+
     if (images.length + files.length > 5) {
       return alert("Max 5 images allowed!");
     }
-  
+
     setImages((prevImages) => [...prevImages, ...files]);
   };
+
   const handleSubmit = async () => {
-    console.log({
-      donationType,
-      category,
-      selectedId,
-      description,
-    });
-    if (!description || images.length < 1)
-      return alert("Please provide description & images.");
+    console.log(existingImages, images, description)
+    // console.log(images.length < 1 || existingImages.length < 1);
+    if (!description){
+      alert("Please provide description")
+    } else if (images.length < 1 || existingImages.length < 1) {
+      alert("Please upload at least one image");
+    }
     const formData = new FormData();
     formData.append("donationType", donationType);
+    console.log(formData);
     formData.append("category", category);
     formData.append("description", description);
     images.forEach((file) => formData.append("images", file));
-    if (category === "event") {
+    existingImages.forEach((url) => formData.append("existingImages", url));
+    if (category === "Event") {
       formData.append("eventId", selectedId);
-    } else if (category === "goal") {
+    } else if (category === "Goal") {
       formData.append("goalId", selectedId);
-    } else if (category === "beneficiary") {
-      formData.append("beneficiaryId", selectedId);
     }
 
     console.log(formData);
 
-    const method = editId ? "PUT" : "POST";
-    await fetch(
-      `http://localhost:5000/api/v1/impact${
-        editId ? `/edit/:${editId}` : "/create"
-      }`,
+    console.log({
+      donationType,
+      category,
+      description,
+      images,
+      selectedId,
+    });
+    console.log(formData)
+
+    if (editId) {
+      const res = await api.put(`/impact/edit/${editId}`, 
+        formData,
       {
-        method,
-        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
     );
+      console.log(res.data);
+    } else {
+      const res = await api.post("/impact/create", formData);
+      console.log(res.data);
+    }
 
     fetchImpacts();
     handleCloseModal();
   };
 
-  const handleDelete = async (id) => {
-    await fetch(`/api/impacts/${id}`, { method: "DELETE" });
+  const handleDelete = async (id: string) => {
+    const res = await api.delete(`/impact/${id}`);
+    console.log(res.data);
     fetchImpacts();
   };
 
-  const handleEdit = (impact) => {
+  const handleEdit = async (impact: IImpact) => {
+    console.log(impact);
+    setSelectedImpact(impact);
     setEditId(impact._id);
     setDonationType(impact.donationType);
-    setCategory(impact.category);
-    setSelectedId(impact.selectedId);
+    console.log(impact?.eventId !== null);
+    if (impact?.eventId) {
+      setCategory("Event");
+    } else if (impact?.goalId) {
+      setCategory("Goal");
+    }
+    console.log(category);
+    setSelectedId(impact?.selectedId);
     setDescription(impact.description);
     setImages([]);
+    setExistingImages(impact.images || []);
     setActiveStep(0);
     setOpenModal(true);
+    // await fetchNames();
+
+    // console.log(events);
   };
 
   const handleNext = () => {
@@ -168,13 +208,13 @@ const ImpactManagement = () => {
       alert("Please provide a description and at least one image.");
       return;
     }
-  
+
     setActiveStep((prevStep) => prevStep + 1);
   };
 
   const handleCloseModal = () => {
     setOpenModal(false);
-    setEditId(null);
+    setEditId("");
     setActiveStep(0);
     setDonationType("");
     setCategory("");
@@ -200,7 +240,6 @@ const ImpactManagement = () => {
         <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
           <MenuItem value="">All</MenuItem>
           <MenuItem value="event">Event</MenuItem>
-          <MenuItem value="beneficiary">Beneficiary</MenuItem>
           <MenuItem value="goal">Goal</MenuItem>
         </Select>
       </FormControl>
@@ -219,7 +258,6 @@ const ImpactManagement = () => {
         sx={{ mt: 3, boxShadow: 3, borderRadius: 2 }}
       >
         <Table>
-          {/* Table Head */}
           <TableHead>
             <TableRow sx={{ bgcolor: "primary.main", color: "white" }}>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>
@@ -244,7 +282,6 @@ const ImpactManagement = () => {
             </TableRow>
           </TableHead>
 
-          {/* Table Body */}
           <TableBody>
             {impacts
               ?.filter((impact) =>
@@ -256,23 +293,16 @@ const ImpactManagement = () => {
                   key={impact._id}
                   sx={{ "&:nth-of-type(even)": { bgcolor: "grey.100" } }}
                 >
-                  {/* Donation Type */}
                   <TableCell sx={{ fontWeight: "500" }}>
                     {impact.donationType}
                   </TableCell>
 
-                  {/* Category - Hide on mobile */}
                   {!isMobile && (
                     <TableCell sx={{ fontWeight: "500" }}>
-                      {impact.eventId !== ""
-                        ? "Event"
-                        : impact.goalId !== ""
-                        ? "Campagna"
-                        : "Beneficiary"}
+                      {impact.eventId !== "" ? "Event" : "Campaign"}
                     </TableCell>
                   )}
 
-                  {/* Description */}
                   <TableCell
                     sx={{
                       maxWidth: "200px",
@@ -284,7 +314,6 @@ const ImpactManagement = () => {
                     {impact.description}
                   </TableCell>
 
-                  {/* Images */}
                   <TableCell>
                     <AvatarGroup max={4} sx={{ justifyContent: "left" }}>
                       {impact?.images?.length > 0 ? (
@@ -310,10 +339,12 @@ const ImpactManagement = () => {
                     </AvatarGroup>
                   </TableCell>
 
-                  {/* Actions */}
                   <TableCell sx={{ textAlign: "center" }}>
                     <IconButton
-                      onClick={() => handleEdit(impact)}
+                      onClick={() => {
+                        handleEdit(impact);
+                        setSelectedId(impact._id);
+                      }}
                       sx={{ color: "primary.main" }}
                     >
                       <Edit />
@@ -331,7 +362,6 @@ const ImpactManagement = () => {
         </Table>
       </TableContainer>
 
-      {/* Impact Form Modal */}
       <Dialog
         open={openModal}
         onClose={handleCloseModal}
@@ -370,9 +400,8 @@ const ImpactManagement = () => {
                 onChange={(e) => setCategory(e.target.value)}
                 required
               >
-                <MenuItem value="event">Event</MenuItem>
-                <MenuItem value="beneficiary">Beneficiary</MenuItem>
-                <MenuItem value="goal">Goal</MenuItem>
+                <MenuItem value="Event">Event</MenuItem>
+                <MenuItem value="Goal">Goal</MenuItem>
               </Select>
             </FormControl>
           )}
@@ -381,26 +410,26 @@ const ImpactManagement = () => {
             <FormControl fullWidth margin="dense" required>
               <InputLabel>Select {category}</InputLabel>
               <Select
-                value={selectedId || ""}
-                onChange={(e) => setSelectedId(e.target.value)}
-                renderValue={(selected) =>
-                  (category === "event"
-                    ? events
-                    : category === "goal"
-                    ? goals
-                    : beneficiaries
-                  )?.find((item) => item.id === selected)?.name ||
-                  "Select an option"
+                value={
+                  events.find(
+                    (event: any) =>
+                      event.id ===
+                      (category === "Event"
+                        ? selectedImpact?.eventId
+                        : selectedImpact?.goalId)
+                  )?.name || ""
                 }
+                onChange={(e) => {
+                  const selectedEvent = events.find(
+                    (event: any) => event.name === e.target.value
+                  );
+                  console.log(selectedEvent);
+                  if (selectedEvent) setSelectedId(selectedEvent.id);
+                }}
               >
-                {(category === "event"
-                  ? events
-                  : category === "goal"
-                  ? goals
-                  : beneficiaries
-                )?.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.name}
+                {events.map((event: any) => (
+                  <MenuItem key={event.id} value={event.name}>
+                    {event.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -423,7 +452,7 @@ const ImpactManagement = () => {
                 variant="outlined"
                 startIcon={<CloudUpload />}
                 sx={{ mt: 2 }}
-                disabled={images.length >= 5} // Limit to 5 images
+                disabled={images.length >= 5}
               >
                 Upload Images (Max 5)
                 <input
@@ -431,21 +460,30 @@ const ImpactManagement = () => {
                   accept="image/*"
                   multiple
                   hidden
-                  onChange={(e)=>{handleFileChange(e)}}
+                  onChange={(e) => {
+                    handleFileChange(e);
+                  }}
                 />
               </Button>
 
-              {images.length > 0 && (
-                <AvatarGroup sx={{ mt: 1 }}>
-                  {images?.map((src, index) => (
-                    <Avatar
-                      key={index}
-                      alt="Uploaded"
-                      src={URL.createObjectURL(src)}
-                    />
-                  ))}
-                </AvatarGroup>
-              )}
+              <Box display="flex" gap={1} flexWrap="wrap">
+                {existingImages.map((url, index) => (
+                  <Avatar
+                    key={index}
+                    src={url}
+                    alt="Existing Image"
+                    sx={{ width: 50, height: 50 }}
+                  />
+                ))}
+                {images.map((file, index) => (
+                  <Avatar
+                    key={index}
+                    src={URL.createObjectURL(file)}
+                    alt="New Image"
+                    sx={{ width: 50, height: 50 }}
+                  />
+                ))}
+              </Box>
             </Box>
           )}
         </DialogContent>
@@ -455,9 +493,12 @@ const ImpactManagement = () => {
             <Button onClick={() => setActiveStep(activeStep - 1)}>Back</Button>
           )}
           {activeStep < steps.length - 1 && (
-            <Button onClick={handleNext} disabled={activeStep === steps.length - 1}>
-            Next
-          </Button>
+            <Button
+              onClick={handleNext}
+              disabled={activeStep === steps.length - 1}
+            >
+              Next
+            </Button>
           )}
           {activeStep === steps.length - 1 && (
             <Button

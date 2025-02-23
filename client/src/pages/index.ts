@@ -13,6 +13,7 @@ import VisionPage from "./Vision/VisionPage";
 import AchievementsPage from "./Achievements/AchievementsPage";
 import BeneficiaryApplicationsPage from "./Dashboard/BeneficiaryApplicationsPage";
 import ImpactPage from "./Dashboard/ImpactPage";
+import ImpactComponentPage from "./Impact/ImpactComponentPage";
 
 export {
   LoginPage,
@@ -29,5 +30,6 @@ export {
   VisionPage,
   AchievementsPage,
   BeneficiaryApplicationsPage,
-  ImpactPage
+  ImpactPage,
+  ImpactComponentPage
 };

@@ -234,7 +234,7 @@ import {
   VolunteerActivism,
   Event,
   Flag,
-  AccountBalance,
+  // AccountBalance,
   ArrowDropDown,
   Money,
 } from "@mui/icons-material";
@@ -268,9 +268,9 @@ const navTabs: Tab[] = [
   },
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
   { name: "Campaign", path: "/dashboard/goals", icon: <Flag /> },
-  { name: "Schemes", path: "/dashboard/schemes", icon: <AccountBalance /> },
+  // { name: "Schemes", path: "/dashboard/schemes", icon: <AccountBalance /> },
   { name: "Impact", path: "/dashboard/impact", icon: <Money /> },
-];
+]; 
 
 const Link = styled(RouterLink)(({ theme }) => ({
   textDecoration: "none",

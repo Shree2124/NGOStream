@@ -11,7 +11,7 @@ import {
   DonorFormPage,
   EventFrontPage,
   FeedbackForm,
-  SchemesPage,
+  // SchemesPage,
   VisionPage,
   AchievementsPage,
   ImpactPage,
@@ -29,6 +29,7 @@ import GoalsPage from "./pages/Dashboard/GoalsPage";
 import PaymentSuccessPage from "./components/constants/PaymentSuccess";
 import FundraisingMetrics from "./pages/predicted";
 import EventDetailsPage from "./pages/Dashboard/EventDetailsPage";
+import ImpactComponentPage from "./pages/Impact/ImpactComponentPage";
 
 const App: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -51,6 +52,7 @@ const App: React.FC = () => {
           <Route path="/events" element={<EventFrontPage />} />
           <Route path="/visions" element={<VisionPage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
+          <Route path="/impact" element={<ImpactComponentPage />} />
           <Route
             path="/dashboard/*"
             element={
@@ -74,7 +76,7 @@ const App: React.FC = () => {
                       <Route path="/events" element={<EventsPage />} />
                       <Route path="/event-details/:eventId" element={<EventDetailsPage />} />
                       <Route path="/goals" element={<GoalsPage />} />
-                      <Route path="/schemes" element={<SchemesPage />} />
+                      {/* <Route path="/schemes" element={<SchemesPage />} /> */}
                       <Route path="/impact" element={<ImpactPage />} />
                     </Routes>
                   </DashboardLayout>

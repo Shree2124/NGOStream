@@ -29,6 +29,7 @@ const Navbar = () => {
     { text: "Events", link: "/events" },
     { text: "Vision", link: "/visions" },
     { text: "Achievements", link: "/achievements" },
+    { text: "Impact", link: "/impact" },
     { text: "Admin Login", link: "/login" },
   ];
 
