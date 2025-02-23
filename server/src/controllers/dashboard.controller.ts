@@ -99,6 +99,7 @@ const getQuickStats = async (req: any, res: Response) => {
   }
 };
 
+
 const getEvent = asyncHandler(async (req: any, res: Response) => {
   const { eventId } = req.params;
 
@@ -142,12 +143,8 @@ const getEvent = asyncHandler(async (req: any, res: Response) => {
         outcomes: { $first: "$outcomes" },
         kpis: { $first: "$kpis" },
         donations: { $first: "$donations" },
-        eventReport: {$first: "$eventReport"},
-  
-        feedback: {
-          $first: "$feedback"
-        },
-
+        eventReport: { $first: "$eventReport" },
+        feedback: { $first: "$feedback" },
         attendees: {
           $push: {
             $cond: {
@@ -162,7 +159,6 @@ const getEvent = asyncHandler(async (req: any, res: Response) => {
             },
           },
         },
-  
         eventStaff: {
           $push: {
             $cond: {
@@ -196,12 +192,83 @@ const getEvent = asyncHandler(async (req: any, res: Response) => {
       },
     },
   ]);
+
+  if (!event || event.length === 0) {
+    return res.status(404).json(new ErrorResponse(404, "Event not found"));
+  }
+
+  let feedbackAnalysis = {};
+
+  if (event[0]?.feedback.length !== 0) {
+    let feedbackTexts: string[] = [];
+    let feedbackDates: string[] = [];
+
+    event[0]?.feedback.forEach((f: any) => {
+      feedbackTexts.push(f.feedbackText);
+      feedbackDates.push(f.date);
+    });
+
+    const response = await fetch(`http://127.0.0.1:8000/api/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texts: feedbackTexts }),
+    });
+
+    const analysisResult = await response.json();
+    console.log(analysisResult);
+
+    let startDate = new Date(event[0].startDate);
+    let currentDate = new Date();
+    let weeklyData: any = {};
+
+    while (startDate <= currentDate) {
+      let endOfWeek = new Date(startDate);
+      endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+      let weekKey = startDate.toISOString().split("T")[0];
+
+      if (!weeklyData[weekKey]) {
+        weeklyData[weekKey] = {
+          positive: 0,
+          negative: 0,
+          neutral: 0,
+          suggestion: 0,
+        };
+      }
+
+      feedbackDates.forEach((date: string, index: number) => {
+        let feedbackDate = new Date(date);
+        if (feedbackDate >= startDate && feedbackDate < endOfWeek) {
+          let sentimentObj = analysisResult.sentiments[index]; 
+          console.log("sentiment objec:",sentimentObj)
+          if (sentimentObj && sentimentObj.sentiment) {
+            let sentiment = sentimentObj.sentiment.toLowerCase();
+            console.log("Sentiment .to lower ",sentiment)
+            if (weeklyData[weekKey][sentiment] !== undefined) {
+              console.log(weekKey, sentiment)
+              weeklyData[weekKey][sentiment]++;
+              console.log("if ",weeklyData)
+            } else {
+              console.warn(`Unexpected sentiment type: ${sentiment}`);
+            }
+          }
+        }
+      });
+
+      startDate = endOfWeek;
+    }
+
+    feedbackAnalysis = weeklyData;
+  }
   
+  console.log(feedbackAnalysis);
 
   return res
     .status(200)
-    .json(new SuccessResponse(200, event[0], "Event fetched successfully"));
+    .json(new SuccessResponse(200, { ...event[0], feedbackAnalysis }, "Event fetched successfully"));
 });
+
+
 
 const getImpacts = asyncHandler(async (req: any, res: Response) => {
   const impacts = await Impact.find();

@@ -5,6 +5,102 @@ import uploadOnCloudinary from "../utils/cloudinary";
 import { SuccessResponse } from "../utils/successResponse";
 import { Impact } from "../models/impact.models";
 
+const getAllImpacts = asyncHandler(async(req:any, res: Response)=>{
+  const impacts = await Impact.aggregate([
+    {
+      $lookup: {
+        from: "events",
+        localField: "eventId",
+        foreignField: "_id",
+        as: "event",
+      },
+    },
+    {
+      $lookup: {
+        from: "goals",
+        localField: "goalId",
+        foreignField: "_id",
+        as: "goal",
+      },
+    },
+    { $unwind: { path: "$event", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: "$goal", preserveNullAndEmptyArrays: true } },
+
+    {
+      $lookup: {
+        from: "donations",
+        let: { goalId: "$goalId", eventId: "$eventId" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  { $eq: ["$goalId", "$$goalId"] },
+                  { $eq: ["$eventId", "$$eventId"] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "allDonations"
+      }
+    },
+
+    {
+      $addFields: {
+        eventName: "$event.name",
+        goalName: "$goal.name",
+
+        monetaryDonations: {
+          $filter: {
+            input: "$allDonations",
+            as: "donation",
+            cond: { $eq: ["$$donation.donationType", "Monetary"] }
+          }
+        },
+        inKindDonations: {
+          $filter: {
+            input: "$allDonations",
+            as: "donation",
+            cond: { $eq: ["$$donation.donationType", "In-Kind"] }
+          }
+        }
+      }
+    },
+
+    {
+      $addFields: {
+        totalMonetaryDonations: {
+          $sum: { $ifNull: ["$monetaryDonations.monetaryDetails.amount", 0] }
+        },
+        totalInKindDonations: {
+          $sum: { $ifNull: ["$inKindDonations.inKindDetails.estimatedValue", 0] }
+        }
+      }
+    },
+
+    {
+      $project: {
+        _id: 1,
+        description: 1,
+        donationType: 1,
+        images: 1,
+        eventId: 1,
+        goalId: 1,
+        eventName: 1,
+        goalName: 1,
+        totalMonetaryDonations: 1,
+        totalInKindDonations: 1
+      }
+    }
+  ]);
+
+  console.log(impacts);
+
+  return res.status(200).json(new SuccessResponse(200, impacts, "Impacts fetched successfully"));
+});
+
+
 const createImpact = asyncHandler(async (req: any, res: Response) => {
   const {
     eventId,
@@ -116,4 +212,4 @@ const deleteImpact = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, null, "Impact deleted successfully"));
 });
 
-export { createImpact, deleteImpact, updateImpact };
+export { createImpact, deleteImpact, updateImpact, getAllImpacts };

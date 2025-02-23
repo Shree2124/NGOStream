@@ -25,6 +25,15 @@ const EventDetails: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [isModalOpen, setModalOpen] = useState(false);
+
+  const feedbackAnalysis = event?.feedbackAnalysis ?? {};
+  const feedbackLabels = Object.keys(feedbackAnalysis);
+
+  const positiveData = feedbackLabels.map((date) => feedbackAnalysis[date]?.positive || 0);
+  const negativeData = feedbackLabels.map((date) => feedbackAnalysis[date]?.negative || 0);
+  const neutralData = feedbackLabels.map((date) => feedbackAnalysis[date]?.neutral || 0);
+  const suggestionsData = feedbackLabels.map((date) => feedbackAnalysis[date]?.suggestions || 0);
+
   console.log(isModalOpen);
 
   // useEffect(() => {
@@ -40,31 +49,31 @@ const EventDetails: React.FC = () => {
   //   fetchEvent();
   // }, [event]);
 
-  const labels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
-  const datasets = [
-    {
-      label: "Positive Feedback",
-      data: [50, 75, 90, 120, 150],
-      borderColor: "rgb(75, 192, 192)",
-      backgroundColor: "rgba(75, 192, 192, 0.2)",
-    },
-    {
-      label: "Negative Feedback",
-      data: [20, 35, 50, 70, 85],
-      borderColor: "rgb(255, 99, 132)",
-      backgroundColor: "rgba(255, 99, 132, 0.2)",
-    },
-  ];
+  // const labels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
+  // const datasets = [
+  //   {
+  //     label: "Positive Feedback",
+  //     data: [50, 75, 90, 120, 150],
+  //     borderColor: "rgb(75, 192, 192)",
+  //     backgroundColor: "rgba(75, 192, 192, 0.2)",
+  //   },
+  //   {
+  //     label: "Negative Feedback",
+  //     data: [20, 35, 50, 70, 85],
+  //     borderColor: "rgb(255, 99, 132)",
+  //     backgroundColor: "rgba(255, 99, 132, 0.2)",
+  //   },
+  // ];
 
   const getEventDetails = async () => {
     setLoading(true);
     try {
       const res = await api.get(`/admin/event/${eventId}`);
       setEvent(res.data.data);
-      console.log("details ",event);
-      
+      console.log("details ", event);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error:any) {
+    } catch (error) {
       setError(error.message);
     } finally {
       setLoading(false);
@@ -74,6 +83,44 @@ const EventDetails: React.FC = () => {
   useEffect(() => {
     getEventDetails();
   }, [eventId]);
+
+  const feedbackChartData = {
+    labels: feedbackLabels,
+    datasets: [
+      {
+        label: "Positive Feedback",
+        data: positiveData,
+        borderColor: "rgb(75, 192, 192)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        tension: 0.3,
+        fill: true,
+      },
+      {
+        label: "Negative Feedback",
+        data: negativeData,
+        borderColor: "rgb(255, 99, 132)",
+        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        tension: 0.3,
+        fill: true,
+      },
+      {
+        label: "Neutral Feedback",
+        data: neutralData,
+        borderColor: "rgb(255, 206, 86)",
+        backgroundColor: "rgba(255, 206, 86, 0.2)",
+        tension: 0.3,
+        fill: true,
+      },
+      {
+        label: "Suggestions",
+        data: suggestionsData,
+        borderColor: "rgb(54, 162, 235)",
+        backgroundColor: "rgba(54, 162, 235, 0.2)",
+        tension: 0.3,
+        fill: true,
+      },
+    ],
+  };
 
   // const handleDownload = () => {
   //   const link = document.createElement("a");
@@ -86,12 +133,11 @@ const EventDetails: React.FC = () => {
   //   document.body.removeChild(link);
   // };
 
-
   const handleReportGeneration = async () => {
     const res = await api.get(`/event/${eventId}/report`);
     console.log(res.data.data);
     setEvent(res.data.data);
-    getEventDetails()
+    getEventDetails();
   };
 
   if (loading) return <p className="text-lg text-center">Loading...</p>;
@@ -212,7 +258,7 @@ const EventDetails: React.FC = () => {
           Weekly Feedback Overview
         </h2>
         <div className="relative w-full h-auto">
-          <StackedLineChart labels={labels} datasets={datasets} />
+          <StackedLineChart datasets={feedbackChartData.datasets} labels={feedbackChartData.labels} />
         </div>
       </div>
 
@@ -255,7 +301,11 @@ const EventDetails: React.FC = () => {
               <div className="flex space-x-2">
                 <div>
                   <button onClick={handleReportGeneration}>
-                    {event?.eventReport ? (<p>Generate New Report</p>) : (<p>Generate Report</p>)}
+                    {event?.eventReport ? (
+                      <p>Generate New Report</p>
+                    ) : (
+                      <p>Generate Report</p>
+                    )}
                   </button>
                 </div>
                 {event?.eventReport && (

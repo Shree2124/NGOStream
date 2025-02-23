@@ -429,7 +429,7 @@ const getEventById = asyncHandler(async (req: any, res: Response) => {
         createdBy: 1,
         createdAt: 1,
         updatedAt: 1,
-        eventReport: 1, // Include eventReport explicitly
+        eventReport: 1, 
       },
     },
   ]);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import {
   Chart as ChartJS,
@@ -23,7 +24,7 @@ ChartJS.register(
 );
 
 interface StackedLineChartProps {
-  labels: string[];
+  labels: any[];
   datasets: {
     label: string;
     data: number[];
