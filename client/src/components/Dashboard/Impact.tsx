@@ -30,7 +30,12 @@ import {
   useMediaQuery,
   Box,
 } from "@mui/material";
-import { Add, Edit, Delete, CloudUpload, CategoryOutlined } from "@mui/icons-material";
+import {
+  Add,
+  Edit,
+  Delete,
+  CloudUpload,
+} from "@mui/icons-material";
 import { api } from "../../api/api";
 
 const steps = [
@@ -112,10 +117,10 @@ const ImpactManagement = () => {
   };
 
   const handleSubmit = async () => {
-    console.log(existingImages, images, description)
+    console.log(existingImages, images, description);
     // console.log(images.length < 1 || existingImages.length < 1);
-    if (!description){
-      alert("Please provide description")
+    if (!description) {
+      alert("Please provide description");
     } else if (images.length < 1 || existingImages.length < 1) {
       alert("Please upload at least one image");
     }
@@ -141,17 +146,14 @@ const ImpactManagement = () => {
       images,
       selectedId,
     });
-    console.log(formData)
+    console.log(formData);
 
     if (editId) {
-      const res = await api.put(`/impact/edit/${editId}`, 
-        formData,
-      {
+      const res = await api.put(`/impact/edit/${editId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
-    );
+      });
       console.log(res.data);
     } else {
       const res = await api.post("/impact/create", formData);
@@ -411,25 +413,31 @@ const ImpactManagement = () => {
               <InputLabel>Select {category}</InputLabel>
               <Select
                 value={
-                  events.find(
-                    (event: any) =>
-                      event.id ===
-                      (category === "Event"
-                        ? selectedImpact?.eventId
-                        : selectedImpact?.goalId)
+                  (category === "Event"
+                    ? events.find(
+                        (event: any) => event.id === selectedImpact?.eventId
+                      )
+                    : goals.find(
+                        (goal: any) => goal.id === selectedImpact?.goalId
+                      )
                   )?.name || ""
                 }
                 onChange={(e) => {
-                  const selectedEvent = events.find(
-                    (event: any) => event.name === e.target.value
-                  );
-                  console.log(selectedEvent);
-                  if (selectedEvent) setSelectedId(selectedEvent.id);
+                  const selectedItem =
+                    category === "Event"
+                      ? events.find(
+                          (event: any) => event.name === e.target.value
+                        )
+                      : goals.find((goal: any) => goal.name === e.target.value);
+
+                  if (selectedItem) {
+                    setSelectedId(selectedItem.id);
+                  }
                 }}
               >
-                {events.map((event: any) => (
-                  <MenuItem key={event.id} value={event.name}>
-                    {event.name}
+                {(category === "Event" ? events : goals).map((item: any) => (
+                  <MenuItem key={item.id} value={item.name}>
+                    {item.name}
                   </MenuItem>
                 ))}
               </Select>

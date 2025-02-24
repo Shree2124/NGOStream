@@ -1,7 +1,7 @@
 import React from 'react'
 import { Impact } from '../../components'
 
-const ImpactPage = () => {
+const ImpactPage: React.FC = () => {
   return (
     <div>
       <Impact />

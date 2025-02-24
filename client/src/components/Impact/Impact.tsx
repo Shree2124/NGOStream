@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, Typography, Grid, Box, Chip } from "@mui/material";
+import { Card, CardContent, Typography, Grid, Box } from "@mui/material";
 import { motion } from "framer-motion";
 import { api } from "../../api/api";
 

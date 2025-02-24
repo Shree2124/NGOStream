@@ -73,7 +73,7 @@ const EventDetails: React.FC = () => {
       console.log("details ", event);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error) {
+    } catch (error:any) {
       setError(error.message);
     } finally {
       setLoading(false);
