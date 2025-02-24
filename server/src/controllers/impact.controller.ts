@@ -104,10 +104,8 @@ const getAllImpacts = asyncHandler(async(req:any, res: Response)=>{
 const createImpact = asyncHandler(async (req: any, res: Response) => {
   const {
     eventId,
-    beneficiaryId,
     goalId,
     description,
-    donationType,
   } = req.body;
 
   if (!description) throw new ErrorResponse(400, "Description Required");
@@ -132,10 +130,8 @@ const createImpact = asyncHandler(async (req: any, res: Response) => {
 
   const impact = await Impact.create({
     eventId: eventId ? eventId : null,
-    beneficiaryId: beneficiaryId ? beneficiaryId : null,
     goalId: goalId ? goalId : null,
     description,
-    donationType,
     images: uploadImages,
   });
 
@@ -148,10 +144,8 @@ const updateImpact = asyncHandler(async (req: any, res: Response) => {
   const { id } = req.params;
   const {
     eventId,
-    beneficiaryId,
     goalId,
-    description,
-    donationType,    
+    description,  
   } = req.body;
 
   console.log(id)
@@ -182,10 +176,8 @@ const updateImpact = asyncHandler(async (req: any, res: Response) => {
   }
 
   impact.eventId = eventId ? eventId : impact.eventId;
-  impact.beneficiaryId = beneficiaryId ? beneficiaryId : impact.beneficiaryId;
   impact.goalId = goalId ? goalId : impact.goalId;
   impact.description = description ? description : impact.description;
-  impact.donationType = donationType ? donationType : impact.donationType;
   if (uploadImages.length > 0) {
     impact.images = [...impact.images, ...uploadImages];
   }

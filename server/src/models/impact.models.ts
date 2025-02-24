@@ -7,10 +7,6 @@ const impactSchema = new mongoose.Schema<IImpact>(
       type: Types.ObjectId,
       ref: "Event",
     },
-    beneficiaryId: {
-      type: Types.ObjectId,
-      ref: "Beneficiary",
-    },
     goalId: {
       type: Types.ObjectId,
       ref: "Goal",
@@ -18,10 +14,6 @@ const impactSchema = new mongoose.Schema<IImpact>(
     description: {
       type: String,
       required: true,
-    },
-    donationType: {
-        type: String,
-        enum: ["In-Kind","Monetary"]
     },
     images: [
       {

@@ -30,16 +30,10 @@ import {
   useMediaQuery,
   Box,
 } from "@mui/material";
-import {
-  Add,
-  Edit,
-  Delete,
-  CloudUpload,
-} from "@mui/icons-material";
+import { Add, Edit, Delete, CloudUpload } from "@mui/icons-material";
 import { api } from "../../api/api";
 
-const steps = [
-  "Donation Type",
+const steps = [  
   "Select Category",
   "Choose Item",
   "Upload & Submit",
@@ -52,7 +46,7 @@ export interface IImpact {
   goalId?: string;
   description: string;
   images: string[];
-  donationType: "In-Kind" | "Monetary";
+  // donationType: "In-Kind" | "Monetary";
   selectedId: string;
   category: "Event" | "Goal";
 }
@@ -64,15 +58,21 @@ const ImpactManagement = () => {
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [editId, setEditId] = useState<string>("");
   const [activeStep, setActiveStep] = useState<number>(0);
-  const [donationType, setDonationType] = useState<string>("");
+  
   const [category, setCategory] = useState<string>("");
-  const [selectedId, setSelectedId] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [events, setEvents] = useState<any>([]);
   const [goals, setGoals] = useState<any>([]);
   const [selectedImpact, setSelectedImpact] = useState<IImpact>();
+  const [selectedId, setSelectedId] = useState<string | null>(
+    selectedImpact
+      ? category === "Event"
+        ? selectedImpact.eventId || null
+        : selectedImpact.goalId || null
+      : null
+  );
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
@@ -86,8 +86,9 @@ const ImpactManagement = () => {
       console.log(res);
       setEvents(res.data.data);
     } else if (category === "Goal") {
-      const res = await api.get("/goal/get-names");
+      const res = await api.get("/goals/get-names");
       setGoals(res.data.data);
+      console.log(goals);
     }
   };
 
@@ -121,26 +122,24 @@ const ImpactManagement = () => {
     // console.log(images.length < 1 || existingImages.length < 1);
     if (!description) {
       alert("Please provide description");
-    } else if (images.length < 1 || existingImages.length < 1) {
+    } else if (images?.length < 1 || existingImages?.length < 1) {
       alert("Please upload at least one image");
     }
     const formData = new FormData();
-    formData.append("donationType", donationType);
     console.log(formData);
     formData.append("category", category);
     formData.append("description", description);
     images.forEach((file) => formData.append("images", file));
     existingImages.forEach((url) => formData.append("existingImages", url));
     if (category === "Event") {
-      formData.append("eventId", selectedId);
+      formData.append("eventId", selectedId!);
     } else if (category === "Goal") {
-      formData.append("goalId", selectedId);
+      formData.append("goalId", selectedId!);
     }
 
     console.log(formData);
 
     console.log({
-      donationType,
       category,
       description,
       images,
@@ -170,11 +169,20 @@ const ImpactManagement = () => {
     fetchImpacts();
   };
 
+  useEffect(() => {
+    if (selectedImpact) {
+      setSelectedId(
+        category === "Event"
+          ? selectedImpact.eventId || null
+          : selectedImpact.goalId || null
+      );
+    }
+  }, [selectedImpact, category]);
+
   const handleEdit = async (impact: IImpact) => {
     console.log(impact);
     setSelectedImpact(impact);
     setEditId(impact._id);
-    setDonationType(impact.donationType);
     console.log(impact?.eventId !== null);
     if (impact?.eventId) {
       setCategory("Event");
@@ -193,20 +201,17 @@ const ImpactManagement = () => {
     // console.log(events);
   };
 
+
   const handleNext = () => {
-    if (activeStep === 0 && !donationType) {
-      alert("Please select a donation type.");
-      return;
-    }
-    if (activeStep === 1 && !category) {
+    if (activeStep === 0 && !category) {
       alert("Please select a category.");
       return;
     }
-    if (activeStep === 2 && !selectedId) {
+    if (activeStep === 1 && !selectedId) {
       alert("Please choose an item.");
       return;
     }
-    if (activeStep === 3 && (!description || images.length < 1)) {
+    if (activeStep === 2 && (!description || images.length < 1)) {
       alert("Please provide a description and at least one image.");
       return;
     }
@@ -218,7 +223,7 @@ const ImpactManagement = () => {
     setOpenModal(false);
     setEditId("");
     setActiveStep(0);
-    setDonationType("");
+    
     setCategory("");
     setSelectedId("");
     setDescription("");
@@ -262,9 +267,6 @@ const ImpactManagement = () => {
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: "primary.main", color: "white" }}>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Donation Type
-              </TableCell>
               {!isMobile && (
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Category
@@ -295,13 +297,11 @@ const ImpactManagement = () => {
                   key={impact._id}
                   sx={{ "&:nth-of-type(even)": { bgcolor: "grey.100" } }}
                 >
-                  <TableCell sx={{ fontWeight: "500" }}>
-                    {impact.donationType}
-                  </TableCell>
 
                   {!isMobile && (
                     <TableCell sx={{ fontWeight: "500" }}>
-                      {impact.eventId !== "" ? "Event" : "Campaign"}
+                      {impact?.eventId && "Event"}
+                      {impact?.goalId && "Goal"}
                     </TableCell>
                   )}
 
@@ -346,6 +346,7 @@ const ImpactManagement = () => {
                       onClick={() => {
                         handleEdit(impact);
                         setSelectedId(impact._id);
+                        setSelectedImpact(impact);
                       }}
                       sx={{ color: "primary.main" }}
                     >
@@ -380,7 +381,7 @@ const ImpactManagement = () => {
             ))}
           </Stepper>
 
-          {activeStep === 0 && (
+          {/* {activeStep === 0 && (
             <FormControl fullWidth margin="dense" required>
               <InputLabel>Donation Type</InputLabel>
               <Select
@@ -392,9 +393,9 @@ const ImpactManagement = () => {
                 <MenuItem value="Monetary">Monetary</MenuItem>
               </Select>
             </FormControl>
-          )}
+          )} */}
 
-          {activeStep === 1 && (
+          {activeStep === 0 && (
             <FormControl fullWidth margin="dense" required>
               <InputLabel>Category</InputLabel>
               <Select
@@ -408,30 +409,40 @@ const ImpactManagement = () => {
             </FormControl>
           )}
 
-          {activeStep === 2 && (
+          {activeStep === 1 && (
             <FormControl fullWidth margin="dense" required>
               <InputLabel>Select {category}</InputLabel>
               <Select
                 value={
-                  (category === "Event"
-                    ? events.find(
-                        (event: any) => event.id === selectedImpact?.eventId
-                      )
-                    : goals.find(
-                        (goal: any) => goal.id === selectedImpact?.goalId
-                      )
-                  )?.name || ""
+                  selectedId
+                    ? category === "Event"
+                      ? events.find((event: any) => event.id === selectedId)
+                          ?.name || ""
+                      : goals.find((goal: any) => goal.id === selectedId)
+                          ?.name || ""
+                    : ""
                 }
                 onChange={(e) => {
                   const selectedItem =
                     category === "Event"
                       ? events.find(
-                          (event: any) => event.name === e.target.value
+                          (event: any) =>
+                            event.name.trim() === e.target.value.trim()
                         )
-                      : goals.find((goal: any) => goal.name === e.target.value);
+                      : goals.find(
+                          (goal: any) =>
+                            goal.name.trim() === e.target.value.trim()
+                        );
 
                   if (selectedItem) {
+                    console.log("Selected:", selectedItem);
                     setSelectedId(selectedItem.id);
+                    setSelectedImpact((prev: any) => ({
+                      ...prev,
+                      [category === "Event"
+                        ? "eventId"
+                        : "goalId"]: selectedItem.id,
+                    }));
                   }
                 }}
               >
@@ -444,7 +455,7 @@ const ImpactManagement = () => {
             </FormControl>
           )}
 
-          {activeStep === 3 && (
+          {activeStep === 2 && (
             <Box sx={{ mt: 2 }}>
               <TextField
                 fullWidth

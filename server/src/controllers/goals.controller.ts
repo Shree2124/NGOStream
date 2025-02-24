@@ -229,4 +229,42 @@ const deleteGoal = asyncHandler(async (req: any, res: Response) => {
     );
 });
 
-export { createGoal, getAllGoals, editGoal, deleteGoal, getGoal };
+const getGoalNames = asyncHandler(async (req: any, res: Response) => {
+  const goalNames = await Goal.find().select("_id name");
+
+  if (!goalNames || goalNames.length === 0)
+    throw new ErrorResponse(404, "Goals not found");
+
+  const goalsWithDonations = await Promise.all(
+    goalNames.map(async (goal) => {
+      const donations = await Donation.find({ goalId: goal._id });
+
+      const inKindDonations = donations
+        .filter((d) => d.donationType === "In-Kind")
+        .map((d) => ({
+          itemName: d.inKindDetails?.itemName,
+          quantity: d.inKindDetails?.quantity,
+        }));
+
+      const monetaryDonations = donations
+        .filter((d) => d.donationType === "Monetary")
+        .reduce((total, d) => total + (d.monetaryDetails?.amount || 0), 0);
+
+      return {
+        id: goal._id,
+        name: goal.name,
+        donations: {
+          inKind: inKindDonations,
+          monetary: monetaryDonations,
+        },
+      };
+    })
+  );
+
+  return res
+    .status(200)
+    .json(new SuccessResponse(200, goalsWithDonations, "Goals fetched successfully"));
+});
+
+
+export { createGoal, getAllGoals, editGoal, deleteGoal, getGoal, getGoalNames };
