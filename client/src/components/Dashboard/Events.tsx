@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -90,7 +91,6 @@ const Events: React.FC = () => {
   const [filterType, setFilterType] = useState<string>("All");
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [currentEvent, setCurrentEvent] = useState<IEvent | null>(null);
-  const [visualModalOpen, setVisualModalOpen] = useState<boolean>(false);
   const [systemParticipants, setSystemParticipants] = useState<IMember[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [assignedRoles, setAssignedRoles] = useState<string | any>();
@@ -102,8 +102,87 @@ const Events: React.FC = () => {
   const [eventType, setEventType] = useState("");
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
+  const [openGenerateReportModal, setOpenGenerateReportModal] = useState<
+    boolean
+  >(true);
   const navigate = useNavigate();
+
+  const firstEventStartDate = new Date(
+    Math.min(...events.map((event) => new Date(event.startDate).getTime()))
+  );
+
+  const lastEventEndDate = new Date(
+    Math.max(...events.map((event) => new Date(event.endDate).getTime()))
+  );
+
+  const [selectedPeriod, setSelectedPeriod] = useState("week");
+  const [selectedRange, setSelectedRange] = useState<string | null>(null);
+  const [fileType, setFileType] = useState("pdf");
+
+  const handlePeriodChange = (event) => {
+    setSelectedPeriod(event.target.value);
+    setSelectedRange(null);
+  };
+
+  const generateSelectableRanges = () => {
+    const ranges = [];
+    const start = new Date(firstEventStartDate);
+    const end = new Date(lastEventEndDate);
+
+    if (selectedPeriod === "week") {
+      const current = new Date(start);
+      while (current <= end) {
+        const weekStart = new Date(current);
+        let weekEnd = new Date(current);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        if (weekEnd > end) weekEnd = new Date(end);
+        ranges.push({
+          label: `${weekStart.toDateString()} - ${weekEnd.toDateString()}`,
+          value: { from: weekStart, to: weekEnd },
+        });
+        current.setDate(current.getDate() + 7);
+      }
+    } else if (selectedPeriod === "month") {
+      const current = new Date(start);
+      while (current <= end) {
+        const monthStart = new Date(
+          current.getFullYear(),
+          current.getMonth(),
+          1
+        );
+        let monthEnd = new Date(
+          current.getFullYear(),
+          current.getMonth() + 1,
+          0
+        );
+        if (monthEnd > end) monthEnd = new Date(end);
+        ranges.push({
+          label: `${monthStart.toDateString()} - ${monthEnd.toDateString()}`,
+          value: { from: monthStart, to: monthEnd },
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
+    } else if (selectedPeriod === "year") {
+      const current = new Date(start);
+      while (current <= end) {
+        const yearStart = new Date(current.getFullYear(), 0, 1);
+        let yearEnd = new Date(current.getFullYear(), 11, 31);
+        if (yearEnd > end) yearEnd = new Date(end);
+        ranges.push({
+          label: `${yearStart.getFullYear()}`,
+          value: { from: yearStart, to: yearEnd },
+        });
+        current.setFullYear(current.getFullYear() + 1);
+      }
+    }
+    return ranges;
+  };
+
   // const [loading, setLoading] = useState(false);
+
+  const handleGenerateReportModalClose = () => {
+    setOpenGenerateReportModal(false);
+  };
 
   const resetForm = () => {
     setName("");
@@ -283,46 +362,13 @@ const Events: React.FC = () => {
     setDialogOpen(false);
   };
 
-  // const handleDeleteEvent = (id: string) => {
-  //   setEvents((prev) => prev.filter((e) => e._id !== id));
-  // };
-
-  // const handleShowVisuals = (event: IEvent) => {
-  //   setCurrentEvent(event);
-  //   console.log("Event", event);
-
-  //   // setVisualEventId(eventId);
-  //   setVisualModalOpen(true);
-  // };
-
-  const handleCloseVisuals = () => {
-    setVisualModalOpen(false);
-  };
-
-  const getEventChartData = (event: IEvent) => ({
-    labels: ["Attendance"],
-    datasets: [
-      {
-        label: event.name,
-        data: [event?.kpis.attendance],
-        backgroundColor: ["#4caf50"],
-      },
-    ],
-  });
-
-  // const getSuccessMetricsChartData = (event: Event) => ({
-  //   labels: event?.kpis?.successMetrics,
-  //   datasets: [
-  //     {
-  //       data: event.kpis?.successMetrics?.map(() => 1),
-  //       backgroundColor: ["#f44336", "#ff9800", "#ffeb3b"],
-  //     },
-  //   ],
-  // });
-
   const handleNavigation = (id: string) => {
     navigate(`/dashboard/event-details/${id}`);
   };
+
+  function generateReport(selectedRange: any, fileType: string) {
+    console.log(selectedRange, fileType);
+  }
 
   return (
     <Box p={3}>
@@ -461,7 +507,7 @@ const Events: React.FC = () => {
         ))}
       </Grid>
 
-      <Dialog open={visualModalOpen} onClose={handleCloseVisuals}>
+      {/* <Dialog open={visualModalOpen} onClose={handleCloseVisuals}>
         <DialogTitle>Event Visual Representation</DialogTitle>
         <DialogContent>
           {currentEvent && (
@@ -470,17 +516,31 @@ const Events: React.FC = () => {
                 Attendance for {currentEvent.name}
               </Typography>
               <Bar data={getEventChartData(currentEvent)} />
-              {/* <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                 Success Metrics Distribution
               </Typography>
-              <Pie data={getSuccessMetricsChartData(currentEvent)} /> */}
+              <Pie data={getSuccessMetricsChartData(currentEvent)} />
             </>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseVisuals}>Close</Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
+
+      <div className="text-right">
+        <Button
+        onClick={()=>setOpenGenerateReportModal(true)}
+          sx={{
+            bgcolor: "#1450ac",
+            color: "#fff",
+            p: 2,
+            cursor: "pointer",
+          }}
+        >
+          Generate Report
+        </Button>
+      </div>
 
       <Dialog open={dialogOpen} onClose={handleDialogClose}>
         <DialogTitle
@@ -668,6 +728,80 @@ const Events: React.FC = () => {
           <Button onClick={handleDialogClose}>Cancel</Button>
           <Button onClick={handleSaveEvent} variant="contained">
             {currentEvent ? "Save Changes" : "Add Event"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openGenerateReportModal}
+        onClose={handleGenerateReportModalClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Select Report Period</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* Period Selection */}
+            <FormControl fullWidth>
+              <InputLabel>Period</InputLabel>
+              <Select value={selectedPeriod} onChange={handlePeriodChange}>
+                <MenuItem value="week">Week</MenuItem>
+                <MenuItem value="month">Month</MenuItem>
+                <MenuItem value="year">Year</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Range Selection (Appears only if a period is selected) */}
+            {selectedPeriod && (
+              <FormControl fullWidth>
+                <InputLabel>Select Range</InputLabel>
+                <Select
+                  value={selectedRange}
+                  onChange={(e) => setSelectedRange(e.target.value!)}
+                >
+                  {generateSelectableRanges()?.map((range, index) => (
+                    <MenuItem key={index} value={range.label}>
+                      {range.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+
+            {/* Report File Type */}
+            <FormControl fullWidth>
+              <InputLabel>Report File Type</InputLabel>
+              <Select
+                value={fileType}
+                onChange={(e) => setFileType(e.target.value)}
+              >
+                <MenuItem value="word">Word</MenuItem>
+                <MenuItem value="excel">Excel</MenuItem>
+                <MenuItem value="pdf">PDF</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleGenerateReportModalClose}
+            sx={{ color: "gray" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              if (!selectedRange) {
+                alert("Please select a range.");
+                return;
+              }
+              generateReport(selectedRange, fileType);
+            }}
+          >
+            Generate Report
           </Button>
         </DialogActions>
       </Dialog>

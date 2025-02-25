@@ -45,7 +45,6 @@ const Impact: React.FC = () => {
         alignItems: "center",
       }}
     >
-      {/* Title Animation */}
       <Typography
         variant="h3"
         component={motion.div}
