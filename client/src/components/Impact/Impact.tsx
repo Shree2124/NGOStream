@@ -36,10 +36,11 @@ const Impact: React.FC = () => {
 
   return (
     <Box
+    // className="bg-gradient-to-r from-green-500/70 to-blue-500/40"
       sx={{
         padding: 5,
         minHeight: "100vh",
-        background: "linear-gradient(to bottom, #e3f2fd, #bbdefb)",
+        background: "linear-gradient(to bottom, rgba(34, 197, 94,0.7), rgba(59,130,246,0.4))",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

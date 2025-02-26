@@ -30,7 +30,6 @@ import {
 } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -104,7 +103,7 @@ const Events: React.FC = () => {
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
   const [openGenerateReportModal, setOpenGenerateReportModal] = useState<
     boolean
-  >(true);
+  >(false);
   const navigate = useNavigate();
 
   const firstEventStartDate = new Date(
@@ -119,7 +118,7 @@ const Events: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [fileType, setFileType] = useState("pdf");
 
-  const handlePeriodChange = (event) => {
+  const handlePeriodChange = (event: any) => {
     setSelectedPeriod(event.target.value);
     setSelectedRange(null);
   };
@@ -371,7 +370,10 @@ const Events: React.FC = () => {
   }
 
   return (
-    <Box p={3}>
+    <Box p={3} sx={{
+      height: "100%",
+      width: "100%"
+    }}>
       <Typography variant="h4" gutterBottom>
         Event Management
       </Typography>
@@ -527,20 +529,7 @@ const Events: React.FC = () => {
           <Button onClick={handleCloseVisuals}>Close</Button>
         </DialogActions>
       </Dialog> */}
-
-      <div className="text-right">
-        <Button
-        onClick={()=>setOpenGenerateReportModal(true)}
-          sx={{
-            bgcolor: "#1450ac",
-            color: "#fff",
-            p: 2,
-            cursor: "pointer",
-          }}
-        >
-          Generate Report
-        </Button>
-      </div>
+      
 
       <Dialog open={dialogOpen} onClose={handleDialogClose}>
         <DialogTitle
@@ -805,6 +794,23 @@ const Events: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <div className="text-right">
+        <Button
+        onClick={()=>setOpenGenerateReportModal(true)}
+          sx={{
+            bgcolor: "#1450ac",
+            color: "#fff",
+            p: 2,
+            cursor: "pointer",
+            position: "fixed",
+            bottom: "2rem",
+            right: "3rem"
+          }}
+        >
+          Generate Report
+        </Button>
+      </div>
     </Box>
   );
 };

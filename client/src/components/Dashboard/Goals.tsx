@@ -15,7 +15,6 @@ import {
   Select,
   Stack,
   TableContainer,
-  Paper,
   Table,
   TableHead,
   TableRow,
@@ -28,6 +27,12 @@ import {
   Card,
   Grid,
   Divider,
+  FormControl,
+  DialogContent,
+  DialogTitle,
+  Dialog,
+  InputLabel,
+  DialogActions,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -70,7 +75,7 @@ const Goals: React.FC = () => {
   // const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
-  const [selectedGoal, setSelectedGoal] = useState<IGoal | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState<IGoal>();
 
   const [goals, setGoals] = useState<IGoal[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -90,6 +95,16 @@ const Goals: React.FC = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isLoadingGoal, setIsLoadingGoal] = useState<boolean>(false);
+  const [fileTypeModal, setFileTypeModal] = useState<boolean>(false);
+  const [fileType, setFileType] = useState<string>("pdf");
+
+  const generateReport = () => {
+    setFileTypeModal(true);
+  };
+
+  const generateGoalReport = async (fileType: string, id: string) => {
+    console.log(fileType, id);
+  };
 
   const fetchGoalInfo = async (id: string) => {
     setIsLoadingGoal(true);
@@ -223,7 +238,7 @@ const Goals: React.FC = () => {
         const res = await api.get("/admin/all-goals");
         setGoals(res.data.data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-      } catch (error: any) {
+      } catch (error) {
         toast.error("Failed to fetch goals. Please try again.");
       } finally {
         setIsLoading(false);
@@ -589,7 +604,7 @@ const Goals: React.FC = () => {
 
               <Typography variant="h6">Donor Information</Typography>
 
-              <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+              <TableContainer sx={{ maxHeight: 400 }}>
                 <Table stickyHeader size={isMobile ? "small" : "medium"}>
                   <TableHead>
                     <TableRow>
@@ -637,8 +652,73 @@ const Goals: React.FC = () => {
               </TableContainer>
             </Stack>
           )}
+          <div className="text-right">
+            <Button
+              onClick={() => generateReport()}
+              sx={{
+                bgcolor: "#1450ac",
+                color: "#fff",
+                p: 2,
+                cursor: "pointer",
+                position: "fixed",
+                bottom: "2rem",
+                right: "3rem",
+              }}
+            >
+              Generate Report
+            </Button>
+          </div>
         </Box>
       </Modal>
+
+      <Dialog
+        open={fileTypeModal}
+        onClose={() => {
+          setFileTypeModal(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Select Report Period</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* Report File Type */}
+            <FormControl fullWidth>
+              <InputLabel>Report File Type</InputLabel>
+              <Select
+                value={fileType}
+                onChange={(e) => setFileType(e.target.value)}
+              >
+                <MenuItem value="word">Word</MenuItem>
+                <MenuItem value="excel">Excel</MenuItem>
+                <MenuItem value="pdf">PDF</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setFileTypeModal(false)}
+            sx={{ color: "gray" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              if (fileType) generateGoalReport(fileType, selectedGoal!._id);
+              else {
+                alert("Select file type");
+                setFileTypeModal(true);
+              }
+            }}
+          >
+            Generate Report
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Modal */}
       <Modal
