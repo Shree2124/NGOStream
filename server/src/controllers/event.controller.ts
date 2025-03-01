@@ -13,6 +13,7 @@ import path from "path";
 import uploadOnCloudinary from "../utils/cloudinary";
 import { ConfigResponse } from "cloudinary";
 import { Donation } from "../models/donations.model";
+import { generateReport } from "../utils/reportGeneration";
 
 const createEvent = asyncHandler(async (req: any, res: Response) => {
   const {
@@ -429,7 +430,7 @@ const getEventById = asyncHandler(async (req: any, res: Response) => {
         createdBy: 1,
         createdAt: 1,
         updatedAt: 1,
-        eventReport: 1, 
+        eventReport: 1,
       },
     },
   ]);
@@ -661,6 +662,19 @@ const getEventNames = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, donations, "Names fetched successfully"));
 });
 
+const generateReportInRage = asyncHandler(async (req: any, res: Response) => {
+  const { ids, fileType, type } = req.body;
+
+  console.log({ ids, fileType, type })
+
+  if (ids.length === 0) {
+    return res.status(400).json(new ErrorResponse(400, "No events selected"));
+  }
+
+  const report = generateReport(ids,type, fileType);
+  return res.json(report)
+});
+
 export {
   createEvent,
   getAllEvents,
@@ -669,4 +683,5 @@ export {
   addEventFeedback,
   getEventById,
   getEventNames,
+  generateReportInRage,
 };

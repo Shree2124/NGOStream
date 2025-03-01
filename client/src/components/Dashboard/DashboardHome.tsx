@@ -55,7 +55,7 @@ const DashboardHome: React.FC = () => {
     const fetchFundraisingMetrics = async () => {
       try {
         const response = await axios.get<FundraisingMetricsData>(
-          "http://127.0.0.1:5000/api/fundraising-metrics"
+          "http://127.0.0.1:8000/api/fundraising-metrics"
         );
         setFundraisingMetrics(response.data);
       } catch (err) {
@@ -127,7 +127,7 @@ const DashboardHome: React.FC = () => {
       </h2>
 
       <div className="bg-white shadow-md p-6 rounded-lg">
-        <h2 className="mb-4 font-semibold text-2xl text-gray-800">
+        <h2 className="mb-4 font-semibold text-gray-800 text-2xl">
           Fundraising Insights
         </h2>
         {/* <p className="mb-6 text-gray-600">
@@ -148,7 +148,7 @@ const DashboardHome: React.FC = () => {
                 <h3 className="font-medium text-gray-700 text-lg">
                   Average Monthly Donations
                 </h3>
-                <p className="font-bold text-2xl text-blue-600">
+                <p className="font-bold text-blue-600 text-2xl">
                   ${fundraisingMetrics?.average?.toFixed(2)}
                 </p>
               </div>
@@ -156,7 +156,7 @@ const DashboardHome: React.FC = () => {
                 <h3 className="font-medium text-gray-700 text-lg">
                   Predicted Next Month Donations
                 </h3>
-                <p className="font-bold text-2xl text-green-600">
+                <p className="font-bold text-green-600 text-2xl">
                   ${fundraisingMetrics?.predicted?.toFixed(2)}
                 </p>
               </div>
@@ -175,25 +175,25 @@ const DashboardHome: React.FC = () => {
       <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <div className="bg-white shadow p-4 rounded-lg">
           <h3 className="text-gray-500 text-sm">Total Donations This Year</h3>
-          <p className="font-bold text-2xl text-blue-600">
+          <p className="font-bold text-blue-600 text-2xl">
             ${adminMetrics?.data?.totalDonations.toFixed(2)}
           </p>
         </div>
         <div className="bg-white shadow p-4 rounded-lg">
           <h3 className="text-gray-500 text-sm">Active Campaigns</h3>
-          <p className="font-bold text-2xl text-green-600">
+          <p className="font-bold text-green-600 text-2xl">
             {adminMetrics?.data?.activeCampaigns}
           </p>
         </div>
         <div className="bg-white shadow p-4 rounded-lg">
           <h3 className="text-gray-500 text-sm">Number of Donors</h3>
-          <p className="font-bold text-2xl text-purple-600">
+          <p className="font-bold text-purple-600 text-2xl">
             {adminMetrics?.data?.totalDonors}
           </p>
         </div>
         <div className="bg-white shadow p-4 rounded-lg">
           <h3 className="text-gray-500 text-sm">Top Donor</h3>
-          <p className="font-bold text-lg text-yellow-600">
+          <p className="font-bold text-yellow-600 text-lg">
             {adminMetrics?.data?.topDonor.name} - $
             {adminMetrics?.data?.topDonor.amount}
           </p>
@@ -202,7 +202,7 @@ const DashboardHome: React.FC = () => {
 
       {/* <div className="bg-white shadow-md mb-6 p-6 rounded-lg">
         <h2 className="mb-4 font-semibold text-2xl">Campaign Performance</h2>
-        <table className="border-collapse w-full text-left">
+        <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b">
               <th className="py-2">Campaign Name</th>

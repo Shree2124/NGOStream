@@ -33,6 +33,7 @@ const FundraisingMetrics: React.FC = () => {
         setMetrics(response.data);
         setLoading(false);
       } catch (err) {
+        console.log(err)
         setError(
           axios.isAxiosError(err) && err.response
             ? `Error: ${err.response.status} - ${err.response.statusText}`
@@ -43,6 +44,7 @@ const FundraisingMetrics: React.FC = () => {
     };
 
     fetchMetrics();
+    
   }, []);
 
   if (loading) return <p>Loading...</p>;

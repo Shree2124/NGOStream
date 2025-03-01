@@ -97,10 +97,67 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setSelectedRange(null);
   };
 
-  function generateReport(selectedRange: any, fileType: string) {
-    console.log(selectedRange, fileType);
+  const generatePDFReport = async (filteredIds, fileType) => {
+    try {
+      const res = await api.post("/event/generate-report", {
+        ids: filteredIds,
+        fileType: fileType,
+        type: "donor",
+      })
+      console.log(res.data.data)
+    } catch (error: any) {
+      console.log(error)
+    }
   }
 
+  function generateReport(selectedRange: string, fileType: string) {
+    console.log("Selected Range:", selectedRange);
+  
+    if (!selectedRange || typeof selectedRange !== "string") {
+      console.error("Invalid date range selected.");
+      return;
+    }
+  
+    let from: Date, to: Date;
+  
+    if (/^\d{4}$/.test(selectedRange)) {
+      const year = parseInt(selectedRange);
+      from = new Date(year, 0, 1);  
+      to = new Date(year, 11, 31, 23, 59, 59, 999);
+    } else {
+      
+      const dateParts = selectedRange.split(" - ");
+      if (dateParts.length !== 2) {
+        console.error("Invalid date format.");
+        return;
+      }
+  
+      from = new Date(dateParts[0]);
+      to = new Date(dateParts[1]);  
+  
+      
+      from.setHours(0, 0, 0, 0);  
+      to.setHours(23, 59, 59, 999); 
+    }
+  
+    
+    const filteredIds = donationData
+      .filter((donation) => {
+        const createdAt = new Date(donation.createdAt);
+        return createdAt >= from && createdAt <= to;
+      })
+      .map((donation) => donation._id);
+  
+    console.log("Filtered Donation IDs:", filteredIds);
+    console.log("File Type:", fileType);
+  
+    generatePDFReport(filteredIds, fileType);
+
+    setSelectedRange(null);
+    setOpenGenerateReportModal(false);
+  }
+  
+  
   const generateSelectableRanges = () => {
     const ranges = [];
     const start = new Date(firstDonationStartDate);

@@ -365,15 +365,71 @@ const Events: React.FC = () => {
     navigate(`/dashboard/event-details/${id}`);
   };
 
-  function generateReport(selectedRange: any, fileType: string) {
-    console.log(selectedRange, fileType);
+  const generatePDFReport = async (filteredIds: any[], fileType: string) => {
+    try {
+      const res = await api.post("/event/generate-report", {
+        ids: filteredIds,
+        fileType: fileType,
+        type: "event",
+      });
+      console.log(res.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  function generateReport(selectedRange: string, fileType: string) {
+    console.log("Selected Range:", selectedRange);
+
+    if (!selectedRange || typeof selectedRange !== "string") {
+      console.error("Invalid date range selected.");
+      return;
+    }
+
+    let from: Date, to: Date;
+
+    if (/^\d{4}$/.test(selectedRange)) {
+      const year = parseInt(selectedRange);
+      from = new Date(year, 0, 1);
+      to = new Date(year, 11, 31, 23, 59, 59, 999);
+    } else {
+      const dateParts = selectedRange.split(" - ");
+      if (dateParts.length !== 2) {
+        console.error("Invalid date format.");
+        return;
+      }
+
+      from = new Date(dateParts[0]);
+      to = new Date(dateParts[1]);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+    }
+
+    const filteredIds = events
+      .filter((e) => {
+        const createdAt = new Date(e.startDate);
+        return createdAt >= from && createdAt <= to;
+      })
+      .map((e) => e._id);
+
+    console.log("Filtered events IDs:", filteredIds);
+    console.log("File Type:", fileType);
+
+    generatePDFReport(filteredIds, fileType);
+
+    setSelectedRange(null);
+    setOpenGenerateReportModal(false);
   }
 
   return (
-    <Box p={3} sx={{
-      height: "100%",
-      width: "100%"
-    }}>
+    <Box
+      p={3}
+      sx={{
+        height: "100%",
+        width: "100%",
+      }}
+    >
       <Typography variant="h4" gutterBottom>
         Event Management
       </Typography>
@@ -529,7 +585,6 @@ const Events: React.FC = () => {
           <Button onClick={handleCloseVisuals}>Close</Button>
         </DialogActions>
       </Dialog> */}
-      
 
       <Dialog open={dialogOpen} onClose={handleDialogClose}>
         <DialogTitle
@@ -797,7 +852,7 @@ const Events: React.FC = () => {
 
       <div className="text-right">
         <Button
-        onClick={()=>setOpenGenerateReportModal(true)}
+          onClick={() => setOpenGenerateReportModal(true)}
           sx={{
             bgcolor: "#1450ac",
             color: "#fff",
@@ -805,7 +860,7 @@ const Events: React.FC = () => {
             cursor: "pointer",
             position: "fixed",
             bottom: "2rem",
-            right: "3rem"
+            right: "3rem",
           }}
         >
           Generate Report
