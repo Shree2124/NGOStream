@@ -12,11 +12,8 @@ const ensureDirectoryExists = (dirPath: string) => {
 const formatDate = (date: string) =>
   moment(date).format("DD MMM YYYY, hh:mm A");
 
-const generateEventReportExcel = async (
-  workbook: ExcelJS.Workbook,
-  data: any[]
-) => {
-  console.log(data);
+const generateEventReportExcel = async (data: any[]) => {
+  const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Events Report");
 
   // Define columns
@@ -48,15 +45,38 @@ const generateEventReportExcel = async (
       location: event.location,
       eventType: event.eventType,
       status: event.status,
-      totalParticipants: event.totalParticipants || 0, // Aggregated field
+      totalParticipants: event.totalParticipants || 0,
       totalMonetaryDonations:
         event.totalMonetaryDonations?.toLocaleString() || "0",
       totalInKindDonations: event.totalInKindDonations?.toLocaleString() || "0",
-      donationCount: event.donationCount || 0, // Aggregated field
+      donationCount: event.donationCount || 0,
     });
   });
 
-  return sheet;
+  // ✅ Ensure the `public/temp` directory exists
+  const tempDir = path.join(__dirname, "../../../public/temp");
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  // ✅ Define the file path
+  const filePath = path.join(tempDir, `${Date.now()}.xlsx`);
+
+  try {
+    // ✅ Remove existing file if needed
+    if (fs.existsSync(filePath)) {
+      await fs.promises.unlink(filePath);
+    }
+
+    // ✅ Save the workbook to the defined file path
+    await workbook.xlsx.writeFile(filePath);
+    console.log("✅ Excel file created successfully:", filePath);
+
+    return filePath;
+  } catch (error) {
+    console.error("❌ Error generating Excel file:", error);
+    throw new Error("Failed to generate event report.");
+  }
 };
 
 const generateDonorReportExcel = async (data: any[]) => {
@@ -119,21 +139,16 @@ const generateDonorReportExcel = async (data: any[]) => {
   });
 
   // ✅ Ensure the `public/temp` directory exists
-  const tempDir = path.join(__dirname, "../../../public/temp");
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
-  }
-
-  // Generate a unique file name with timestamp
-  const filePath = path.join(tempDir, `${Date.now()}.xlsx`);
+  const filePath = path.join(
+    __dirname,
+    `../../../public/temp/${Date.now()}.xlsx`
+  );
 
   try {
-    // ✅ Close previous file handles properly before overwriting
     if (fs.existsSync(filePath)) {
       await fs.promises.unlink(filePath); // Delete the previous file safely
     }
 
-    // ✅ Write the Excel file safely
     await workbook.xlsx.writeFile(filePath);
     console.log("✅ Excel file created successfully:", filePath);
     return filePath;
@@ -155,18 +170,18 @@ export const generateExcel = async (
 
     const workbook = new ExcelJS.Workbook();
     ensureDirectoryExists(path.dirname(filePath));
+    let generatedFilePath: string | null = null;
 
     try {
       if (reportType === "event") {
-        await generateEventReportExcel(workbook, data);
+        generatedFilePath = await generateEventReportExcel(data);
       } else if (reportType === "donor") {
-        await generateDonorReportExcel(data);
+        generatedFilePath = await generateDonorReportExcel(data);
       } else {
         return reject("Invalid report type.");
       }
 
-      await workbook.xlsx.writeFile(filePath);
-      resolve(filePath);
+      resolve(generatedFilePath);
     } catch (error) {
       reject(`Error generating Excel file: ${error}`);
     }

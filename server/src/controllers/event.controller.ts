@@ -671,8 +671,16 @@ const generateReportInRage = asyncHandler(async (req: any, res: Response) => {
     return res.status(400).json(new ErrorResponse(400, "No events selected"));
   }
 
-  const report = generateReport(ids,type, fileType);
-  return res.json(report)
+  const report = await generateReport(ids,type, fileType);
+  const uploaded: any = await uploadOnCloudinary(report);
+
+  if (uploaded) {
+    return res.status(200).json(
+      new SuccessResponse(200, uploaded?.url, "Report generated successfully")
+    )
+  }
+return res.status(500).json(new ErrorResponse(500, "Error generating report"));
+  
 });
 
 export {
