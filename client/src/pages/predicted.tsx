@@ -58,7 +58,7 @@ const FundraisingMetrics: React.FC = () => {
     const fetchMetrics = async () => {
       try {
         const response = await axios.get<FundraisingMetricsData>(
-          "http://127.0.0.1:5000/api/fundraising-metrics"
+          "http://127.0.0.1:8000/api/fundraising-metrics"
         );
         setMetrics(response.data);
         setLoading(false);
