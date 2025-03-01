@@ -1,5 +1,3 @@
-/*TODO:Duplicate key error yetoy solve krshil  */
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -10,7 +8,6 @@ import {
   IconButton,
   List,
   ListItem,
-  // ListItemText,
   MenuItem,
   Select,
   Stack,
@@ -33,6 +30,7 @@ import {
   Dialog,
   InputLabel,
   DialogActions,
+  Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -42,7 +40,7 @@ import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-
+import CampaignImage from "./../../assets/campaign.jpg";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface IDonations {
@@ -68,11 +66,11 @@ const Goals: React.FC = () => {
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+  const isLandscape = useMediaQuery("(orientation: landscape)");
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [currentGoal, setCurrentGoal] = useState<IGoal | null>(null);
-  // const [isSearchBarVisible, setIsSearchBarVisible] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
   const [selectedGoal, setSelectedGoal] = useState<IGoal>();
@@ -104,6 +102,7 @@ const Goals: React.FC = () => {
 
   const generateGoalReport = async (fileType: string, id: string) => {
     console.log(fileType, id);
+    setFileTypeModal(false);
   };
 
   const fetchGoalInfo = async (id: string) => {
@@ -111,7 +110,6 @@ const Goals: React.FC = () => {
     try {
       const res = await api.get(`/goals/goal/${id}`);
       setGoal(res.data.data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to fetch goal details. Please try again.");
     } finally {
@@ -142,6 +140,7 @@ const Goals: React.FC = () => {
       setStartDate(new Date().toISOString().split("T")[0]);
       setStatus("Active");
       setImage(null);
+      setImagePreview(null);
     }
     setIsModalOpen(true);
   };
@@ -189,7 +188,6 @@ const Goals: React.FC = () => {
       }
       setIsModalOpen(false);
       setCurrentGoal(null);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to save goal. Please try again.");
     } finally {
@@ -207,7 +205,6 @@ const Goals: React.FC = () => {
         );
         setIsDeleteModalOpen(false);
         toast.success("Goal deleted successfully!");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       } catch (error) {
         toast.error("Something went wrong while deleting the Goal");
         console.error("Error deleting goal:", error);
@@ -237,7 +234,6 @@ const Goals: React.FC = () => {
       try {
         const res = await api.get("/admin/all-goals");
         setGoals(res.data.data);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       } catch (error) {
         toast.error("Failed to fetch goals. Please try again.");
       } finally {
@@ -247,6 +243,7 @@ const Goals: React.FC = () => {
     fetchGoals();
   }, []);
 
+  // Improved modal styles with better handling of mobile/landscape views
   const modalStyles = {
     position: "absolute" as const,
     top: "50%",
@@ -254,13 +251,21 @@ const Goals: React.FC = () => {
     transform: "translate(-50%, -50%)",
     bgcolor: "background.paper",
     boxShadow: 24,
-    p: 3,
+    p: { xs: 2, sm: 3 },
     borderRadius: 2,
     width: isMobile ? "90%" : isTablet ? "70%" : "50%",
-    maxHeight: "90vh",
+    maxHeight: isMobile && !isLandscape ? "80vh" : "90vh",
     overflowY: "auto",
   };
 
+  // For small dialog modals
+  const smallModalStyles = {
+    ...modalStyles,
+    width: isMobile ? "90%" : 400,
+    maxHeight: "80vh",
+  };
+
+  // Improved chart data and options
   const chartData = {
     labels: ["Raised", "Remaining"],
     datasets: [
@@ -276,32 +281,39 @@ const Goals: React.FC = () => {
     ],
   };
 
+  // Chart options with better responsive handling
   const chartOptions = {
+    devicePixelRatio: window.devicePixelRatio || 3,
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: true,
     plugins: {
       tooltip: {
         callbacks: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          label: function (tooltipItem: any) {
-            return `${tooltipItem.label}: ${tooltipItem.raw}`;
+          label: function (tooltipItem) {
+            return `${tooltipItem.label}: $${tooltipItem.raw}`;
           },
         },
       },
       legend: {
-        position: isMobile ? ("bottom" as const) : ("right" as const),
+        position: isMobile || isTablet ? "bottom" : "right",
+        labels: {
+          padding: 20,
+          font: {
+            size: isMobile ? 12 : 14,
+          },
+        },
       },
     },
-    rotation: 45,
     animation: {
       animateScale: true,
       animateRotate: true,
+      duration: 800,
     },
-    cutout: "50%",
+    cutout: isMobile ? "50%" : "60%",
     elements: {
       arc: {
-        borderWidth: 5,
-        borderColor: "rgba(0, 0, 0, 0.2)",
+        borderWidth: 2,
+        borderColor: "#ffffff",
       },
     },
   };
@@ -324,8 +336,8 @@ const Goals: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3 } }}>
       {/* Search and Filter Section */}
-      <Card sx={{ mb: 3, p: 2 }}>
-        <Grid container spacing={2} alignItems="center">
+      <Card sx={{ mb: 3, p: { xs: 1.5, sm: 2 } }}>
+        <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -334,26 +346,30 @@ const Goals: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
                 startAdornment: (
-                  <IconButton>
+                  <IconButton edge="start" size={isMobile ? "small" : "medium"}>
                     <SearchIcon />
                   </IconButton>
                 ),
               }}
               size={isMobile ? "small" : "medium"}
+              variant="outlined"
             />
           </Grid>
           <Grid item xs={6} md={3}>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              fullWidth
-              size={isMobile ? "small" : "medium"}
-            >
-              <MenuItem value="All">All</MenuItem>
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Inactive">Inactive</MenuItem>
-              <MenuItem value="Complete">Complete</MenuItem>
-            </Select>
+            <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+              <InputLabel id="status-filter-label">Status</InputLabel>
+              <Select
+                labelId="status-filter-label"
+                label="Status"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value="All">All</MenuItem>
+                <MenuItem value="Active">Active</MenuItem>
+                <MenuItem value="Inactive">Inactive</MenuItem>
+                <MenuItem value="Complete">Complete</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={6} md={3}>
             <Button
@@ -362,125 +378,170 @@ const Goals: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={() => handleOpenModal(null)}
               sx={{
-                padding: (!isMobile && 2) || 0.75,
-                display: "flex",
-                flexDirection: "row",
-                fontSize: isMobile ? "0.75rem" : "1rem",
+                py: { xs: 0.75, sm: 1, md: 1.5 },
+                height: { xs: 40, sm: "auto" },
+                fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
               }}
             >
-              Add Goal
+              {!isMobile ? "Add Goal" : "Add"}
             </Button>
           </Grid>
         </Grid>
       </Card>
 
       {/* Goals List */}
-      <Card>
-        <List sx={{ p: 0 }}>
-          {filteredGoals.map((goal, index) => (
-            <React.Fragment key={goal._id}>
-              <ListItem
-                sx={{
-                  py: 2,
-                  px: 3,
-                  display: "flex",
-                  flexDirection: { xs: "column", sm: "row" },
-                  gap: { xs: 2, sm: 0 },
-                }}
-              >
-                <Box
+      {filteredGoals.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: "center" }}>
+          <Typography variant="h6" color="text.secondary">
+            No goals found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Try adjusting your search or add a new goal
+          </Typography>
+        </Paper>
+      ) : (
+        <Card>
+          <List sx={{ p: 0 }}>
+            {filteredGoals.map((goal, index) => (
+              <React.Fragment key={goal._id}>
+                <ListItem
                   sx={{
+                    py: { xs: 1.5, sm: 2 },
+                    px: { xs: 2, sm: 3 },
                     display: "flex",
-                    alignItems: "center",
-                    width: { xs: "100%", sm: "auto" },
-                    flex: 1,
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    gap: { xs: 1.5, sm: 1 },
                   }}
                 >
                   <Box
-                    component="img"
-                    src={goal.image}
-                    alt={goal.name}
                     sx={{
-                      width: 48,
-                      height: 48,
-                      objectFit: "cover",
-                      borderRadius: 1,
-                      mr: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                      flex: { xs: "none", sm: 1 },
                     }}
-                  />
-                  <Box>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 500, mb: 0.5 }}
-                    >
-                      {goal.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Status: {goal.status} • Target: ${goal.targetAmount}
-                    </Typography>
+                  >
+                    <Box
+                      component="img"
+                      src={goal.image || CampaignImage}
+                      alt={goal.name}
+                      sx={{
+                        width: { xs: 40, sm: 48 },
+                        height: { xs: 40, sm: 48 },
+                        objectFit: "cover",
+                        borderRadius: 1,
+                        mr: 2,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography
+                        variant={isMobile ? "subtitle2" : "subtitle1"}
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.5,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {goal.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Status: {goal.status} • Target: $
+                        {goal.targetAmount.toLocaleString()}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
 
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{
-                    width: isMobile ? "100%" : "auto",
-                    justifyContent: isMobile ? "center" : "flex-end",
-                  }}
-                >
-                  <Button
-                    startIcon={<Visibility />}
-                    onClick={() => handleViewGoal(goal)}
-                    size={isMobile ? "small" : "medium"}
-                    variant="outlined"
-                    sx={{ flex: { xs: 1, sm: "none" } }}
-                  >
-                    {!isMobile && "View"}
-                  </Button>
-                  <Button
-                    startIcon={<Edit />}
-                    onClick={() => handleOpenModal(goal)}
-                    size={isMobile ? "small" : "medium"}
-                    variant="outlined"
-                    sx={{ flex: { xs: 1, sm: "none" } }}
-                  >
-                    {!isMobile && "Edit"}
-                  </Button>
-                  <Button
-                    startIcon={<Delete />}
-                    onClick={() => {
-                      setSelectedGoal(goal);
-                      setIsDeleteModalOpen(true);
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      width: "100%",
+                      justifyContent: "flex-end",
+                      mt: { xs: 1, sm: 0 },
                     }}
-                    size={isMobile ? "small" : "medium"}
-                    variant="outlined"
-                    color="error"
-                    sx={{ flex: { xs: 1, sm: "none" } }}
                   >
-                    {!isMobile && "Delete"}
-                  </Button>
-                </Stack>
-              </ListItem>
-              {index < filteredGoals.length - 1 && <Divider />}
-            </React.Fragment>
-          ))}
-        </List>
-      </Card>
+                    <Button
+                      startIcon={<Visibility />}
+                      onClick={() => handleViewGoal(goal)}
+                      size={isMobile ? "small" : "medium"}
+                      variant="outlined"
+                      sx={{
+                        minWidth: { xs: 0, sm: 64 },
+                        flex: { xs: 1, sm: "none" },
+                        px: { xs: 1, sm: 2 },
+                      }}
+                    >
+                      {!isMobile && "View"}
+                    </Button>
+                    <Button
+                      startIcon={<Edit />}
+                      onClick={() => handleOpenModal(goal)}
+                      size={isMobile ? "small" : "medium"}
+                      variant="outlined"
+                      sx={{
+                        minWidth: { xs: 0, sm: 64 },
+                        flex: { xs: 1, sm: "none" },
+                        px: { xs: 1, sm: 2 },
+                      }}
+                    >
+                      {!isMobile && "Edit"}
+                    </Button>
+                    <Button
+                      startIcon={<Delete />}
+                      onClick={() => {
+                        setSelectedGoal(goal);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      size={isMobile ? "small" : "medium"}
+                      variant="outlined"
+                      color="error"
+                      sx={{
+                        minWidth: { xs: 0, sm: 64 },
+                        flex: { xs: 1, sm: "none" },
+                        px: { xs: 1, sm: 2 },
+                      }}
+                    >
+                      {!isMobile && "Delete"}
+                    </Button>
+                  </Stack>
+                </ListItem>
+                {index < filteredGoals.length - 1 && <Divider />}
+              </React.Fragment>
+            ))}
+          </List>
+        </Card>
+      )}
 
       {/* Add/Edit Modal */}
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        aria-labelledby="add-edit-goal-modal"
+      >
         <Box sx={modalStyles}>
-          <Typography variant="h6" mb={2}>
+          <Typography variant="h6" mb={2} id="add-edit-goal-modal">
             {isEditing ? "Edit Goal" : "Add Goal"}
           </Typography>
-          <Stack spacing={2}>
+          <Stack spacing={{ xs: 1.5, sm: 2 }}>
             <TextField
               label="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               fullWidth
               size={isMobile ? "small" : "medium"}
+              required
             />
             <TextField
               label="Description"
@@ -490,6 +551,7 @@ const Goals: React.FC = () => {
               multiline
               rows={3}
               size={isMobile ? "small" : "medium"}
+              required
             />
             <TextField
               label="Target Amount"
@@ -498,6 +560,10 @@ const Goals: React.FC = () => {
               onChange={(e) => setTargetAmount(Number(e.target.value))}
               fullWidth
               size={isMobile ? "small" : "medium"}
+              InputProps={{
+                startAdornment: <Typography sx={{ mr: 0.5 }}>$</Typography>,
+              }}
+              required
             />
             <TextField
               label="Start Date"
@@ -506,25 +572,35 @@ const Goals: React.FC = () => {
               onChange={(e) => setStartDate(e.target.value)}
               fullWidth
               size={isMobile ? "small" : "medium"}
+              InputLabelProps={{ shrink: true }}
+              required
             />
-            <Select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+            <FormControl
               fullWidth
               size={isMobile ? "small" : "medium"}
+              required
             >
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Inactive">Inactive</MenuItem>
-              <MenuItem value="Complete">Complete</MenuItem>
-            </Select>
+              <InputLabel id="status-select-label">Status</InputLabel>
+              <Select
+                labelId="status-select-label"
+                label="Status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <MenuItem value="Active">Active</MenuItem>
+                <MenuItem value="Inactive">Inactive</MenuItem>
+                <MenuItem value="Complete">Complete</MenuItem>
+              </Select>
+            </FormControl>
 
             {isEditing && (
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ mt: 1 }}>
                 <Button
                   variant="outlined"
                   component="label"
                   fullWidth
                   size={isMobile ? "small" : "medium"}
+                  sx={{ mt: 1 }}
                 >
                   Upload Image
                   <input
@@ -535,14 +611,14 @@ const Goals: React.FC = () => {
                   />
                 </Button>
                 {imagePreview && (
-                  <Box sx={{ mt: 2 }}>
+                  <Box sx={{ mt: 2, textAlign: "center" }}>
                     <img
                       src={imagePreview}
                       alt="Preview"
                       style={{
-                        width: "100%",
+                        maxWidth: "100%",
                         maxHeight: "200px",
-                        objectFit: "cover",
+                        objectFit: "contain",
                         borderRadius: "4px",
                       }}
                     />
@@ -552,20 +628,27 @@ const Goals: React.FC = () => {
             )}
           </Stack>
           <Box
-            sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}
+            sx={{
+              mt: { xs: 2, sm: 3 },
+              display: "flex",
+              gap: { xs: 1, sm: 2 },
+              justifyContent: "flex-end",
+            }}
           >
             <Button
               variant="outlined"
               onClick={() => setIsModalOpen(false)}
               disabled={isSaving}
+              size={isMobile ? "small" : "medium"}
             >
               Cancel
             </Button>
             <Button
               variant="contained"
               onClick={handleAddOrEditGoal}
-              disabled={isSaving}
-              startIcon={isSaving && <Loader2 className="animate-spin" />}
+              disabled={!name || !description || !targetAmount || isSaving}
+              startIcon={isSaving ? <Loader2 className="animate-spin" /> : null}
+              size={isMobile ? "small" : "medium"}
             >
               {isEditing ? "Save Changes" : "Add Goal"}
             </Button>
@@ -574,7 +657,11 @@ const Goals: React.FC = () => {
       </Modal>
 
       {/* View Modal */}
-      <Modal open={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
+      <Modal
+        open={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        aria-labelledby="view-goal-modal"
+      >
         <Box sx={modalStyles}>
           {isLoadingGoal ? (
             <Box
@@ -588,89 +675,139 @@ const Goals: React.FC = () => {
               <CircularProgress />
             </Box>
           ) : (
-            <Stack spacing={3}>
-              <Typography variant="h6" align="center">
+            <Stack spacing={{ xs: 2, sm: 3 }}>
+              <Typography
+                variant="h6"
+                align="center"
+                id="view-goal-modal"
+                sx={{
+                  wordBreak: "break-word",
+                  mb: { xs: 0, sm: 1 },
+                }}
+              >
                 {selectedGoal?.name}
               </Typography>
 
               <Box
                 sx={{
-                  height: isMobile ? "200px" : "300px",
-                  position: "relative",
+                  height: { xs: 200, sm: 300, md: 400 },
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  px: { xs: 1, sm: 2 },
                 }}
               >
                 <Pie data={chartData} options={chartOptions} />
               </Box>
 
-              <Typography variant="h6">Donor Information</Typography>
-
-              <TableContainer sx={{ maxHeight: 400 }}>
-                <Table stickyHeader size={isMobile ? "small" : "medium"}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Donor Name</TableCell>
-                      <TableCell>Donor Email</TableCell>
-                      <TableCell>Donated Amount</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {goal?.length > 0 &&
-                    goal?.some((goalItem: IGoal) =>
-                      goalItem.donations?.some(
-                        (donation: IDonations) =>
-                          donation.donorName?.trim() &&
-                          donation.donorEmail?.trim() &&
-                          donation.amount !== null &&
-                          donation.amount !== undefined &&
-                          typeof donation.amount === "number"
-                      )
-                    ) ? (
-                      goal?.map((goalItem: IGoal, goalIndex: number) =>
-                        goalItem?.donations?.map(
-                          (donation: IDonations, donationIndex: number) => (
-                            <TableRow key={`${goalIndex}-${donationIndex}`}>
-                              <TableCell>
-                                {donation.donorName?.trim() || "Unknown"}
-                              </TableCell>
-                              <TableCell>
-                                {donation.donorEmail?.trim() || "Unknown"}
-                              </TableCell>
-                              <TableCell>${donation.amount}</TableCell>
-                            </TableRow>
+              <Box sx={{ pt: { xs: 1, sm: 2 } }}>
+                <Typography
+                  variant="h6"
+                  sx={{ mb: 1, fontSize: { xs: "1rem", sm: "1.25rem" } }}
+                >
+                  Donor Information
+                </Typography>
+                <Paper variant="outlined" sx={{ mb: 2 }}>
+                  <TableContainer sx={{ maxHeight: { xs: 200, sm: 300 } }}>
+                    <Table stickyHeader size={isMobile ? "small" : "medium"}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: "bold" }}>
+                            Donor Name
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: "bold" }}>
+                            Donor Email
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: "bold" }}>
+                            Amount
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {goal?.length > 0 &&
+                        goal?.some((goalItem: IGoal) =>
+                          goalItem.donations?.some(
+                            (donation: IDonations) =>
+                              donation.donorName?.trim() &&
+                              donation.donorEmail?.trim() &&
+                              donation.amount !== null &&
+                              donation.amount !== undefined &&
+                              typeof donation.amount === "number"
                           )
-                        )
-                      )
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} align="center">
-                          No donations yet
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                        ) ? (
+                          goal?.map((goalItem: IGoal, goalIndex: number) =>
+                            goalItem?.donations?.map(
+                              (donation: IDonations, donationIndex: number) => (
+                                <TableRow key={`${goalIndex}-${donationIndex}`}>
+                                  <TableCell
+                                    sx={{
+                                      maxWidth: { xs: 80, sm: 150 },
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {donation.donorName?.trim() || "Unknown"}
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      maxWidth: { xs: 100, sm: 200 },
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {donation.donorEmail?.trim() || "Unknown"}
+                                  </TableCell>
+                                  <TableCell>
+                                    ${donation.amount?.toLocaleString()}
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            )
+                          )
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={3} align="center">
+                              No donations yet
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mt: { xs: 1, sm: 2 },
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsViewModalOpen(false)}
+                  size={isMobile ? "small" : "medium"}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={generateReport}
+                  size={isMobile ? "small" : "medium"}
+                >
+                  Generate Report
+                </Button>
+              </Box>
             </Stack>
           )}
-          <div className="text-right">
-            <Button
-              onClick={() => generateReport()}
-              sx={{
-                bgcolor: "#1450ac",
-                color: "#fff",
-                p: 2,
-                cursor: "pointer",
-                position: "fixed",
-                bottom: "2rem",
-                right: "3rem",
-              }}
-            >
-              Generate Report
-            </Button>
-          </div>
         </Box>
       </Modal>
 
+      {/* File Type Selection Dialog */}
       <Dialog
         open={fileTypeModal}
         onClose={() => {
@@ -679,13 +816,16 @@ const Goals: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Select Report Period</DialogTitle>
+        <DialogTitle>Select Report Format</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {/* Report File Type */}
+          <Box sx={{ pt: 1 }}>
             <FormControl fullWidth>
-              <InputLabel>Report File Type</InputLabel>
+              <InputLabel id="report-file-type-label">
+                Report File Type
+              </InputLabel>
               <Select
+                labelId="report-file-type-label"
+                label="Report File Type"
                 value={fileType}
                 onChange={(e) => setFileType(e.target.value)}
               >
@@ -698,20 +838,17 @@ const Goals: React.FC = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setFileTypeModal(false)}
-            sx={{ color: "gray" }}
-          >
+          <Button onClick={() => setFileTypeModal(false)} color="inherit">
             Cancel
           </Button>
           <Button
             variant="contained"
             color="primary"
             onClick={() => {
-              if (fileType) generateGoalReport(fileType, selectedGoal!._id);
-              else {
-                alert("Select file type");
-                setFileTypeModal(true);
+              if (fileType && selectedGoal?._id) {
+                generateGoalReport(fileType, selectedGoal._id);
+              } else {
+                toast.error("Please select a file type");
               }
             }}
           >
@@ -724,17 +861,27 @@ const Goals: React.FC = () => {
       <Modal
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
+        aria-labelledby="delete-goal-modal"
       >
-        <Box sx={{ ...modalStyles, width: isMobile ? "90%" : 400 }}>
-          <Typography variant="h6" mb={2}>
+        <Box sx={smallModalStyles}>
+          <Typography variant="h6" mb={2} id="delete-goal-modal">
             Confirm Delete
           </Typography>
-          <Typography>Are you sure you want to delete this goal?</Typography>
-          <Stack direction="row" spacing={2} justifyContent="flex-end" mt={3}>
+          <Typography>
+            Are you sure you want to delete{" "}
+            <strong>{selectedGoal?.name}</strong>? This action cannot be undone.
+          </Typography>
+          <Stack
+            direction="row"
+            spacing={{ xs: 1, sm: 2 }}
+            justifyContent="flex-end"
+            mt={3}
+          >
             <Button
               variant="outlined"
               onClick={() => setIsDeleteModalOpen(false)}
               disabled={isDeleting}
+              size={isMobile ? "small" : "medium"}
             >
               Cancel
             </Button>
@@ -743,7 +890,10 @@ const Goals: React.FC = () => {
               color="error"
               onClick={handleDeleteGoal}
               disabled={isDeleting}
-              startIcon={isDeleting && <Loader2 className="animate-spin" />}
+              startIcon={
+                isDeleting ? <Loader2 className="animate-spin" /> : null
+              }
+              size={isMobile ? "small" : "medium"}
             >
               Delete
             </Button>

@@ -23,11 +23,16 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Button
+  Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { api } from "../../api/api";
-import { Edit } from "@mui/icons-material";
+import {
+  DescriptionOutlined,
+  Edit,
+  PictureAsPdfOutlined,
+  TableChartOutlined,
+} from "@mui/icons-material";
 // import { Button } from "../ui/button";
 
 interface IDonation {
@@ -68,9 +73,8 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     null
   );
   const [editModal, setEditModal] = useState<boolean>(false);
-  const [openGenerateReportModal, setOpenGenerateReportModal] = useState<
-    boolean
-  >(false);
+  const [openGenerateReportModal, setOpenGenerateReportModal] =
+    useState<boolean>(false);
   const [selectedPeriod, setSelectedPeriod] = useState("week");
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [fileType, setFileType] = useState("pdf");
@@ -286,7 +290,16 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         sx={{ mb: 3, display: { xs: "none", md: "block" } }}
       />
 
-      <TableContainer component={Paper}>
+      <TableContainer
+        component={Paper}
+        sx={{
+          borderRadius: 2,
+          transition: "box-shadow 0.3s ease",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 12px 20px rgba(71, 117, 234, 0.12)",
+          border: "1px solid rgba(229, 231, 235, 0.5)",
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>
@@ -432,27 +445,52 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         onClose={handleGenerateReportModalClose}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+            overflow: "hidden",
+          },
+        }}
       >
-        <DialogTitle>Select Report Period</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <DialogTitle
+          sx={{
+            pb: 1,
+            pt: 3,
+            px: 3,
+            typography: "h5",
+            fontWeight: 600,
+          }}
+        >
+          Generate Report
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Period Selection */}
-            <FormControl fullWidth>
-              <InputLabel>Period</InputLabel>
-              <Select value={selectedPeriod} onChange={handlePeriodChange}>
-                <MenuItem value="week">Week</MenuItem>
-                <MenuItem value="month">Month</MenuItem>
-                <MenuItem value="year">Year</MenuItem>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 3 }}>
+              <InputLabel id="period-label">Time Period</InputLabel>
+              <Select
+                labelId="period-label"
+                value={selectedPeriod}
+                onChange={handlePeriodChange}
+                label="Time Period"
+              >
+                <MenuItem value="week">Weekly</MenuItem>
+                <MenuItem value="month">Monthly</MenuItem>
+                <MenuItem value="year">Yearly</MenuItem>
               </Select>
             </FormControl>
 
-            {/* Range Selection (Appears only if a period is selected) */}
+            {/* Range Selection */}
             {selectedPeriod && (
-              <FormControl fullWidth>
-                <InputLabel>Select Range</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="range-label">Date Range</InputLabel>
                 <Select
+                  labelId="range-label"
                   value={selectedRange}
                   onChange={(e) => setSelectedRange(e.target.value!)}
+                  label="Date Range"
                 >
                   {generateSelectableRanges()?.map((range, index) => (
                     <MenuItem key={index} value={range.label}>
@@ -464,36 +502,65 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
             )}
 
             {/* Report File Type */}
-            <FormControl fullWidth>
-              <InputLabel>Report File Type</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="file-type-label">File Format</InputLabel>
               <Select
+                labelId="file-type-label"
                 value={fileType}
                 onChange={(e) => setFileType(e.target.value)}
+                label="File Format"
               >
-                <MenuItem value="word">Word</MenuItem>
-                <MenuItem value="excel">Excel</MenuItem>
-                <MenuItem value="pdf">PDF</MenuItem>
+                <MenuItem value="word">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <DescriptionOutlined color="primary" fontSize="small" />
+                    <span>Word Document</span>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="excel">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <TableChartOutlined color="success" fontSize="small" />
+                    <span>Excel Spreadsheet</span>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="pdf">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <PictureAsPdfOutlined color="error" fontSize="small" />
+                    <span>PDF Document</span>
+                  </Box>
+                </MenuItem>
               </Select>
             </FormControl>
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
           <Button
             onClick={handleGenerateReportModalClose}
-            sx={{ color: "gray" }}
+            sx={{
+              color: "text.secondary",
+              fontWeight: 500,
+              px: 2,
+            }}
           >
             Cancel
           </Button>
           <Button
             variant="contained"
             color="primary"
+            disableElevation
             onClick={() => {
               if (!selectedRange) {
-                alert("Please select a range.");
+                alert("Please select a date range.");
                 return;
               }
               generateReport(selectedRange, fileType);
+            }}
+            sx={{
+              px: 3,
+              py: 1,
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 600,
             }}
           >
             Generate Report

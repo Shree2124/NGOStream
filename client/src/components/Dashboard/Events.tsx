@@ -22,11 +22,28 @@ import {
   Checkbox,
   ListItemText,
   SelectChangeEvent,
+  InputAdornment,
+  Modal,
 } from "@mui/material";
 import {
   Add,
+  Assignment,
+  Build,
+  CalendarToday,
+  Category,
   //  Edit, Delete, BarChart,
   Close,
+  DescriptionOutlined,
+  EventAvailable,
+  FitnessCenter,
+  LocationOn,
+  MonetizationOn,
+  OtherHousesOutlined,
+  People,
+  PersonAdd,
+  PictureAsPdfOutlined,
+  Public,
+  TableChartOutlined,
 } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -42,6 +59,8 @@ import {
 import { api } from "../../api/api";
 import { Badge } from "../ui/badge";
 import { useNavigate } from "react-router-dom";
+import { School } from "lucide-react";
+import toast from "react-hot-toast";
 
 ChartJS.register(
   CategoryScale,
@@ -101,9 +120,9 @@ const Events: React.FC = () => {
   const [eventType, setEventType] = useState("");
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
-  const [openGenerateReportModal, setOpenGenerateReportModal] = useState<
-    boolean
-  >(false);
+  const [openGenerateReportModal, setOpenGenerateReportModal] =
+    useState<boolean>(false);
+
   const navigate = useNavigate();
 
   const firstEventStartDate = new Date(
@@ -177,7 +196,13 @@ const Events: React.FC = () => {
     return ranges;
   };
 
-  // const [loading, setLoading] = useState(false);
+  // useEffect(() => {
+  //   console.log("Updated startDate: ", startDate);
+  // }, [startDate]);
+
+  // useEffect(() => {
+  //   console.log("Updated endDate: ", endDate);
+  // }, [endDate]);
 
   const handleGenerateReportModalClose = () => {
     setOpenGenerateReportModal(false);
@@ -370,10 +395,13 @@ const Events: React.FC = () => {
   }
 
   return (
-    <Box p={3} sx={{
-      height: "100%",
-      width: "100%"
-    }}>
+    <Box
+      p={3}
+      sx={{
+        height: "100%",
+        width: "100%",
+      }}
+    >
       <Typography variant="h4" gutterBottom>
         Event Management
       </Typography>
@@ -403,22 +431,6 @@ const Events: React.FC = () => {
             <MenuItem value="Completed">Completed</MenuItem>
           </Select>
         </FormControl>
-        <FormControl fullWidth>
-          <InputLabel>Participants</InputLabel>
-          <Select
-            multiple
-            value={participantIds} // Ensure this is always an array
-            onChange={handleParticipantsChange}
-            renderValue={(selected) => selected.join(", ")} // Display selected values
-          >
-            {systemParticipants.map((participant) => (
-              <MenuItem key={participant._id} value={participant._id}>
-                <Checkbox checked={participantIds.includes(participant._id)} />
-                <ListItemText primary={participant.fullName} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
 
         <Button
           sx={{
@@ -438,98 +450,170 @@ const Events: React.FC = () => {
         {filteredEvents?.map((event) => (
           <Grid item xs={12} sm={6} md={4} key={event._id}>
             <Card
-              sx={{ height: "100%", cursor: "pointer" }}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                cursor: "pointer",
+                borderRadius: 3,
+                overflow: "hidden",
+                position: "relative",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  transition: "transform 0.3s ease",
+                  boxShadow: "0 12px 24px rgba(0, 0, 0, 0.12)",
+                },
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                border: "1px solid rgba(229, 231, 235, 0.8)",
+              }}
               onClick={() => handleNavigation(event._id)}
             >
-              <CardContent>
-                <Typography variant="h6">{event.name}</Typography>
-                <Typography variant="body2" color="textSecondary">
+              {/* Colorful status indicator at the top */}
+              <Box
+                sx={{
+                  height: 6,
+                  width: "100%",
+                }}
+              />
+
+              <CardContent
+                sx={{ p: 3, flex: 1, display: "flex", flexDirection: "column" }}
+              >
+                {/* Event name with better typography */}
+                <Typography
+                  variant="h6"
+                  fontWeight={600}
+                  gutterBottom
+                  sx={{
+                    fontSize: "1.1rem",
+                    lineHeight: 1.3,
+                    mb: 1,
+                  }}
+                >
+                  {event.name}
+                </Typography>
+
+                {/* Description with better spacing and line clamping */}
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    mb: 2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
                   {event.description}
                 </Typography>
-                <Typography variant="body2">
-                  <strong>start date:</strong> {event.startDate}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>end date:</strong> {event.endDate}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Status:</strong>
-                  {"  "}
-                  <Badge
-                    variant={
-                      event.status.toLowerCase() as
-                        | "outline"
-                        | "upcoming"
-                        | "happening"
-                        | "completed"
-                        | undefined
-                    }
+
+                {/* Dates section with improved visual hierarchy */}
+                <Box
+                  sx={{
+                    backgroundColor: "rgba(0, 0, 0, 0.02)",
+                    borderRadius: 2,
+                    p: 1.5,
+                    mb: 2,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <CalendarToday
+                      sx={{ fontSize: 18, mr: 1, color: "text.secondary" }}
+                    />
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      Start:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ ml: 0.5 }}
+                    >
+                      {new Date(event.startDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <EventAvailable
+                      sx={{ fontSize: 18, mr: 1, color: "text.secondary" }}
+                    />
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      End:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ ml: 0.5 }}
+                    >
+                      {new Date(event.endDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Status badge with improved design */}
+                <Box sx={{ mt: "auto", display: "flex", alignItems: "center" }}>
+                  <Typography
+                    variant="body2"
+                    component="span"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    Status:
+                  </Typography>
+                  <Typography
+                    sx={{
+                      ml: 1,
+                      px: 1.2,
+                      py: 0.5,
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                      textTransform: "capitalize",
+                      backgroundColor:
+                        event.status.toLowerCase() === "upcoming"
+                          ? "rgba(63, 81, 181, 0.1)"
+                          : event.status.toLowerCase() === "happening"
+                          ? "rgba(76, 175, 80, 0.1)"
+                          : event.status.toLowerCase() === "completed"
+                          ? "#4caf50"
+                          : "rgba(255, 152, 0, 0.1)",
+
+                      border: "1px solid",
+                      borderColor:
+                        event.status.toLowerCase() === "upcoming"
+                          ? "rgba(63, 81, 181, 0.2)"
+                          : event.status.toLowerCase() === "happening"
+                          ? "rgba(76, 175, 80, 0.2)"
+                          : event.status.toLowerCase() === "completed"
+                          ? "rgba(158, 158, 158, 0.2)"
+                          : "rgba(255, 152, 0, 0.2)",
+                    }}
                   >
                     {event.status}
-                  </Badge>
-                </Typography>
-                <Divider sx={{ my: 2 }} />
-
-                {/* <Box display="flex" justifyContent="space-evenly">
-                  {event?.status?.toLowerCase() === "completed" && (
-                    <Tooltip title="Show Visuals">
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleShowVisuals(event)}
-                      >
-                        <BarChart />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-
-                  <Box>
-                    {event?.status?.toLowerCase() === "upcoming" && (
-                      <Tooltip title="Edit">
-                        <IconButton
-                          color="primary"
-                          onClick={() => handleDialogOpen(event)}
-                        >
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <Tooltip title="Delete">
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteEvent(event._id)}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box> */}
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
-
-      {/* <Dialog open={visualModalOpen} onClose={handleCloseVisuals}>
-        <DialogTitle>Event Visual Representation</DialogTitle>
-        <DialogContent>
-          {currentEvent && (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Attendance for {currentEvent.name}
-              </Typography>
-              <Bar data={getEventChartData(currentEvent)} />
-              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                Success Metrics Distribution
-              </Typography>
-              <Pie data={getSuccessMetricsChartData(currentEvent)} />
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseVisuals}>Close</Button>
-        </DialogActions>
-      </Dialog> */}
-      
 
       <Dialog open={dialogOpen} onClose={handleDialogClose}>
         <DialogTitle
@@ -545,116 +629,331 @@ const Events: React.FC = () => {
           </IconButton>
         </DialogTitle>
 
-        <DialogContent>
-          <TextField
-            label="Event Name"
-            variant="outlined"
-            fullWidth
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            sx={{ my: 2 }}
-            required
-          />
-          <TextField
-            label="Description"
-            variant="outlined"
-            fullWidth
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            sx={{ my: 2 }}
-            required
-          />
-          <TextField
-            label="Start Date"
-            variant="outlined"
-            fullWidth
-            type="datetime-local"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            sx={{ my: 2 }}
-            required
-          />
-          <TextField
-            label="End Date"
-            variant="outlined"
-            fullWidth
-            type="datetime-local"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            sx={{ my: 2 }}
-            required
-          />
-          <TextField
-            label="Location"
-            variant="outlined"
-            fullWidth
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            sx={{ my: 2 }}
-            required
-          />
-          <FormControl fullWidth sx={{ my: 2 }}>
-            <InputLabel>Event Type</InputLabel>
-            <Select
-              value={eventType}
-              onChange={(e) => setEventType(e.target.value)}
-              label="Event Type"
-              required
-            >
-              <MenuItem value="Fundraiser">Fundraiser</MenuItem>
-              <MenuItem value="Workshop">Workshop</MenuItem>
-              <MenuItem value="Outreach">Outreach</MenuItem>
-              <MenuItem value="Seminar">Seminar</MenuItem>
-              <MenuItem value="Training">Training</MenuItem>
-            </Select>
-          </FormControl>
+        <DialogContent sx={{ px: 3, py: 2 }}>
+          <Grid container spacing={3}>
+            {/* Basic Information Section */}
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
+                  color: "primary.main",
+                  fontSize: "0.95rem",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                Basic Information
+              </Typography>
 
-          <FormControl fullWidth sx={{ my: 2 }}>
-            <InputLabel>Participants</InputLabel>
-            <Select
-              multiple
-              value={participantIds}
-              onChange={handleParticipantsChange}
-              renderValue={(selected) =>
-                selected
-                  .map((id) => {
-                    const participant = systemParticipants?.find(
-                      (member: IMember) =>
-                        member._id === id && member?.role !== "Attendee"
-                    );
-                    return participant ? participant?.fullName : "";
-                  })
-                  .join(",")
-              }
-            >
-              {systemParticipants?.map((member: IMember) => (
-                <MenuItem key={member._id} value={member._id}>
-                  <Checkbox checked={participantIds?.includes(member._id)} />
-                  <ListItemText primary={member.fullName} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <TextField
+                label="Event Name"
+                variant="outlined"
+                fullWidth
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Enter event name"
+                InputProps={{
+                  sx: { borderRadius: 1.5 },
+                }}
+              />
+            </Grid>
 
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 2,
-            }}
-          >
-            <Typography variant="h6">Assign Roles</Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={openAssignRolesModal}
-              sx={{ textTransform: "none" }}
-            >
-              Assign Roles
-            </Button>
-          </Box>
+            <Grid item xs={12}>
+              <TextField
+                label="Description"
+                variant="outlined"
+                fullWidth
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                multiline
+                rows={3}
+                placeholder="Describe the event purpose and activities"
+                InputProps={{
+                  sx: { borderRadius: 1.5 },
+                }}
+              />
+            </Grid>
+
+            {/* Date and Time Section */}
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
+                  mt: 1,
+                  color: "primary.main",
+                  fontSize: "0.95rem",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                Date and Time
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography>Start Date</Typography>
+                  <TextField
+                    variant="outlined"
+                    fullWidth
+                    type="datetime-local"
+                    value={startDate}
+                    onChange={(e) => {
+                      const selectedDate = new Date(e.target.value);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0); // Normalize to the beginning of today
+
+                      if (selectedDate < today) {
+                        alert("Start date cannot be earlier than today.");
+                        return;
+                      }
+
+                      setStartDate(e.target.value);
+                    }}
+                    required
+                    inputProps={{
+                      min: new Date().toISOString().slice(0, 16), // Prevents selecting past dates
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Typography>End Date</Typography>
+                  <TextField
+                    variant="outlined"
+                    fullWidth
+                    type="datetime-local"
+                    value={endDate}
+                    onChange={(e) => {
+                      const selectedEndDate = new Date(e.target.value);
+                      const selectedStartDate = new Date(startDate);
+
+                      if (!startDate) {
+                        alert("Please select a start date first.");
+                        return;
+                      }
+
+                      if (selectedEndDate < selectedStartDate) {
+                        alert(
+                          "End date cannot be earlier than the start date."
+                        );
+                        return;
+                      }
+
+                      setEndDate(e.target.value);
+                    }}
+                    required
+                    inputProps={{
+                      min: startDate || new Date().toISOString().slice(0, 16), // Prevents selecting dates before the start date
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Event Details Section */}
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
+                  mt: 1,
+                  color: "primary.main",
+                  fontSize: "0.95rem",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                Event Details
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Location"
+                    variant="outlined"
+                    fullWidth
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    required
+                    placeholder="Where will this event take place?"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationOn fontSize="small" color="action" />
+                        </InputAdornment>
+                      ),
+                      sx: { borderRadius: 1.5 },
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Event Type</InputLabel>
+                    <Select
+                      value={eventType}
+                      onChange={(e) => setEventType(e.target.value)}
+                      label="Event Type"
+                      required
+                      sx={{ borderRadius: 1.5 }}
+                      startAdornment={
+                        <InputAdornment position="start" sx={{ ml: 1 }}>
+                          <Category fontSize="small" color="action" />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value="Fundraiser">
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <MonetizationOn
+                            fontSize="small"
+                            sx={{ mr: 1, color: "success.main" }}
+                          />
+                          Fundraiser
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Workshop">
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Build
+                            fontSize="small"
+                            sx={{ mr: 1, color: "warning.main" }}
+                          />
+                          Workshop
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Outreach">
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Public
+                            fontSize="small"
+                            sx={{ mr: 1, color: "info.main" }}
+                          />
+                          Outreach
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Seminar">
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <School
+                            fontSize="small"
+                            sx={{ mr: 1, color: "primary.main" }}
+                          />
+                          Seminar
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Training">
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <FitnessCenter
+                            fontSize="small"
+                            sx={{ mr: 1, color: "error.main" }}
+                          />
+                          Training
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="Training">
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          Other
+                        </Box>
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Participants Section */}
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
+                  mt: 1,
+                  color: "primary.main",
+                  fontSize: "0.95rem",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                Participants & Roles
+              </Typography>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Participants</InputLabel>
+                <Select
+                  multiple
+                  value={participantIds}
+                  onChange={handleParticipantsChange}
+                  renderValue={(selected) =>
+                    selected
+                      .map((id) => {
+                        const participant = systemParticipants?.find(
+                          (member) =>
+                            member._id === id && member?.role !== "Attendee"
+                        );
+                        return participant ? participant?.fullName : "";
+                      })
+                      .join(", ")
+                  }
+                  sx={{ borderRadius: 1.5 }}
+                  startAdornment={
+                    <InputAdornment position="start" sx={{ ml: 1 }}>
+                      <People fontSize="small" color="action" />
+                    </InputAdornment>
+                  }
+                >
+                  {systemParticipants?.map((member) => (
+                    <MenuItem key={member._id} value={member._id}>
+                      <Checkbox
+                        checked={participantIds?.includes(member._id)}
+                      />
+                      <ListItemText
+                        primary={member.fullName}
+                        secondary={member.role}
+                      />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  bgcolor: "background.paper",
+                  p: 2,
+                  borderRadius: 1.5,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Assignment color="primary" sx={{ mr: 1.5 }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                    Assign Roles to Participants
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  size="medium"
+                  onClick={openAssignRolesModal}
+                  startIcon={<PersonAdd />}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: 1.5,
+                    boxShadow: "none",
+                  }}
+                >
+                  Assign Roles
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
         </DialogContent>
 
         <Dialog open={rolesModalOpen} onClose={closeAssignRolesModal}>
@@ -726,27 +1025,52 @@ const Events: React.FC = () => {
         onClose={handleGenerateReportModalClose}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+            overflow: "hidden",
+          },
+        }}
       >
-        <DialogTitle>Select Report Period</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <DialogTitle
+          sx={{
+            pb: 1,
+            pt: 3,
+            px: 3,
+            typography: "h5",
+            fontWeight: 600,
+          }}
+        >
+          Generate Report
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Period Selection */}
-            <FormControl fullWidth>
-              <InputLabel>Period</InputLabel>
-              <Select value={selectedPeriod} onChange={handlePeriodChange}>
-                <MenuItem value="week">Week</MenuItem>
-                <MenuItem value="month">Month</MenuItem>
-                <MenuItem value="year">Year</MenuItem>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 3 }}>
+              <InputLabel id="period-label">Time Period</InputLabel>
+              <Select
+                labelId="period-label"
+                value={selectedPeriod}
+                onChange={handlePeriodChange}
+                label="Time Period"
+              >
+                <MenuItem value="week">Weekly</MenuItem>
+                <MenuItem value="month">Monthly</MenuItem>
+                <MenuItem value="year">Yearly</MenuItem>
               </Select>
             </FormControl>
 
-            {/* Range Selection (Appears only if a period is selected) */}
+            {/* Range Selection */}
             {selectedPeriod && (
-              <FormControl fullWidth>
-                <InputLabel>Select Range</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="range-label">Date Range</InputLabel>
                 <Select
+                  labelId="range-label"
                   value={selectedRange}
                   onChange={(e) => setSelectedRange(e.target.value!)}
+                  label="Date Range"
                 >
                   {generateSelectableRanges()?.map((range, index) => (
                     <MenuItem key={index} value={range.label}>
@@ -758,36 +1082,65 @@ const Events: React.FC = () => {
             )}
 
             {/* Report File Type */}
-            <FormControl fullWidth>
-              <InputLabel>Report File Type</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="file-type-label">File Format</InputLabel>
               <Select
+                labelId="file-type-label"
                 value={fileType}
                 onChange={(e) => setFileType(e.target.value)}
+                label="File Format"
               >
-                <MenuItem value="word">Word</MenuItem>
-                <MenuItem value="excel">Excel</MenuItem>
-                <MenuItem value="pdf">PDF</MenuItem>
+                <MenuItem value="word">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <DescriptionOutlined color="primary" fontSize="small" />
+                    <span>Word Document</span>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="excel">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <TableChartOutlined color="success" fontSize="small" />
+                    <span>Excel Spreadsheet</span>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="pdf">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <PictureAsPdfOutlined color="error" fontSize="small" />
+                    <span>PDF Document</span>
+                  </Box>
+                </MenuItem>
               </Select>
             </FormControl>
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
           <Button
             onClick={handleGenerateReportModalClose}
-            sx={{ color: "gray" }}
+            sx={{
+              color: "text.secondary",
+              fontWeight: 500,
+              px: 2,
+            }}
           >
             Cancel
           </Button>
           <Button
             variant="contained"
             color="primary"
+            disableElevation
             onClick={() => {
               if (!selectedRange) {
-                alert("Please select a range.");
+                alert("Please select a date range.");
                 return;
               }
               generateReport(selectedRange, fileType);
+            }}
+            sx={{
+              px: 3,
+              py: 1,
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 600,
             }}
           >
             Generate Report
@@ -797,7 +1150,7 @@ const Events: React.FC = () => {
 
       <div className="text-right">
         <Button
-        onClick={()=>setOpenGenerateReportModal(true)}
+          onClick={() => setOpenGenerateReportModal(true)}
           sx={{
             bgcolor: "#1450ac",
             color: "#fff",
@@ -805,7 +1158,7 @@ const Events: React.FC = () => {
             cursor: "pointer",
             position: "fixed",
             bottom: "2rem",
-            right: "3rem"
+            right: "3rem",
           }}
         >
           Generate Report

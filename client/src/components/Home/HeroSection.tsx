@@ -61,7 +61,7 @@ const HeroSection: React.FC = () => {
                   left: 0,
                   width: "100%",
                   height: "100%",
-                  backgroundColor: "rgba(0, 0, 0, 0.5)", 
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
                   zIndex: 1,
                 },
               }}
@@ -86,7 +86,7 @@ const HeroSection: React.FC = () => {
           sx={{
             fontWeight: "bold",
             mb: "1.5rem",
-            fontSize: { xs: "2.5rem", sm: "1.8rem", md: "3rem" }, 
+            fontSize: { xs: "2.5rem", sm: "1.8rem", md: "3rem" },
           }}
         >
           Empowering Communities Together
@@ -98,10 +98,10 @@ const HeroSection: React.FC = () => {
             fontSize: { xs: "1rem", sm: "1.25rem" },
           }}
         >
-          Join us in making a difference by connecting donors, volunteers, and
-          resources to those in need.
+          Contribute in making a difference by connecting donors, volunteers,
+          and resources to those in need.
         </Typography>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           sx={{
@@ -114,7 +114,7 @@ const HeroSection: React.FC = () => {
           href="/get-involved"
         >
           Get Involved
-        </Button>
+        </Button> */}
       </Box>
     </Box>
   );

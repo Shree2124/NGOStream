@@ -67,14 +67,18 @@ const App: React.FC = () => {
                       />
                       <Route
                         path="/donation-details/inkind"
-                        element={<DonationDetailsPage type={"In-Kind"}/>}
+                        element={<DonationDetailsPage type={"In-Kind"} />}
                       />
                       <Route
                         path="/donation-details/monetary"
-                        element={<DonationDetailsPage type={"Monetary"}/>}
+                        element={<DonationDetailsPage type={"Monetary"} />}
                       />
-                      <Route path="/events" element={<EventsPage />} />
-                      <Route path="/event-details/:eventId" element={<EventDetailsPage />} />
+                      <Route path="/events/details" element={<EventsPage />} />
+                      <Route path="/events/reports" element={<EventsPage />} />
+                      <Route
+                        path="/event-details/:eventId"
+                        element={<EventDetailsPage />}
+                      />
                       <Route path="/goals" element={<GoalsPage />} />
                       {/* <Route path="/schemes" element={<SchemesPage />} /> */}
                       <Route path="/impact" element={<ImpactPage />} />

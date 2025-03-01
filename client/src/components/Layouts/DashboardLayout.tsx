@@ -1,219 +1,3 @@
-// import React, { useState } from "react";
-// import {
-//   Sidebar,
-//   SidebarMenu,
-//   SidebarMenuItem,
-//   SidebarMenuSub,
-// } from "../ui/sidebar";
-// import {
-//   Home,
-//   Users,
-//   Gift,
-//   Calendar,
-//   Flag,
-//   ChevronDown,
-//   ChevronUp,
-//   LogOut,
-//   Menu,
-//   X,
-// } from "lucide-react";
-
-// interface Tab {
-//   name: string;
-//   path: string;
-//   icon: React.ReactNode;
-//   children?: Tab[];
-// }
-
-// const fitNotesTabs: Tab[] = [
-//   { name: "Home", path: "/dashboard", icon: <Home /> },
-//   {
-//     name: "Member Management",
-//     path: "/dashboard/members",
-//     icon: <Users />,
-//     children: [
-//       { name: "Add Member", path: "/dashboard/members/add", icon: <Users /> },
-//       { name: "View Members", path: "/dashboard/members/view", icon: <Users /> },
-//     ],
-//   },
-//   { name: "Donations", path: "/dashboard/donations", icon: <Gift /> },
-//   { name: "Events", path: "/dashboard/events", icon: <Calendar /> },
-//   { name: "Goals", path: "/dashboard/goals", icon: <Flag /> },
-// ];
-
-// const DashboardLayout: React.FC = ({ children }) => {
-//   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-//   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-//   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
-
-//   const toggleMenu = (menuName: string) => {
-//     setExpandedMenus((prev) =>
-//       prev.includes(menuName)
-//         ? prev.filter((menu) => menu !== menuName)
-//         : [...prev, menuName]
-//     );
-//   };
-
-//   const toggleSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
-
-//   return (
-//     <div className="flex bg-gray-100 h-screen">
-//       <div
-//         className={`${
-//           isSidebarOpen ? "w-64" : "w-20"
-//         } hidden lg:flex flex-col bg-gradient-to-b from-blue-700 to-blue-800 text-white shadow-lg transition-all duration-300`}
-//       >
-//         <div
-//           className="p-6 font-bold text-xl text-center tracking-wide cursor-pointer"
-//           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-//         >
-//           {isSidebarOpen ? "NGOStream" : "NGO"}
-//         </div>
-//         <SidebarMenu>
-//           {fitNotesTabs.map((tab) => (
-//             <React.Fragment key={tab.name}>
-//               {!tab.children ? (
-//                 <SidebarMenuItem
-//                   to={tab.path}
-//                   icon={tab.icon}
-//                   className="flex items-center gap-4 hover:bg-blue-700 hover:text-white transition-colors"
-//                 >
-//                   {isSidebarOpen && tab.name}
-//                 </SidebarMenuItem>
-//               ) : (
-//                 <SidebarMenuSub>
-//                   <div
-//                     className="flex justify-between items-center hover:bg-blue-700 px-4 py-3 hover:text-white transition-colors cursor-pointer"
-//                     onClick={() => toggleMenu(tab.name)}
-//                   >
-//                     <div className="flex items-center space-x-3">
-//                       {tab.icon}
-//                       {isSidebarOpen && <span>{tab.name}</span>}
-//                     </div>
-//                     {isSidebarOpen &&
-//                       (expandedMenus.includes(tab.name) ? (
-//                         <ChevronUp size={16} />
-//                       ) : (
-//                         <ChevronDown size={16} />
-//                       ))}
-//                   </div>
-//                   {expandedMenus.includes(tab.name) && (
-//                     <div className="bg-blue-700/20 pl-8">
-//                       {tab.children.map((subTab) => (
-//                         <SidebarMenuItem
-//                           key={subTab.name}
-//                           to={subTab.path}
-//                           icon={subTab.icon}
-//                           className="flex items-center gap-4 hover:bg-blue-600 hover:text-white transition-colors"
-//                         >
-//                           {subTab.name}
-//                         </SidebarMenuItem>
-//                       ))}
-//                     </div>
-//                   )}
-//                 </SidebarMenuSub>
-//               )}
-//             </React.Fragment>
-//           ))}
-//         </SidebarMenu>
-//         <div className="mt-auto px-4 py-3">
-//           <SidebarMenuItem
-//             to="#"
-//             icon={<LogOut />}
-//             className="flex items-center gap-4 hover:bg-red-600 hover:text-white transition-colors"
-//           >
-//             {isSidebarOpen && "Logout"}
-//           </SidebarMenuItem>
-//         </div>
-//       </div>
-
-//       <div
-//         className={`fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden ${isMobileSidebarOpen ? "block" : "hidden"}`}
-//         onClick={toggleSidebar}
-//       />
-//       <div
-//         className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-blue-700 to-blue-800 text-white shadow-lg w-64 transform transition-transform duration-300 lg:hidden ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-//       >
-//         <div className="p-6 font-bold text-xl text-center tracking-wide">
-//           NGOStream
-//         </div>
-//         <SidebarMenu>
-//           {fitNotesTabs.map((tab) => (
-//             <React.Fragment key={tab.name}>
-//               {!tab.children ? (
-//                 <SidebarMenuItem
-//                   to={tab.path}
-//                   icon={tab.icon}
-//                   className="flex items-center gap-4 hover:bg-blue-700 hover:text-white transition-colors"
-//                 >
-//                   {tab.name}
-//                 </SidebarMenuItem>
-//               ) : (
-//                 <SidebarMenuSub>
-//                   <div
-//                     className="flex justify-between items-center hover:bg-blue-700 px-4 py-3 hover:text-white transition-colors cursor-pointer"
-//                     onClick={() => toggleMenu(tab.name)}
-//                   >
-//                     <div className="flex items-center space-x-3">
-//                       {tab.icon}
-//                       <span>{tab.name}</span>
-//                     </div>
-//                     {expandedMenus.includes(tab.name) ? (
-//                       <ChevronUp size={16} />
-//                     ) : (
-//                       <ChevronDown size={16} />
-//                     )}
-//                   </div>
-//                   {expandedMenus.includes(tab.name) && (
-//                     <div className="bg-blue-700/20 pl-8">
-//                       {tab.children.map((subTab) => (
-//                         <SidebarMenuItem
-//                           key={subTab.name}
-//                           to={subTab.path}
-//                           icon={subTab.icon}
-//                           className="flex items-center gap-4 hover:bg-blue-600 hover:text-white transition-colors"
-//                         >
-//                           {subTab.name}
-//                         </SidebarMenuItem>
-//                       ))}
-//                     </div>
-//                   )}
-//                 </SidebarMenuSub>
-//               )}
-//             </React.Fragment>
-//           ))}
-//         </SidebarMenu>
-//         <div className="mt-auto px-4 py-3">
-//           <SidebarMenuItem
-//             to="#"
-//             icon={<LogOut />}
-//             className="flex items-center gap-4 hover:bg-red-600 hover:text-white transition-colors"
-//           >
-//             Logout
-//           </SidebarMenuItem>
-//         </div>
-//       </div>
-
-//       <div className="flex-1 bg-gray-50 overflow-y-auto">
-//         <div className="lg:hidden top-4 left-4 z-50 fixed">
-//           <button
-//             className="bg-blue-600 hover:bg-blue-700 shadow-md p-2 rounded-md focus:outline-none text-white"
-//             onClick={toggleSidebar}
-//           >
-//             {isMobileSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-//           </button>
-//         </div>
-
-//         <div className="p-6">{children}</div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default DashboardLayout;
-
-
-
 import {
   Box,
   Stack,
@@ -237,11 +21,16 @@ import {
   // AccountBalance,
   ArrowDropDown,
   Money,
+  BackupOutlined,
+  ArrowBack,
+  Logout,
 } from "@mui/icons-material";
 import { ReactNode, useState } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
+import { api } from "./../../api/api";
+import toast from "react-hot-toast";
 
-const fontFamily = "'Poppins', sans-serif";
+const fontFamily = "Proxima nova";
 
 interface Tab {
   name: string;
@@ -266,11 +55,20 @@ const navTabs: Tab[] = [
       { name: "Monetary", path: "/monetary" },
     ],
   },
+  {
+    name: "Events",
+    path: "/dashboard/events",
+    icon: <Event />,
+    subTabs: [
+      { name: " Details", path: "/details" },
+      { name: " Reports", path: "/reports" },
+    ],
+  },
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
   { name: "Campaign", path: "/dashboard/goals", icon: <Flag /> },
   // { name: "Schemes", path: "/dashboard/schemes", icon: <AccountBalance /> },
   { name: "Impact", path: "/dashboard/impact", icon: <Money /> },
-]; 
+];
 
 const Link = styled(RouterLink)(({ theme }) => ({
   textDecoration: "none",
@@ -282,12 +80,13 @@ const Link = styled(RouterLink)(({ theme }) => ({
   fontFamily: fontFamily,
   transition: "all 0.3s ease-in-out",
   "&:hover": {
-    backgroundColor:" rgba(0, 0, 0, 0.1)",
+    backgroundColor: " rgba(0, 0, 0, 0.1)",
     // color: "",
   },
 }));
 
-const SideBar: React.FC<{w: string}> = ({w}) => {
+const SideBar: React.FC<{ w: string }> = ({ w }) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [openTabs, setOpenTabs] = useState<Record<string, boolean>>({});
 
@@ -295,6 +94,15 @@ const SideBar: React.FC<{w: string}> = ({w}) => {
     setOpenTabs((prev) => ({ ...prev, [tabName]: !prev[tabName] }));
   };
 
+  const handleLogout = async () => {
+    const response = await api.post("/users/logout");
+
+    if (!response) {
+      toast.error("Something went wrong while logging out!");
+    }
+
+    navigate("/");
+  };
   return (
     <Stack
       width={w}
@@ -310,6 +118,8 @@ const SideBar: React.FC<{w: string}> = ({w}) => {
         fontFamily: fontFamily,
         boxShadow: "2px 0 8px rgba(0, 0, 0, 0.2)",
         position: "relative",
+        background:
+          "linear-gradient(135deg, rgba(34, 197, 94, 0.7) 0%, rgba(59, 130, 246, 0.5) 100%)",
       }}
     >
       <Typography
@@ -337,7 +147,9 @@ const SideBar: React.FC<{w: string}> = ({w}) => {
                     textAlign: "left",
                     color: "black",
                     padding: "0.8rem 1rem",
-                    bgcolor: openTabs[tab.name] ? "rgba(0, 0, 0, 0.1)" : "transparent",
+                    bgcolor: openTabs[tab.name]
+                      ? "rgba(0, 0, 0, 0.1)"
+                      : "transparent",
                     "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
                   }}
                 >
@@ -347,16 +159,22 @@ const SideBar: React.FC<{w: string}> = ({w}) => {
                   </Stack>
                   <ArrowDropDown
                     sx={{
-                      transform: openTabs[tab.name] ? "rotate(180deg)" : "rotate(0deg)",
+                      transform: openTabs[tab.name]
+                        ? "rotate(180deg)"
+                        : "rotate(0deg)",
                       transition: "transform 0.3s ease-in-out",
                     }}
                   />
                 </Button>
                 <Collapse in={openTabs[tab.name]} timeout="auto">
-                  <Stack pl="2rem">
+                  <Stack pl="2rem" marginTop={"10px"}>
                     {tab.subTabs.map((subTab) => (
                       <Link key={subTab.path} to={tab.path + subTab.path}>
-                        <Stack direction="row" alignItems="center" spacing="1rem">
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing="1rem"
+                        >
                           {subTab.icon}
                           <Typography>{subTab.name}</Typography>
                         </Stack>
@@ -368,7 +186,11 @@ const SideBar: React.FC<{w: string}> = ({w}) => {
             ) : (
               <Link
                 to={tab.path}
-                sx={location.pathname === tab.path ? { bgcolor: "black", color: "white" } : undefined}
+                sx={
+                  location.pathname === tab.path
+                    ? { bgcolor: "black", color: "white" }
+                    : undefined
+                }
               >
                 <Stack direction="row" alignItems="center" spacing="1rem">
                   {tab.icon}
@@ -380,18 +202,53 @@ const SideBar: React.FC<{w: string}> = ({w}) => {
         ))}
       </Stack>
 
-      <Stack>
-        <Link to="#">
+      {/* <Link to="#">
           <Stack direction="row" alignItems="center" spacing="1rem">
             <ExitToApp />
             <Typography>Logout</Typography>
           </Stack>
-        </Link>
-      </Stack>
+        </Link> */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          width: "100%",
+          maxWidth: "300px", // Set maximum width for better mobile responsiveness
+        }}
+      >
+        <Button
+          component={Link}
+          to="/"
+          startIcon={<ArrowBack fontSize="small" />}
+          sx={{
+            justifyContent: "flex-start",
+            textTransform: "none",
+            color: "inherit",
+            padding: "8px 16px",
+            textAlign: "left",
+          }}
+        >
+          Back to main
+        </Button>
+
+        <Button
+          startIcon={<Logout fontSize="small" />}
+          onClick={() => handleLogout()}
+          sx={{
+            justifyContent: "flex-start",
+            textTransform: "none",
+            color: "inherit",
+            padding: "8px 16px",
+            textAlign: "left",
+          }}
+        >
+          Logout
+        </Button>
+      </Box>
     </Stack>
   );
 };
-
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -411,7 +268,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     <Grid
       container
       sx={{
-        bgcolor: "background.default",
         fontFamily: fontFamily,
         minHeight: "100vh",
       }}
@@ -445,7 +301,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           height: "100vh",
         }}
       >
-        <SideBar w="100%"/>
+        <SideBar w="100%" />
       </Grid>
 
       <Grid

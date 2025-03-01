@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Line } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +14,31 @@ import {
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { api } from "../../api/api";
-import { CircularProgress } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  CircularProgress,
+  Container,
+  Divider,
+  Grid,
+  Paper,
+  Typography,
+  Alert,
+  Stack,
+  useTheme,
+  Avatar,
+  LinearProgress,
+} from "@mui/material";
+import {
+  TrendingUp,
+  Campaign,
+  People,
+  Person,
+  MonetizationOn,
+  ShowChart,
+} from "@mui/icons-material";
 
 ChartJS.register(
   CategoryScale,
@@ -45,9 +69,11 @@ interface MonthlyTotals {
 }
 
 const DashboardHome: React.FC = () => {
+  const theme = useTheme();
   const { user } = useSelector((state: RootState) => state.user);
-  const [fundraisingMetrics, setFundraisingMetrics] = useState<FundraisingMetricsData | null>(null);
-  const [adminMetrics, setAdminMetrics] = useState<any | null>(null); // Adjust type as needed
+  const [fundraisingMetrics, setFundraisingMetrics] =
+    useState<FundraisingMetricsData | null>(null);
+  const [adminMetrics, setAdminMetrics] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,11 +81,12 @@ const DashboardHome: React.FC = () => {
     const fetchFundraisingMetrics = async () => {
       try {
         const response = await axios.get<FundraisingMetricsData>(
-          "http://127.0.0.1:5000/api/fundraising-metrics"
+          "http://localhost:5000/api/fundraising-metrics"
         );
         setFundraisingMetrics(response.data);
       } catch (err) {
         setError("Error: Unable to fetch fundraising metrics.");
+        console.error("Fundraising metrics error:", err);
       }
     };
 
@@ -69,37 +96,96 @@ const DashboardHome: React.FC = () => {
         setAdminMetrics(response.data);
       } catch (err) {
         setError("Error: Unable to fetch admin metrics.");
+        console.error("Admin metrics error:", err);
       }
     };
 
     // Fetch data concurrently
-    Promise.all([fetchFundraisingMetrics(), fetchAdminMetrics()])
-      .finally(() => setLoading(false)); // Stop loading when both are done
+    Promise.all([fetchFundraisingMetrics(), fetchAdminMetrics()]).finally(() =>
+      setLoading(false)
+    );
   }, []);
+  console.log("fundrasiing metri cS:", fundraisingMetrics);
 
   const chartData = {
     labels: fundraisingMetrics
-      ? fundraisingMetrics.monthly_totals?.map((item: MonthlyTotals) => `Month ${item.month}`)
+      ? fundraisingMetrics.monthly_totals?.map((item: MonthlyTotals) => {
+          // Convert the month number to a month name and add year
+          const monthNames = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ];
+          const monthIndex = (item.month - 1) % 12; // Convert 1-12 to 0-11 index
+          const monthName = monthNames[monthIndex];
+
+          // Assuming item.month might include year information or you have a separate year field
+          // If item.month is just 1-12, you'll need to determine the year another way
+          const year = new Date().getFullYear(); // Current year as fallback
+
+          return `${monthName} ${year}`;
+        })
       : [],
     datasets: [
       {
         label: "Total Donations",
         data: fundraisingMetrics
-          ? fundraisingMetrics.monthly_totals.map((item: MonthlyTotals) => item.amount)
+          ? fundraisingMetrics.monthly_totals.map(
+              (item: MonthlyTotals) => item.amount
+            )
           : [],
-        borderColor: "#3b82f6",
-        fill: false,
-        tension: 0.1,
+        borderColor: theme.palette.primary.main,
+        backgroundColor: theme.palette.primary.light + "40", // 40 = 25% opacity
+        fill: true,
+        tension: 0.3,
+        borderWidth: 2,
+        pointBackgroundColor: theme.palette.background.paper,
+        pointBorderColor: theme.palette.primary.main,
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
       },
     ],
   };
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
+      legend: {
+        position: "top" as const,
+      },
       title: {
         display: true,
         text: "Donation Trends Over Time",
+        font: {
+          size: 16,
+          weight: "bold",
+        },
+        padding: {
+          top: 10,
+          bottom: 20,
+        },
+      },
+      tooltip: {
+        backgroundColor: theme.palette.grey[900],
+        titleFont: {
+          size: 14,
+        },
+        bodyFont: {
+          size: 14,
+        },
+        padding: 12,
+        cornerRadius: 8,
       },
     },
     scales: {
@@ -108,128 +194,312 @@ const DashboardHome: React.FC = () => {
           display: true,
           text: "Month",
         },
+        grid: {
+          display: false,
+        },
       },
       y: {
         title: {
           display: true,
-          text: "Total Donations",
+          text: "Total Donations ($)",
         },
         beginAtZero: true,
+        grid: {
+          color: theme.palette.divider,
+        },
+        ticks: {
+          callback: function (value: any) {
+            return "$" + value;
+          },
+        },
       },
     },
   };
 
+  const MetricCard = ({
+    title,
+    value,
+    icon,
+    color,
+  }: {
+    title: string;
+    value: string;
+    icon: React.ReactNode;
+    color: string;
+  }) => (
+    <Card
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 2,
+        "&:hover": {
+          transform: "translateY(-4px)",
+          transition: "transform 0.3s ease",
+          boxShadow: "0 12px 20px rgba(71, 117, 234, 0.12)",
+        },
+        transition: "box-shadow 0.3s ease",
+        backdropFilter: "blur(10px)",
+        boxShadow: "0 6px 16px rgba(71, 117, 234, 0.08)",
+        border: "1px solid rgba(229, 231, 235, 0.5)",
+      }}
+    >
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+          <Avatar
+            sx={{ bgcolor: color + ".light", color: color + ".main", mr: 2 }}
+          >
+            {icon}
+          </Avatar>
+          <Typography variant="subtitle2" color="text.secondary">
+            {title}
+          </Typography>
+        </Box>
+        <Typography
+          variant="h4"
+          component="div"
+          sx={{ fontWeight: "bold", color: `${color}.main` }}
+        >
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="sm:p-0 lg:p-6">
-      <h1 className="mb-6 font-bold text-3xl">Admin Dashboard</h1>
-      <h2 className="mb-4 text-xl">
-        Welcome, <span className="text-blue-600">{user?.username}</span>!
-      </h2>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          mb: 3,
+          background: "linear-gradient(90deg, #1976d2, #2196f3)",
+          color: "white",
+          borderRadius: 2,
+          transition: "box-shadow 0.3s ease",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 6px 16px rgba(71, 117, 234, 0.08)",
+          border: "1px solid rgba(229, 231, 235, 0.5)",
+        }}
+      >
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          Admin Dashboard
+        </Typography>
+        <Typography variant="h6">
+          Welcome, {user?.username || "Admin"}!
+        </Typography>
+      </Paper>
 
-      <div className="bg-white shadow-md p-6 rounded-lg">
-        <h2 className="mb-4 font-semibold text-2xl text-gray-800">
-          Fundraising Insights
-        </h2>
-        {/* <p className="mb-6 text-gray-600">
-          Utilize machine learning to predict donation trends and optimize
-          campaigns for better fundraising outcomes.
-        </p> */}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 8 }}>
+          <CircularProgress size={60} thickness={4} />
+        </Box>
+      ) : error ? (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      ) : (
+        <>
+          {/* Main metrics */}
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                title="Total Donations"
+                value={`$${
+                  adminMetrics?.data?.totalDonations?.toFixed(2) || "0.00"
+                }`}
+                icon={<MonetizationOn />}
+                color="primary"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                title="Active Campaigns"
+                value={adminMetrics?.data?.activeCampaigns?.toString() || "0"}
+                icon={<Campaign />}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                title="Total Donors"
+                value={adminMetrics?.data?.totalDonors?.toString() || "0"}
+                icon={<People />}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card
+                sx={{
+                  height: "100%",
+                  borderRadius: 2,
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    transition: "transform 0.3s ease",
+                    boxShadow: "0 12px 20px rgba(71, 117, 234, 0.12)",
+                  },
+                  transition: "box-shadow 0.3s ease",
+                  backdropFilter: "blur(10px)",
+                  boxShadow: "0 6px 16px rgba(71, 117, 234, 0.08)",
+                  border: "1px solid rgba(229, 231, 235, 0.5)",
+                }}
+              >
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <Avatar
+                      sx={{
+                        bgcolor: "warning.light",
+                        color: "warning.main",
+                        mr: 2,
+                      }}
+                    >
+                      <Person />
+                    </Avatar>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Top Donor
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    component="div"
+                    fontWeight="bold"
+                    sx={{ color: "warning.main" }}
+                  >
+                    {adminMetrics?.data?.topDonor?.name || "N/A"}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    $
+                    {adminMetrics?.data?.topDonor?.amount?.toFixed(2) || "0.00"}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
-        {loading ? (
-          <div className="flex justify-center items-center">
-            <CircularProgress /> 
-          </div>
-        ) : error ? (
-          <p className="text-red-500">{error}</p>
-        ) : (
-          <>
-             <div className="gap-6 grid grid-cols-1 md:grid-cols-2 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-700 text-lg">
-                  Average Monthly Donations
-                </h3>
-                <p className="font-bold text-2xl text-blue-600">
-                  ${fundraisingMetrics?.average?.toFixed(2)}
-                </p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-700 text-lg">
-                  Predicted Next Month Donations
-                </h3>
-                <p className="font-bold text-2xl text-green-600">
-                  ${fundraisingMetrics?.predicted?.toFixed(2)}
-                </p>
-              </div>
-            </div>
+          {/* Fundraising insights */}
+          <Card
+            sx={{
+              mb: 3,
+              borderRadius: 2,
 
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="mb-4 font-medium text-gray-700 text-lg">
-                Donation Trends
-              </h3>
-              <Line data={chartData} options={chartOptions} />
-            </div>
-          </>
-        )}
-      </div>
+              transition: "box-shadow 0.3s ease",
+              backdropFilter: "blur(10px)",
+              boxShadow: "0 6px 16px rgba(71, 117, 234, 0.08)",
+              border: "1px solid rgba(229, 231, 235, 0.5)",
+            }}
+          >
+            <CardHeader
+              title="Fundraising Insights"
+              subheader="AI-powered predictions to optimize your fundraising strategy"
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} md={6} sx={{}}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      bgcolor: "primary.light",
+                      borderRadius: 2,
+                      position: "relative",
+                      overflow: "hidden",
+                      transition: "box-shadow 0.3s ease",
+                      backdropFilter: "blur(10px)",
+                      boxShadow: "0 6px 16px rgba(71, 117, 234, 0.08)",
+                      border: "1px solid rgba(229, 231, 235, 0.5)",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "4px",
+                        background: "linear-gradient(135deg, #2193b0, #6dd5ed)",
+                      }}
+                    />
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={2}
+                      sx={{ mb: 1 }}
+                    >
+                      <ShowChart color="primary" />
+                      <Typography variant="subtitle1" fontWeight="medium">
+                        Average Monthly Donations
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="h4"
+                      fontWeight="bold"
+                      color="primary.dark"
+                    >
+                      ${fundraisingMetrics?.average?.toFixed(2) || "0.00"}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      bgcolor: "success.light",
+                      borderRadius: 2,
+                      position: "relative",
+                      overflow: "hidden",
+                      transition: "box-shadow 0.3s ease",
+                      backdropFilter: "blur(10px)",
+                      boxShadow: "0 6px 16px rgba(71, 117, 234, 0.08)",
+                      border: "1px solid rgba(229, 231, 235, 0.5)",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "4px",
+                        background: "linear-gradient(135deg, #56ab2f, #a8e169)",
+                      }}
+                    />
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={2}
+                      sx={{ mb: 1 }}
+                    >
+                      <TrendingUp color="success" />
+                      <Typography variant="subtitle1" fontWeight="medium">
+                        Predicted Next Month Donations
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="h4"
+                      fontWeight="bold"
+                      color="success.dark"
+                    >
+                      ${fundraisingMetrics?.predicted?.toFixed(2) || "0.00"}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
 
-      <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-gray-500 text-sm">Total Donations This Year</h3>
-          <p className="font-bold text-2xl text-blue-600">
-            ${adminMetrics?.data?.totalDonations.toFixed(2)}
-          </p>
-        </div>
-        <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-gray-500 text-sm">Active Campaigns</h3>
-          <p className="font-bold text-2xl text-green-600">
-            {adminMetrics?.data?.activeCampaigns}
-          </p>
-        </div>
-        <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-gray-500 text-sm">Number of Donors</h3>
-          <p className="font-bold text-2xl text-purple-600">
-            {adminMetrics?.data?.totalDonors}
-          </p>
-        </div>
-        <div className="bg-white shadow p-4 rounded-lg">
-          <h3 className="text-gray-500 text-sm">Top Donor</h3>
-          <p className="font-bold text-lg text-yellow-600">
-            {adminMetrics?.data?.topDonor.name} - $
-            {adminMetrics?.data?.topDonor.amount}
-          </p>
-        </div>
-      </div>
-
-      {/* <div className="bg-white shadow-md mb-6 p-6 rounded-lg">
-        <h2 className="mb-4 font-semibold text-2xl">Campaign Performance</h2>
-        <table className="border-collapse w-full text-left">
-          <thead>
-            <tr className="border-b">
-              <th className="py-2">Campaign Name</th>
-              <th className="py-2">Target Amount</th>
-              <th className="py-2">Raised Amount</th>
-              <th className="py-2">Progress</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="py-2">Healthcare Aid</td>
-              <td className="py-2">$50,000</td>
-              <td className="py-2">$40,000</td>
-              <td className="py-2">
-                <div className="bg-gray-200 rounded-full w-full h-2.5">
-                  <div
-                    className="bg-blue-500 rounded-full h-2.5"
-                    style={{ width: "80%" }}
-                  ></div>
-                </div>
-              </td>
-            </tr>
-            
-          </tbody>
-        </table>
-      </div>      */}
-    </div>
+              <Box sx={{ height: 400, mt: 4 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{ mb: 2 }}
+                >
+                  Donation Trends
+                </Typography>
+                <Bar data={chartData} options={chartOptions} />
+              </Box>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </Container>
   );
 };
 
