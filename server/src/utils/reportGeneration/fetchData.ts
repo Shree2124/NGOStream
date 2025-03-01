@@ -3,10 +3,11 @@ import { Event } from "../../models/events.model";
 import { Donor } from "../../models/donors.model";
 import { Donation } from "../../models/donations.model";
 import mongoose from "mongoose";
+import { Member } from "../../models/member.model";
 
 export const fetchData = async (
   ids: string[],
-  type: "event" | "donor"
+  type: "event" | "donor" | "member"
   // fileType: "pdf" | "word" | "excel"
 ) => {
   try {
@@ -138,6 +139,56 @@ export const fetchData = async (
                   donationDate: "$createdAt",
                 },
               },
+            },
+          },
+        ]);
+        break;
+      case "member":
+        data = await Member.aggregate([
+          {
+            $match: { _id: { $in: objectIds } },
+          },
+          {
+            $lookup: {
+              from: "events",
+              localField: "participationHistory.eventId",
+              foreignField: "_id",
+              as: "eventDetails",
+            },
+          },
+          {
+            $unwind: {
+              path: "$eventDetails",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $addFields: {
+              participationHistory: {
+                $map: {
+                  input: "$participationHistory",
+                  as: "participation",
+                  in: {
+                    eventId: "$$participation.eventId",
+                    role: "$$participation.role",
+                    participationDate: "$$participation.participationDate",
+                    eventName: "$eventDetails.name",
+                  },
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              fullName: 1,
+              bio: 1,
+              gender: 1,
+              age: 1,
+              email: 1,
+              address: 1,
+              phone: 1,
+              role: 1,
+              participationHistory: 1,
             },
           },
         ]);

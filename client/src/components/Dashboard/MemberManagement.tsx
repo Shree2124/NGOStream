@@ -20,8 +20,24 @@ import {
   Card,
   Divider,
   Container,
+  FormControl,
+  InputLabel,
+  DialogContent,
+  DialogTitle,
+  Dialog,
+  DialogActions,
 } from "@mui/material";
-import { Add, Delete, Edit, Search, Visibility } from "@mui/icons-material";
+import {
+  Add,
+  Delete,
+  DescriptionOutlined,
+  Edit,
+  PictureAsPdfOutlined,
+  Search,
+  TableChartOutlined,
+  Visibility,
+  Download,
+} from "@mui/icons-material";
 import { api } from "../../api/api";
 import toast from "react-hot-toast";
 
@@ -36,6 +52,7 @@ interface NewUser {
   address: string;
   phone: string;
   role: string;
+  createdAt?: string; // Changed to string for consistency with API responses
 }
 
 interface Member extends NewUser {
@@ -67,7 +84,6 @@ const addUser = async (userData: NewUser) => {
     }
 
     return response.data?.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     toast.error("Something went wrong while adding the user!");
     console.error("Error adding user:", error.message || error);
@@ -77,8 +93,7 @@ const addUser = async (userData: NewUser) => {
 const updateUser = async (
   userId: string,
   updatedUser: NewUser,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  existingUser: NewUser | any
+  existingUser: NewUser
 ) => {
   try {
     const updatedFields = Object.entries(updatedUser).reduce(
@@ -109,7 +124,6 @@ const updateUser = async (
 
     toast.success("User updated successfully!");
     return response.data?.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     toast.error("Something went wrong while updating the user!");
     console.error("Error updating user:", error.message || error);
@@ -125,7 +139,6 @@ const deleteUser = async (userId: string) => {
 
     toast.success("User deleted successfully!");
     return response;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     toast.error("Something went wrong while deleting the user!");
     console.error("Error deleting user:", error.message || error);
@@ -135,7 +148,6 @@ const deleteUser = async (userId: string) => {
 const MemberManagement: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  // const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("All");
@@ -143,11 +155,30 @@ const MemberManagement: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isEdit, setIsEdit] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<NewUser | null>(null);
+
+  const [openGenerateReportModal, setOpenGenerateReportModal] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState("week");
+  const [selectedRange, setSelectedRange] = useState<string | null>(null);
+  const [fileType, setFileType] = useState("pdf");
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportUrl, setReportUrl] = useState<string | null>(null);
+
+  const firstEventStartDate = new Date(
+    members.length > 0
+      ? Math.min(...members.map((m) => new Date(m.createdAt || new Date()).getTime()))
+      : new Date().getTime()
+  );
+
+  const lastEventEndDate = new Date(
+    members.length > 0
+      ? Math.max(...members.map((m) => new Date(m.createdAt || new Date()).getTime()))
+      : new Date().getTime()
+  );
 
   const handleViewDetails = (member: NewUser) => {
     setSelectedMember(member);
@@ -180,9 +211,130 @@ const MemberManagement: React.FC = () => {
       console.error(error);
     }
   };
+
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const handleGenerateReportModalClose = () => {
+    setOpenGenerateReportModal(false);
+  };
+
+  const handlePeriodChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setSelectedPeriod(event.target.value as string);
+    setSelectedRange(null);
+  };
+
+  const generateSelectableRanges = () => {
+    const ranges = [];
+    const start = new Date(firstEventStartDate);
+    const end = new Date(lastEventEndDate);
+
+    if (selectedPeriod === "week") {
+      const current = new Date(start);
+      while (current <= end) {
+        const weekStart = new Date(current);
+        let weekEnd = new Date(current);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        if (weekEnd > end) weekEnd = new Date(end);
+        ranges.push({
+          label: `${weekStart.toDateString()} - ${weekEnd.toDateString()}`,
+          value: { from: weekStart, to: weekEnd },
+        });
+        current.setDate(current.getDate() + 7);
+      }
+    } else if (selectedPeriod === "month") {
+      const current = new Date(start);
+      while (current <= end) {
+        const monthStart = new Date(
+          current.getFullYear(),
+          current.getMonth(),
+          1
+        );
+        let monthEnd = new Date(
+          current.getFullYear(),
+          current.getMonth() + 1,
+          0
+        );
+        if (monthEnd > end) monthEnd = new Date(end);
+        ranges.push({
+          label: `${monthStart.toDateString()} - ${monthEnd.toDateString()}`,
+          value: { from: monthStart, to: monthEnd },
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
+    } else if (selectedPeriod === "year") {
+      const current = new Date(start);
+      while (current <= end) {
+        const yearStart = new Date(current.getFullYear(), 0, 1);
+        let yearEnd = new Date(current.getFullYear(), 11, 31);
+        if (yearEnd > end) yearEnd = new Date(end);
+        ranges.push({
+          label: `${yearStart.getFullYear()}`,
+          value: { from: yearStart, to: yearEnd },
+        });
+        current.setFullYear(current.getFullYear() + 1);
+      }
+    }
+    return ranges;
+  };
+
+  const generatePDFReport = async (filteredIds: string[], fileType: string) => {
+    try {
+      setReportLoading(true);
+      const res = await api.post("/event/generate-report", {
+        ids: filteredIds,
+        fileType: fileType,
+        type: "member",
+      });
+      if (res.data?.data) {
+        setReportUrl(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error generating report:", error);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const generateReport = (selectedRange: string, fileType: string) => {
+    if (!selectedRange || typeof selectedRange !== "string") {
+      console.error("Invalid date range selected.");
+      return;
+    }
+
+    let from: Date, to: Date;
+
+    if (/^\d{4}$/.test(selectedRange)) {
+      const year = parseInt(selectedRange);
+      from = new Date(year, 0, 1);
+      to = new Date(year, 11, 31, 23, 59, 59, 999);
+    } else {
+      const dateParts = selectedRange.split(" - ");
+      if (dateParts.length !== 2) {
+        console.error("Invalid date format.");
+        return;
+      }
+
+      from = new Date(dateParts[0]);
+      to = new Date(dateParts[1]);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+    }
+
+    const filteredMembers = members.filter((member) => {
+      const createdAt = new Date(member.createdAt || new Date());
+      return createdAt >= from && createdAt <= to;
+    });
+
+    const filteredIds = filteredMembers.map((member) => member._id);
+
+    console.log("Filtered Member IDs:", filteredIds);
+    console.log("File Type:", fileType);
+
+    generatePDFReport(filteredIds, fileType);
+  };
 
   const handleConfirmDelete = (userId: string | null) => {
     if (userId) {
@@ -200,7 +352,6 @@ const MemberManagement: React.FC = () => {
     if (user && id) {
       setIsEdit(true);
       setCurrentUserId(id);
-
       setNewUser(user);
       setSelectedMember(user);
       setImagePreview(
@@ -219,7 +370,6 @@ const MemberManagement: React.FC = () => {
       });
       setImagePreview(null);
     }
-
     setShowModal(true);
   };
 
@@ -245,7 +395,7 @@ const MemberManagement: React.FC = () => {
         const updatedUser = await updateUser(
           currentUserId,
           newUser,
-          selectedMember
+          selectedMember!
         );
         setMembers((prev) =>
           prev.map((member) =>
@@ -260,8 +410,7 @@ const MemberManagement: React.FC = () => {
         await fetchUsers();
       }
       handleCloseModal();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving user:", error);
     }
   };
@@ -271,9 +420,7 @@ const MemberManagement: React.FC = () => {
       const res = await deleteUser(userId);
       if (res?.status === 200) setShowDeleteModal(false);
       setMembers((prev) => prev.filter((member) => member._id !== userId));
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting user:", error);
     }
   };
@@ -332,7 +479,7 @@ const MemberManagement: React.FC = () => {
           <Grid item xs={6} md={3}>
             <Select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => setFilter(e.target.value as string)}
               fullWidth
               size={isMobile ? "small" : "medium"}
             >
@@ -360,6 +507,7 @@ const MemberManagement: React.FC = () => {
           </Grid>
         </Grid>
       </Card>
+
       {/* Members List */}
       <Card
         sx={{
@@ -661,7 +809,7 @@ const MemberManagement: React.FC = () => {
                   fullWidth
                   value={newUser.gender}
                   onChange={(e) =>
-                    setNewUser({ ...newUser, gender: e.target.value })
+                    setNewUser({ ...newUser, gender: e.target.value as string })
                   }
                   displayEmpty
                   size={isMobile ? "small" : "medium"}
@@ -713,7 +861,7 @@ const MemberManagement: React.FC = () => {
                   fullWidth
                   value={newUser.role}
                   onChange={(e) =>
-                    setNewUser({ ...newUser, role: e.target.value })
+                    setNewUser({ ...newUser, role: e.target.value as string })
                   }
                   displayEmpty
                   size={isMobile ? "small" : "medium"}
@@ -788,6 +936,170 @@ const MemberManagement: React.FC = () => {
           </Stack>
         </Box>
       </Modal>
+
+      {/* Generate Report Modal */}
+      <Dialog
+        open={openGenerateReportModal}
+        onClose={handleGenerateReportModalClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+            overflow: "hidden",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            pb: 1,
+            pt: 3,
+            px: 3,
+            typography: "h5",
+            fontWeight: 600,
+          }}
+        >
+          Generate Report
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Period Selection */}
+            <FormControl fullWidth variant="outlined" sx={{ mt: 3 }}>
+              <InputLabel id="period-label">Time Period</InputLabel>
+              <Select
+                labelId="period-label"
+                value={selectedPeriod}
+                onChange={handlePeriodChange}
+                label="Time Period"
+              >
+                <MenuItem value="week">Weekly</MenuItem>
+                <MenuItem value="month">Monthly</MenuItem>
+                <MenuItem value="year">Yearly</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Range Selection */}
+            {selectedPeriod && (
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="range-label">Date Range</InputLabel>
+                <Select
+                  labelId="range-label"
+                  value={selectedRange}
+                  onChange={(e) => setSelectedRange(e.target.value as string)}
+                  label="Date Range"
+                >
+                  {generateSelectableRanges()?.map((range, index) => (
+                    <MenuItem key={index} value={range.label}>
+                      {range.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+
+            {/* Report File Type */}
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="file-type-label">File Format</InputLabel>
+              <Select
+                labelId="file-type-label"
+                value={fileType}
+                onChange={(e) => setFileType(e.target.value as string)}
+                label="File Format"
+              >
+                <MenuItem value="word">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <DescriptionOutlined color="primary" fontSize="small" />
+                    <span>Word Document</span>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="excel">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <TableChartOutlined color="success" fontSize="small" />
+                    <span>Excel Spreadsheet</span>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="pdf">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <PictureAsPdfOutlined color="error" fontSize="small" />
+                    <span>PDF Document</span>
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+          <Button
+            onClick={handleGenerateReportModalClose}
+            sx={{
+              color: "text.secondary",
+              fontWeight: 500,
+              px: 2,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            disableElevation
+            onClick={() => {
+              if (!selectedRange) {
+                alert("Please select a date range.");
+                return;
+              }
+              generateReport(selectedRange, fileType);
+            }}
+            disabled={reportLoading}
+            sx={{
+              px: 3,
+              py: 1,
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 600,
+            }}
+          >
+            {!reportUrl && "Generate Report"}
+            {reportUrl && (
+              <a
+                href={reportUrl}
+                download
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+              >
+                <Download />
+                Download Report
+              </a>
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Generate Report Button */}
+      <div className="text-right">
+        <Button
+          onClick={() => setOpenGenerateReportModal(true)}
+          sx={{
+            bgcolor: "#1450ac",
+            color: "#fff",
+            p: 2,
+            cursor: "pointer",
+            position: "fixed",
+            bottom: "2rem",
+            right: "3rem",
+          }}
+        >
+          Generate Report
+        </Button>
+      </div>
     </Container>
   );
 };

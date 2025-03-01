@@ -259,6 +259,87 @@ const generateDonationReport = (doc: PDFKit.PDFDocument, data: any[]) => {
   });
 };
 
+const generateMemberReport = (doc: PDFKit.PDFDocument, data: any[]) => {
+  data?.forEach((member, index) => {
+    if (index > 0) doc.addPage();
+
+    applyStyle(doc, styles.title);
+    doc.text("Member Report", 50, 50, { align: "center" });
+
+    applyStyle(doc, styles.subtitle);
+    doc.text(
+      "Detailed information about members and their participation history",
+      50,
+      85,
+      { align: "center" }
+    );
+
+    doc.roundedRect(50, 130, doc.page.width - 100, 400, 10).fill(colors.cardBg);
+
+    applyStyle(doc, styles.header);
+    doc.text(member.fullName, 70, 150);
+
+    applyStyle(doc, styles.value);
+    doc.font("Helvetica-Oblique").text(member.bio || "No bio provided", 70, 180, {
+      width: doc.page.width - 140,
+    });
+    doc.font("Helvetica");
+
+    doc
+      .moveTo(70, 230)
+      .lineTo(doc.page.width - 70, 230)
+      .strokeColor(colors.border)
+      .stroke();
+
+    const leftCol = 70;
+    const rightCol = doc.page.width / 2 + 20;
+    const startY = 250;
+    const lineHeight = 25;
+
+    applyStyle(doc, styles.label);
+    doc.text("Gender:", leftCol, startY);
+    applyStyle(doc, styles.value);
+    doc.text(member?.gender, leftCol, startY + lineHeight);
+
+    applyStyle(doc, styles.label);
+    doc.text("Age:", leftCol, startY + lineHeight * 2);
+    applyStyle(doc, styles.value);
+    doc.text(member?.age.toString(), leftCol, startY + lineHeight * 3);
+
+    applyStyle(doc, styles.label);
+    doc.text("Email:", rightCol, startY);
+    applyStyle(doc, styles.value);
+    doc.text(member?.email, rightCol, startY + lineHeight);
+
+    applyStyle(doc, styles.label);
+    doc.text("Phone:", rightCol, startY + lineHeight * 2);
+    applyStyle(doc, styles.value);
+    doc.text(member?.phone, rightCol, startY + lineHeight * 3);
+
+    applyStyle(doc, styles.label);
+    doc.text("Address:", leftCol, startY + lineHeight * 4);
+    applyStyle(doc, styles.value);
+    doc.text(member?.address, leftCol, startY + lineHeight * 5, {
+      width: doc.page.width - 140,
+    });
+
+    applyStyle(doc, styles.label);
+    doc.text("Role:", rightCol, startY + lineHeight * 4);
+    applyStyle(doc, styles.value);
+    doc.text(member?.role, rightCol, startY + lineHeight * 5);
+
+
+    applyStyle(doc, styles.footer);
+    doc.text(
+      "Thank you for being a valued member of our community.",
+      50,
+      doc.page.height - 70,
+      { align: "center" }
+    );
+  });
+};
+
+
 export const generatePDF = async (
   data: any[],
   reportType: string,
@@ -273,6 +354,8 @@ export const generatePDF = async (
       generateEventReport(doc, data);
     } else if (reportType === "donor") {
       generateDonationReport(doc, data);
+    }  else if (reportType === "member") {
+      generateMemberReport(doc, data);
     } else {
       reject("Invalid report type");
       return;
