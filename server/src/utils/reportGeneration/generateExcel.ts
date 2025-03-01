@@ -16,7 +16,7 @@ const generateEventReportExcel = async (
   workbook: ExcelJS.Workbook,
   data: any[]
 ) => {
-  console.log(data)
+  console.log(data);
   const sheet = workbook.addWorksheet("Events Report");
 
   // Define columns
@@ -59,31 +59,88 @@ const generateEventReportExcel = async (
   return sheet;
 };
 
-const generateDonorReportExcel = async (
-  workbook: ExcelJS.Workbook,
-  data: any[]
-) => {
+const generateDonorReportExcel = async (data: any[]) => {
+  const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Donor Report");
 
-  // Define columns
+  // Define column headers
   sheet.columns = [
-    { header: "Donor Name", key: "name", width: 25 },
-    { header: "Amount (₹)", key: "amount", width: 15 },
-    { header: "Type", key: "type", width: 15 },
-    { header: "Date", key: "date", width: 15 },
+    { header: "Donor Name", key: "donorName", width: 25 },
+    { header: "Email", key: "donorEmail", width: 30 },
+    { header: "Phone", key: "donorPhone", width: 15 },
+    { header: "Address", key: "donorAddress", width: 40 },
+    {
+      header: "Total Monetary Donations (₹)",
+      key: "totalMonetaryDonations",
+      width: 25,
+    },
+    {
+      header: "Total In-Kind Donations (₹)",
+      key: "totalInKindDonations",
+      width: 25,
+    },
+    { header: "Donation Amount (₹)", key: "amount", width: 20 },
+    { header: "Donation Type", key: "type", width: 20 },
+    { header: "Donation Date", key: "date", width: 20 },
   ];
 
-  // Add rows
-  data.forEach((donation) => {
-    sheet.addRow({
-      name: donation.name,
-      amount: donation.amount,
-      type: donation.type,
-      date: formatDate(donation.date),
-    });
+  // Add rows: Loop through donors and their donations
+  data.forEach((donor) => {
+    if (donor.donations.length === 0) {
+      sheet.addRow({
+        donorName: donor.donorName || "Anonymous",
+        donorEmail: donor.donorEmail || "N/A",
+        donorPhone: donor.donorPhone || "N/A",
+        donorAddress: donor.donorAddress || "N/A",
+        totalMonetaryDonations: `₹${donor.totalMonetaryDonations.toLocaleString()}`,
+        totalInKindDonations: `₹${donor.totalInKindDonations.toLocaleString()}`,
+        amount: "N/A",
+        type: "N/A",
+        date: "N/A",
+      });
+    } else {
+      donor.donations.forEach((donation: any) => {
+        sheet.addRow({
+          donorName: donor.donorName || "Anonymous",
+          donorEmail: donor.donorEmail || "N/A",
+          donorPhone: donor.donorPhone || "N/A",
+          donorAddress: donor.donorAddress || "N/A",
+          totalMonetaryDonations: `₹${donor.totalMonetaryDonations.toLocaleString()}`,
+          totalInKindDonations: `₹${donor.totalInKindDonations.toLocaleString()}`,
+          amount: donation.amount
+            ? `₹${donation.amount.toLocaleString()}`
+            : "N/A",
+          date: donation.createdAt
+            ? new Date(donation.createdAt).toLocaleDateString()
+            : "N/A",
+        });
+      });
+    }
   });
 
-  return sheet;
+  // ✅ Ensure the `public/temp` directory exists
+  const tempDir = path.join(__dirname, "../../../public/temp");
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  // Generate a unique file name with timestamp
+  const filePath = path.join(tempDir, `${Date.now()}.xlsx`);
+
+  try {
+    // ✅ Close previous file handles properly before overwriting
+    if (fs.existsSync(filePath)) {
+      await fs.promises.unlink(filePath); // Delete the previous file safely
+    }
+
+    // ✅ Write the Excel file safely
+    await workbook.xlsx.writeFile(filePath);
+    console.log("✅ Excel file created successfully:", filePath);
+    return filePath;
+  } catch (error) {
+    console.error("❌ Error generating Excel file:", error);
+    throw new Error("Failed to generate report.");
+  }
 };
 
 export const generateExcel = async (
@@ -103,7 +160,7 @@ export const generateExcel = async (
       if (reportType === "event") {
         await generateEventReportExcel(workbook, data);
       } else if (reportType === "donor") {
-        await generateDonorReportExcel(workbook, data);
+        await generateDonorReportExcel(data);
       } else {
         return reject("Invalid report type.");
       }

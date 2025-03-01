@@ -7,13 +7,13 @@ import path from "path";
 
 export const generateReport = async (
   ids: string[],
-  type: "goal" | "event" | "donor",
+  type:  "event" | "donor",
   format: "pdf" | "word" | "excel"
 ) => {
   try {
     const rawData = await fetchData(ids, type);
     const formattedData = formatData(rawData, type);
-    console.log("Formatted data:", format);
+    console.log("raw data:", rawData);
 
     const filePath = path.join(
       __dirname,

@@ -3,14 +3,11 @@ import fs from "fs";
 import moment from "moment";
 
 const colors = {
-  gradientStart: "#4AD66D", // Green
-  gradientEnd: "#4AA5D6", // Blue
-  primary: "#1E5F8C", // Dark blue
-  secondary: "#FFFFFF", // White
-  cardBg: "#F8F9FA", // Light gray
-  text: "#333333", // Dark text
-  accent: "#FF5757", // Red accent
-  border: "#E4E7EB", // Light border
+  primary: "#1E5F8C",
+  text: "#333333",
+  border: "#E4E7EB",
+  footer: "#666666",
+  cardBg: "#FFFFFF",
 };
 
 const styles = {
@@ -19,26 +16,7 @@ const styles = {
   header: { font: "Helvetica-Bold", size: 16, color: colors.primary },
   label: { font: "Helvetica-Bold", size: 12, color: colors.text },
   value: { font: "Helvetica", size: 12, color: colors.text },
-  footer: { font: "Helvetica", size: 10, color: colors.primary },
-};
-
-const applyStyle = (doc: PDFKit.PDFDocument, style: any) => {
-  doc.font(style.font).fontSize(style.size).fillColor(style.color);
-};
-
-const drawGradientBackground = (doc: PDFKit.PDFDocument) => {
-  const segments = 20;
-  const segmentWidth = doc.page.width / segments;
-
-  for (let i = 0; i < segments; i++) {
-    const t = i / (segments - 1);
-    const r = Math.round(0x4a + (0x4a - 0x4a) * t);
-    const g = Math.round(0xd6 + (0xa5 - 0xd6) * t);
-    const b = Math.round(0x6d + (0xd6 - 0x6d) * t);
-
-    doc.fillColor(`#${r.toString(16)}${g.toString(16)}${b.toString(16)}`);
-    doc.rect(i * segmentWidth, 0, segmentWidth, doc.page.height).fill();
-  }
+  footer: { font: "Helvetica", size: 10, color: colors.footer },
 };
 
 const generateEventReport = (doc: PDFKit.PDFDocument, data: any[]) => {
@@ -105,7 +83,6 @@ const generateEventReport = (doc: PDFKit.PDFDocument, data: any[]) => {
     applyStyle(doc, styles.value);
     doc.text(event.status, rightCol, startY + lineHeight * 3);
 
-    
     const detailsStartY = startY + lineHeight * 5;
 
     applyStyle(doc, styles.label);
@@ -162,60 +139,124 @@ const generateEventReport = (doc: PDFKit.PDFDocument, data: any[]) => {
   });
 };
 
-const generateDonationReport = (doc: PDFKit.PDFDocument, data: any[]) => {
-  applyStyle(doc, styles.title);
-  doc.text("Donor Report", 50, 50, { align: "center" });
+const applyStyle = (doc: PDFKit.PDFDocument, style: any) => {
+  doc.font(style.font).fontSize(style.size).fillColor(style.color);
+};
 
-  applyStyle(doc, styles.subtitle);
-  doc.text("Summary of donations and contributors", 50, 85, {
-    align: "center",
-  });
+const generateDonationReport = (doc: PDFKit.PDFDocument, data: any[]) => {
+  console.log(data.forEach((i) => i.donations));
+  applyStyle(doc, styles.title);
+  doc.text("Donation Report", { align: "center" });
+
+  if (data.length === 0) {
+    applyStyle(doc, styles.subtitle);
+    doc.text("No donations recorded.", 50, 85, { align: "center" });
+    return;
+  }
 
   doc.moveDown(2);
-  applyStyle(doc, styles.header);
-  doc.text("Donations Summary", 50, 120);
+  applyStyle(doc, styles.subtitle);
+  doc.text("Summary of donations and contributors", { align: "center" });
 
-  doc
-    .moveTo(50, 140)
-    .lineTo(doc.page.width - 50, 140)
-    .strokeColor(colors.border)
-    .stroke();
-  doc.moveDown();
+  data.forEach((donor, index) => {
+    if (index > 0) doc.addPage();
 
-  const tableTop = 160;
-  const colX = [50, 200, 350, 500];
-  const rowHeight = 25;
+    applyStyle(doc, styles.header);
+    doc.text(donor.donorName || "Anonymous", 50, 100);
 
-  applyStyle(doc, styles.label);
-  doc.text("Donor Name", colX[0], tableTop);
-  doc.text("Amount", colX[1], tableTop);
-  doc.text("Type", colX[2], tableTop);
-  doc.text("Date", colX[3], tableTop);
+    const leftCol = 50;
+    const rightCol = 320;
+    let currentY = 130;
+    const lineHeight = 20;
 
-  doc
-    .moveTo(50, tableTop + rowHeight - 5)
-    .lineTo(doc.page.width - 50, tableTop + rowHeight - 5)
-    .strokeColor(colors.border)
-    .stroke();
+    const addText = (label: string, value: any, x: number, y: number) => {
+      if (value) {
+        applyStyle(doc, styles.label);
+        doc.text(label, x, y);
+        applyStyle(doc, styles.value);
+        doc.text(value, x, y + lineHeight);
+        return y + lineHeight * 2;
+      }
+      return y;
+    };
 
-  data.forEach((donation, index) => {
-    const y = tableTop + rowHeight * (index + 1);
-    applyStyle(doc, styles.value);
+    currentY = addText("Email:", donor.donorEmail, leftCol, currentY);
+    currentY = addText("Phone:", donor.donorPhone, rightCol, currentY);
+    currentY = addText("Address:", donor.donorAddress, leftCol, currentY);
+    currentY = addText(
+      "Total Monetary Donations:",
+      `₹${donor.totalMonetaryDonations.toLocaleString()}`,
+      rightCol,
+      currentY
+    );
+    currentY = addText(
+      "Total In-Kind Donations:",
+      `₹${donor.totalInKindDonations.toLocaleString()}`,
+      rightCol,
+      currentY
+    );
 
-    doc.text(donation.name, colX[0], y);
-    doc.text(`₹${donation.amount}`, colX[1], y);
-    doc.text(donation.type, colX[2], y);
-    doc.text(donation.date, colX[3], y);
+    currentY += lineHeight;
+
+    if (donor.donations && donor.donations.length > 0) {
+      applyStyle(doc, styles.header);
+      doc.text("Donation Details", leftCol, currentY);
+      currentY += lineHeight;
+
+      doc
+        .moveTo(leftCol, currentY)
+        .lineTo(doc.page.width - 50, currentY)
+        .strokeColor(colors.border)
+        .stroke();
+      currentY += 5;
+
+      const colX = [leftCol, leftCol + 150, leftCol + 300, leftCol + 450];
+      const rowHeight = 25;
+
+      applyStyle(doc, styles.label);
+      doc.text("Amount", colX[0], currentY);
+      doc.text("Type", colX[1], currentY);
+      doc.text("Date", colX[2], currentY);
+
+      doc
+        .moveTo(leftCol, currentY + rowHeight - 5)
+        .lineTo(doc.page.width - 50, currentY + rowHeight - 5)
+        .strokeColor(colors.border)
+        .stroke();
+      currentY += rowHeight;
+
+      donor.donations.forEach((donation: any) => {
+        applyStyle(doc, styles.value);
+
+        // Ensure the date is properly formatted
+        let formattedDate = "N/A";
+        if (donation.date) {
+          const parsedDate = moment(donation.date);
+          formattedDate = parsedDate.isValid()
+            ? parsedDate.format("DD MMM YYYY")
+            : "Invalid Date";
+        }
+
+        doc.text(
+          donation.amount ? `₹${donation.amount}` : "N/A",
+          colX[0],
+          currentY
+        );
+        doc.text(donation.type || "Unknown", colX[1], currentY);
+        doc.text(formattedDate, colX[2], currentY);
+
+        currentY += rowHeight;
+      });
+    }
+
+    applyStyle(doc, styles.footer);
+    doc.text(
+      "Your contributions help us create a better world.",
+      50,
+      doc.page.height - 70,
+      { align: "center" }
+    );
   });
-
-  doc.moveDown();
-  applyStyle(doc, styles.footer);
-  doc.text(
-    "Your contributions help us create a better world.",
-    50,
-    doc.page.height - 70,
-    { align: "center" }
-  );
 };
 
 export const generatePDF = async (

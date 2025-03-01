@@ -1,5 +1,3 @@
-
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import {
@@ -39,7 +37,6 @@ import {
 } from "@mui/icons-material";
 // import { Button } from "../ui/button";
 
-
 interface IDonation {
   _id: string;
   donorInfo: { name: string; email?: string };
@@ -63,23 +60,19 @@ interface IDonation {
   createdAt: Date;
 }
 
-
 interface IDonationDetailsProps {
   type: string;
 }
-
 
 interface ICampaign {
   _id: string;
   name: string;
 }
 
-
 interface IEvent {
   _id: string;
   name: string;
 }
-
 
 const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   const [search, setSearch] = useState("");
@@ -92,8 +85,9 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     null
   );
   const [editModal, setEditModal] = useState<boolean>(false);
-  const [openGenerateReportModal, setOpenGenerateReportModal] =
-    useState<boolean>(false);
+  const [openGenerateReportModal, setOpenGenerateReportModal] = useState<
+    boolean
+  >(false);
   const [selectedPeriod, setSelectedPeriod] = useState("week");
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [fileType, setFileType] = useState("pdf");
@@ -101,10 +95,10 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     selectedDonation?.inKindDetails?.status || "Pending"
   );
 
-
   // Manual donation states
-  const [manualDonationModal, setManualDonationModal] =
-    useState<boolean>(false);
+  const [manualDonationModal, setManualDonationModal] = useState<boolean>(
+    false
+  );
   const [donationTarget, setDonationTarget] = useState<string>("campaign");
   const [campaigns, setCampaigns] = useState<ICampaign[]>([]);
   const [events, setEvents] = useState<IEvent[]>([]);
@@ -118,7 +112,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   const [itemQuantity, setItemQuantity] = useState<string>("1");
   const [itemDescription, setItemDescription] = useState<string>("");
 
-
   const firstDonationStartDate =
     donationData.length > 0
       ? new Date(
@@ -127,7 +120,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
           )
         )
       : new Date();
-
 
   const lastDonationEndDate =
     donationData.length > 0
@@ -138,7 +130,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         )
       : new Date();
 
-
   const handleGenerateReportModalClose = () => {
     setOpenGenerateReportModal(false);
   };
@@ -147,71 +138,134 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setSelectedRange(null);
   };
 
+  const generatePDFReport = async (filteredIds: any[], fileType: string) => {
+    try {
+      const res = await api.post("/event/generate-report", {
+        ids: filteredIds,
+        fileType: fileType,
+        type: "donor",
+      });
+      console.log(res.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-  function generateReport(selectedRange: any, fileType: string) {
-    console.log(selectedRange, fileType);
+  function generateReport(selectedRange: string, fileType: string) {
+    console.log("Selected Range:", selectedRange);
+
+    if (!selectedRange || typeof selectedRange !== "string") {
+      console.error("Invalid date range selected.");
+      return;
+    }
+
+    let from: Date, to: Date;
+
+    if (/^\d{4}$/.test(selectedRange)) {
+      const year = parseInt(selectedRange);
+      from = new Date(year, 0, 1);
+      to = new Date(year, 11, 31, 23, 59, 59, 999);
+    } else {
+      const dateParts = selectedRange.split(" - ");
+      if (dateParts.length !== 2) {
+        console.error("Invalid date format.");
+        return;
+      }
+
+      from = new Date(dateParts[0]);
+      to = new Date(dateParts[1]);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+    }
+
+    const filteredIds = donationData
+      .filter((donation) => {
+        const createdAt = new Date(donation.createdAt);
+        return createdAt >= from && createdAt <= to;
+      })
+      .map((donation) => donation._id);
+
+    console.log("Filtered Donation IDs:", filteredIds);
+    console.log("File Type:", fileType);
+
+    generatePDFReport(filteredIds, fileType);
+
+    setSelectedRange(null);
+    setOpenGenerateReportModal(false);
   }
 
-
-  const generateSelectableRanges = () => {
+  function generateSelectableRanges() {
     const ranges = [];
     const start = new Date(firstDonationStartDate);
-    console.log(start);
     const end = new Date(lastDonationEndDate);
-    console.log(end);
-
 
     if (selectedPeriod === "week") {
       const current = new Date(start);
-
+      // Set current to the start of the week (Sunday)
+      const dayOfWeek = current.getDay();
+      current.setDate(current.getDate() - dayOfWeek);
 
       while (current <= end) {
         const weekStart = new Date(current);
         let weekEnd = new Date(current);
         weekEnd.setDate(weekStart.getDate() + 6);
         if (weekEnd > end) weekEnd = new Date(end);
+
+        const formattedWeekStart = weekStart.toDateString(); // e.g. "Sun Oct 27 2024"
+        const formattedWeekEnd = weekEnd.toDateString(); // e.g. "Sat Nov 02 2024"
+        const label = `${formattedWeekStart} - ${formattedWeekEnd}`;
+
         ranges.push({
-          label: `${weekStart.toDateString()} - ${weekEnd.toDateString()}`,
+          label: label,
           value: { from: weekStart, to: weekEnd },
         });
         current.setDate(current.getDate() + 7);
       }
     } else if (selectedPeriod === "month") {
       const current = new Date(start);
+      current.setDate(1); // Start from first day of the month
+
       while (current <= end) {
-        const monthStart = new Date(
-          current.getFullYear(),
-          current.getMonth(),
-          1
-        );
+        const monthStart = new Date(current);
+        // Last day of the month
         let monthEnd = new Date(
           current.getFullYear(),
           current.getMonth() + 1,
           0
         );
         if (monthEnd > end) monthEnd = new Date(end);
+
+        const formattedMonthStart = monthStart.toDateString();
+        const formattedMonthEnd = monthEnd.toDateString();
+        const label = `${formattedMonthStart} - ${formattedMonthEnd}`;
+
         ranges.push({
-          label: `${monthStart.toDateString()} - ${monthEnd.toDateString()}`,
+          label: label,
           value: { from: monthStart, to: monthEnd },
         });
         current.setMonth(current.getMonth() + 1);
       }
     } else if (selectedPeriod === "year") {
       const current = new Date(start);
+      current.setMonth(0, 1); // January 1st
+
       while (current <= end) {
         const yearStart = new Date(current.getFullYear(), 0, 1);
         let yearEnd = new Date(current.getFullYear(), 11, 31);
         if (yearEnd > end) yearEnd = new Date(end);
+
+        const label = `${yearStart.getFullYear()}`;
+
         ranges.push({
-          label: `${yearStart.getFullYear()}`,
+          label: label,
           value: { from: yearStart, to: yearEnd },
         });
         current.setFullYear(current.getFullYear() + 1);
       }
     }
     return ranges;
-  };
-
+  }
 
   const fetchDetails = async () => {
     try {
@@ -222,7 +276,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     }
   };
 
-
   const fetchCampaigns = async () => {
     try {
       const res = await api.get("/campaign/get-all-campaigns");
@@ -231,7 +284,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       console.error("Error fetching campaigns:", error);
     }
   };
-
 
   const fetchEvents = async () => {
     try {
@@ -242,17 +294,14 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     }
   };
 
-
   useEffect(() => {
     if (type !== "Monetary" && type !== "In-Kind") {
       setIsValidType(false);
       return;
     }
 
-
     fetchDetails();
   }, [type]);
-
 
   useEffect(() => {
     if (manualDonationModal) {
@@ -260,7 +309,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       fetchEvents();
     }
   }, [manualDonationModal]);
-
 
   if (!isValidType) {
     return (
@@ -270,20 +318,17 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     );
   }
 
-
   const filteredDonations = donationData.filter((donation) =>
     type === "Monetary"
       ? donation.amount !== undefined
       : donation.estimatedValue !== undefined
   );
 
-
   const filteredSearchDonations = filteredDonations.filter(
     (donation) =>
       donation?.donorInfo?.name.toLowerCase().includes(search.toLowerCase()) ||
       donation?.goalInfo?.name.toLowerCase().includes(search.toLowerCase())
   );
-
 
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
@@ -293,7 +338,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setPage(newPage);
   };
 
-
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -301,24 +345,20 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setPage(0);
   };
 
-
   const handleEdit = (donation: IDonation) => {
     setSelectedDonation(donation);
     setEditModal(true);
   };
-
 
   const handleCloseEdit = () => {
     setSelectedDonation(null);
     setEditModal(false);
   };
 
-
   const handleSave = async (selectedValue: string) => {
     try {
       console.log(selectedValue);
       console.log(selectedDonation?._id);
-
 
       const res = await api.put(`/donation/update-donation-status`, {
         status: selectedValue,
@@ -330,15 +370,12 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       console.log(e);
     }
 
-
     setEditModal(false);
   };
-
 
   const handleOpenManualDonation = () => {
     setManualDonationModal(true);
   };
-
 
   const handleCloseManualDonation = () => {
     setManualDonationModal(false);
@@ -353,7 +390,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setItemQuantity("1");
     setItemDescription("");
   };
-
 
   const handleSubmitManualDonation = async () => {
     try {
@@ -385,7 +421,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
             }),
       };
 
-
       const res = await api.post("/donation/create-manual-donation", payload);
       console.log("Manual donation created:", res.data);
       fetchDetails();
@@ -395,7 +430,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       alert("Failed to create donation. Please try again.");
     }
   };
-
 
   return (
     <div>
@@ -419,7 +453,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
             </IconButton>
           </Box>
 
-
           {showSearch && (
             <TextField
               label="Search Donations"
@@ -438,7 +471,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
             />
           )}
 
-
           <TextField
             label="Search Donations"
             variant="outlined"
@@ -455,7 +487,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
             sx={{ mb: 3, display: { xs: "none", md: "block" } }}
           />
         </Box>
-
 
         <Button
           variant="contained"
@@ -475,7 +506,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
           Manual Donation
         </Button>
       </Box>
-
 
       <TableContainer
         component={Paper}
@@ -567,7 +597,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         </Table>
       </TableContainer>
 
-
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
@@ -577,7 +606,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-
 
       {/* Edit Donation Status Modal */}
       <Dialog open={editModal} onClose={handleCloseEdit}>
@@ -630,7 +658,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         </DialogActions>
       </Dialog>
 
-
       {/* Generate Report Modal */}
       <Dialog
         open={openGenerateReportModal}
@@ -657,7 +684,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
           Generate Report
         </DialogTitle>
 
-
         <DialogContent sx={{ p: 5 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Period Selection */}
@@ -674,7 +700,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                 <MenuItem value="year">Yearly</MenuItem>
               </Select>
             </FormControl>
-
 
             {/* Range Selection */}
             {selectedPeriod && (
@@ -694,7 +719,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                 </Select>
               </FormControl>
             )}
-
 
             {/* Report File Type */}
             <FormControl fullWidth variant="outlined">
@@ -727,7 +751,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
             </FormControl>
           </Box>
         </DialogContent>
-
 
         <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
           <Button
@@ -763,7 +786,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
           </Button>
         </DialogActions>
       </Dialog>
-
 
       {/* Manual Donation Modal */}
       <Dialog
@@ -814,7 +836,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
               </FormControl>
             </Grid>
 
-
             {/* Campaign/Event Selection */}
             <Grid item xs={12}>
               <FormControl fullWidth variant="outlined">
@@ -844,7 +865,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
               </FormControl>
             </Grid>
 
-
             <Grid item xs={12}>
               <Typography
                 variant="subtitle1"
@@ -855,7 +875,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                 Donor Information
               </Typography>
             </Grid>
-
 
             {/* Donor Information */}
             <Grid item xs={12} sm={6}>
@@ -878,7 +897,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
               />
             </Grid>
 
-
             <Grid item xs={12}>
               <Typography
                 variant="subtitle1"
@@ -889,7 +907,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                 Donation Details
               </Typography>
             </Grid>
-
 
             {/* Donation Type Specific Fields */}
             {type === "Monetary" ? (
@@ -1018,7 +1035,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         </DialogActions>
       </Dialog>
 
-
       <div className="text-right">
         <Button
           onClick={() => setOpenGenerateReportModal(true)}
@@ -1038,6 +1054,5 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     </div>
   );
 };
-
 
 export default DonationDetails;

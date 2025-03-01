@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 
 export const fetchData = async (
   ids: string[],
-  type: "goal" | "event" | "donor"
+  type: "event" | "donor"
   // fileType: "pdf" | "word" | "excel"
 ) => {
   try {
@@ -15,9 +15,6 @@ export const fetchData = async (
     const objectIds = ids.map((id) => new mongoose.Types.ObjectId(id));
 
     switch (type) {
-      case "goal":
-        data = await Goal.find({ _id: { $in: objectIds } });
-        break;
       case "event":
         data = await Event.aggregate([
           {
@@ -85,7 +82,65 @@ export const fetchData = async (
         ]);
         break;
       case "donor":
-        data = await Donor.find({ _id: { $in: objectIds } });
+        console.log(objectIds);
+        data = await Donation.aggregate([
+          {
+            $match: { _id: { $in: objectIds } }, // Filter donations based on given donation IDs
+          },
+          {
+            $lookup: {
+              from: "donors",
+              localField: "donorId",
+              foreignField: "_id",
+              as: "donorDetails",
+            },
+          },
+          {
+            $unwind: "$donorDetails",
+          },
+          {
+            $group: {
+              _id: "$donorDetails._id",
+              donorName: { $first: "$donorDetails.name" },
+              donorEmail: { $first: "$donorDetails.email" },
+              donorPhone: { $first: "$donorDetails.phone" },
+              donorAddress: { $first: "$donorDetails.address" },
+              totalMonetaryDonations: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$donationType", "Monetary"] },
+                    "$monetaryDetails.amount",
+                    0,
+                  ],
+                },
+              },
+              totalInKindDonations: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$donationType", "In-Kind"] },
+                    "$inKindDetails.estimatedValue",
+                    0,
+                  ],
+                },
+              },
+              donations: {
+                $push: {
+                  donationId: "$_id",
+                  donationType: "$donationType",
+                  amount: "$monetaryDetails.amount",
+                  currency: "$monetaryDetails.currency",
+                  paymentStatus: "$monetaryDetails.paymentStatus",
+                  paymentMethod: "$monetaryDetails.paymentMethod",
+                  itemName: "$inKindDetails.itemName",
+                  quantity: "$inKindDetails.quantity",
+                  estimatedValue: "$inKindDetails.estimatedValue",
+                  status: "$inKindDetails.status",
+                  donationDate: "$createdAt",
+                },
+              },
+            },
+          },
+        ]);
         break;
       default:
         throw new Error("Invalid report type.");
