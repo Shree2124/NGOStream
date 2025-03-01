@@ -11,66 +11,62 @@ import { Impact } from "../models/impact.models";
 
 const getQuickStats = async (req: any, res: Response) => {
   try {
-    const [
-      totalDonations,
-      totalDonors,
-      activeCampaigns,
-      topDonor,
-    ] = await Promise.all([
-      Donation.aggregate([
-        {
-          $group: {
-            _id: null,
-            totalAmount: {
-              $sum: {
-                $cond: [
-                  { $eq: ["$donationType", "Monetary"] },
-                  "$monetaryDetails.amount",
-                  "$inKindDetails.estimatedValue",
-                ],
+    const [totalDonations, totalDonors, activeCampaigns, topDonor] =
+      await Promise.all([
+        Donation.aggregate([
+          {
+            $group: {
+              _id: null,
+              totalAmount: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$donationType", "Monetary"] },
+                    "$monetaryDetails.amount",
+                    "$inKindDetails.estimatedValue",
+                  ],
+                },
               },
             },
           },
-        },
-      ]),
+        ]),
 
-      Donor.countDocuments(),
+        Donor.countDocuments(),
 
-      Goal.countDocuments({ status: "Active" }),
-      Donation.aggregate([
-        {
-          $group: {
-            _id: "$donorId",
-            totalDonated: {
-              $sum: {
-                $cond: [
-                  { $eq: ["$donationType", "Monetary"] },
-                  "$monetaryDetails.amount",
-                  "$inKindDetails.estimatedValue",
-                ],
+        Goal.countDocuments({ status: "Active" }),
+        Donation.aggregate([
+          {
+            $group: {
+              _id: "$donorId",
+              totalDonated: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$donationType", "Monetary"] },
+                    "$monetaryDetails.amount",
+                    "$inKindDetails.estimatedValue",
+                  ],
+                },
               },
             },
           },
-        },
-        { $sort: { totalDonated: -1 } },
-        { $limit: 1 },
-        {
-          $lookup: {
-            from: "donors",
-            localField: "_id",
-            foreignField: "_id",
-            as: "donor",
+          { $sort: { totalDonated: -1 } },
+          { $limit: 1 },
+          {
+            $lookup: {
+              from: "donors",
+              localField: "_id",
+              foreignField: "_id",
+              as: "donor",
+            },
           },
-        },
-        { $unwind: "$donor" },
-        {
-          $project: {
-            donorName: "$donor.name",
-            totalDonated: 1,
+          { $unwind: "$donor" },
+          {
+            $project: {
+              donorName: "$donor.name",
+              totalDonated: 1,
+            },
           },
-        },
-      ]),
-    ]);
+        ]),
+      ]);
 
     res.json(
       new SuccessResponse(
@@ -98,7 +94,6 @@ const getQuickStats = async (req: any, res: Response) => {
     res.status(500).json({ message: "Failed to fetch quick stats." });
   }
 };
-
 
 const getEvent = asyncHandler(async (req: any, res: Response) => {
   const { eventId } = req.params;
@@ -208,7 +203,7 @@ const getEvent = asyncHandler(async (req: any, res: Response) => {
       feedbackDates.push(f.date);
     });
 
-    const response = await fetch(`http://127.0.0.1:8000/api/analyze`, {
+    const response = await fetch(`http://127.0.0.1:5000/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ texts: feedbackTexts }),
@@ -239,15 +234,15 @@ const getEvent = asyncHandler(async (req: any, res: Response) => {
       feedbackDates.forEach((date: string, index: number) => {
         let feedbackDate = new Date(date);
         if (feedbackDate >= startDate && feedbackDate < endOfWeek) {
-          let sentimentObj = analysisResult.sentiments[index]; 
-          console.log("sentiment objec:",sentimentObj)
+          let sentimentObj = analysisResult.sentiments[index];
+          console.log("sentiment objec:", sentimentObj);
           if (sentimentObj && sentimentObj.sentiment) {
             let sentiment = sentimentObj.sentiment.toLowerCase();
-            console.log("Sentiment .to lower ",sentiment)
+            console.log("Sentiment .to lower ", sentiment);
             if (weeklyData[weekKey][sentiment] !== undefined) {
-              console.log(weekKey, sentiment)
+              console.log(weekKey, sentiment);
               weeklyData[weekKey][sentiment]++;
-              console.log("if ",weeklyData)
+              console.log("if ", weeklyData);
             } else {
               console.warn(`Unexpected sentiment type: ${sentiment}`);
             }
@@ -260,15 +255,19 @@ const getEvent = asyncHandler(async (req: any, res: Response) => {
 
     feedbackAnalysis = weeklyData;
   }
-  
+
   console.log(feedbackAnalysis);
 
   return res
     .status(200)
-    .json(new SuccessResponse(200, { ...event[0], feedbackAnalysis }, "Event fetched successfully"));
+    .json(
+      new SuccessResponse(
+        200,
+        { ...event[0], feedbackAnalysis },
+        "Event fetched successfully"
+      )
+    );
 });
-
-
 
 const getImpacts = asyncHandler(async (req: any, res: Response) => {
   const impacts = await Impact.find();
@@ -276,6 +275,6 @@ const getImpacts = asyncHandler(async (req: any, res: Response) => {
   return res
     .status(200)
     .json(new SuccessResponse(200, impacts, "Impacts fetched successfully"));
-})
+});
 
 export { getQuickStats, getEvent, getImpacts };

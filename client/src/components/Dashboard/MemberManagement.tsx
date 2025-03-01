@@ -301,7 +301,17 @@ const MemberManagement: React.FC = () => {
       }}
     >
       {/* Search and Filter Section */}
-      <Card sx={{ mb: 3, p: 2 }}>
+      <Card
+        sx={{
+          mb: 3,
+          p: 2,
+          borderRadius: 2,
+          transition: "box-shadow 0.3s ease",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 5px 5px rgba(71, 117, 234, 0.12)",
+          border: "1px solid rgba(229, 231, 235, 0.5)",
+        }}
+      >
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={6}>
             <TextField
@@ -351,7 +361,15 @@ const MemberManagement: React.FC = () => {
         </Grid>
       </Card>
       {/* Members List */}
-      <Card>
+      <Card
+        sx={{
+          borderRadius: 2,
+          transition: "box-shadow 0.3s ease",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 12px 20px rgba(71, 117, 234, 0.12)",
+          border: "1px solid rgba(229, 231, 235, 0.5)",
+        }}
+      >
         <List sx={{ p: 0 }}>
           {filteredMembers.map((member: NewUser, index) => (
             <React.Fragment key={member._id}>

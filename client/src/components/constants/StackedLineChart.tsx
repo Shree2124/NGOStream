@@ -33,7 +33,10 @@ interface StackedLineChartProps {
   }[];
 }
 
-const StackedLineChart: React.FC<StackedLineChartProps> = ({ labels, datasets }) => {
+const StackedLineChart: React.FC<StackedLineChartProps> = ({
+  labels,
+  datasets,
+}) => {
   const data = {
     labels,
     datasets: datasets?.map((dataset) => ({
@@ -44,8 +47,9 @@ const StackedLineChart: React.FC<StackedLineChartProps> = ({ labels, datasets })
   };
 
   const options = {
+    devicePixelRatio: window.devicePixelRatio, // Increase this value for higher resolution
     responsive: true,
-    maintainAspectRatio: false, // Allow it to resize freely
+    maintainAspectRatio: true, // Allow it to resize freely
     plugins: {
       legend: {
         position: "top" as const,

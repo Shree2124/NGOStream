@@ -12,6 +12,8 @@ import {
   styled,
 } from "@mui/material";
 import { Menu, X } from "lucide-react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 // Override MUI's default AppBar styles
 const CustomAppBar = styled(AppBar)({
@@ -22,6 +24,7 @@ const CustomAppBar = styled(AppBar)({
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const trigger = useScrollTrigger();
+  const { auth } = useSelector((state: RootState) => state.user);
 
   const menuItems = [
     { text: "Home", link: "#home" },
@@ -30,7 +33,10 @@ const Navbar = () => {
     { text: "Vision", link: "/visions" },
     { text: "Achievements", link: "/achievements" },
     { text: "Impact", link: "/impact" },
-    { text: "Admin Login", link: "/login" },
+    {
+      text: auth ? "Dashboard" : "Admin login",
+      link: auth ? "/Dashboard" : "/login",
+    },
   ];
 
   return (

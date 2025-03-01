@@ -206,25 +206,16 @@ export const Events: React.FC = () => {
                     View Details
                   </Button>
                   {event.status === "Upcoming" && (
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    sx={{ marginRight: 1 }}
-                    onClick={() => handleRegister(event._id)}
-                  >
-                    Register
-                  </Button>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      sx={{ marginRight: 1 }}
+                      onClick={() => handleRegister(event._id)}
+                    >
+                      Register
+                    </Button>
                   )}
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    sx={{ backgroundColor: "#4CAF50", color: "#fff" }}
-                    onClick={() => navigate(`/feedback/${event._id}`)}
-                  >
-                    Give Feedback
-                  </Button>
                 </Box>
               </CardContent>
             </motion.div>

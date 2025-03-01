@@ -64,11 +64,6 @@ app.use(express.json());
 
 app.use(express.static("public"));
 
-// passport.use(googleStratergy)
-
-/* passport initialized */
-app.use(passport.initialize());
-
 app.listen(PORT || 5000, () => {
   console.log(`App is stared and is running on http://localhost:${PORT}`);
 });
@@ -93,8 +88,8 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/goals", goalRouter);
 app.use("/api/v1/donation", donationRouter);
 app.use("/api/v1/event", eventRouter);
-app.use("/api/v1/admin", adminRouter)
-app.use("/api/v1/impact", impactRouter)
+app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/impact", impactRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/schemes", schemeRouter);
 app.use("/api/v1/beneficiary", BeneficiaryRouter);

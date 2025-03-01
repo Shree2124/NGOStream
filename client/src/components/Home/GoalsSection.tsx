@@ -29,7 +29,6 @@ interface IGoal {
 }
 
 const GoalsSection: React.FC = () => {
-
   const navigate = useNavigate();
   const [goalsData, setGoalsData] = useState<IGoal[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -71,14 +70,18 @@ const GoalsSection: React.FC = () => {
     <Card
       className="flex flex-col mx-auto mb-6 max-w-md h-[420px]"
       sx={{
-        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
         borderRadius: 2,
         "&:hover": {
-          boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+          transform: "translateY(-4px)",
+          transition: "transform 0.3s ease",
+          boxShadow: "0 12px 20px rgba(71, 117, 234, 0.12)",
         },
         transition: "box-shadow 0.3s ease",
-        background: "rgba(255, 255, 255, 0.9)",
         backdropFilter: "blur(10px)",
+        boxShadow: "0 6px 16px rgba(71, 117, 234, 0.08)",
+        border: "1px solid rgba(229, 231, 235, 0.5)",
+        background:
+          "linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(240, 249, 255, 0.8) 100%)",
       }}
     >
       <Box
@@ -168,7 +171,8 @@ const GoalsSection: React.FC = () => {
     <Box
       className="py-6 md:py-8"
       sx={{
-        background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+        background:
+          "linear-gradient(135deg, rgba(187, 247, 208, 0.8) 0%, rgba(191, 219, 254, 0.6) 100%)",
         position: "relative",
         "&::before": {
           content: '""',
@@ -250,7 +254,7 @@ const GoalsSection: React.FC = () => {
             cursor: "pointer",
           }}
         >
-          Join us in making a difference through these active campaigns
+          Contribute in making a difference through these active campaigns
         </Typography>
       </Box>
     </Box>

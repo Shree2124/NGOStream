@@ -7,7 +7,7 @@ import { clearUser, setAuth } from "../redux/slices/authSlice";
 import { store } from "../redux/store";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api/v1",
+  baseURL: "http://localhost:5002/api/v1",
   withCredentials: true,
 });
 

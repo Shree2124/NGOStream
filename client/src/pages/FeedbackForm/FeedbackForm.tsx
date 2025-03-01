@@ -121,7 +121,7 @@ const FeedbackForm: React.FC = () => {
   };
 
   const handleGoBack = () => {
-    navigate("/events");
+    navigate("/");
   };
 
   // Loading state
@@ -159,9 +159,6 @@ const FeedbackForm: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button onClick={() => setIsSubmitted(false)} className="w-full">
-            Submit Another Feedback
-          </Button>
           <Button
             onClick={() => handleGoBack()}
             className="bg-white hover:bg-[#D9D9D9] w-full text-black"
