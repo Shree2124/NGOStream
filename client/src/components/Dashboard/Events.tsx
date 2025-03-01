@@ -18,12 +18,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
   Checkbox,
   ListItemText,
   SelectChangeEvent,
   InputAdornment,
-  Modal,
 } from "@mui/material";
 import {
   Add,
@@ -38,7 +36,6 @@ import {
   FitnessCenter,
   LocationOn,
   MonetizationOn,
-  OtherHousesOutlined,
   People,
   PersonAdd,
   PictureAsPdfOutlined,
@@ -57,10 +54,9 @@ import {
   Legend,
 } from "chart.js";
 import { api } from "../../api/api";
-import { Badge } from "../ui/badge";
 import { useNavigate } from "react-router-dom";
 import { School } from "lucide-react";
-import toast from "react-hot-toast";
+
 
 ChartJS.register(
   CategoryScale,
@@ -71,16 +67,19 @@ ChartJS.register(
   Legend
 );
 
+
 interface IMember {
   _id: string;
   role: string;
   fullName: string;
 }
 
+
 interface IParticipant {
   memberId: string;
   role: string;
 }
+
 
 interface IEvent {
   _id: string;
@@ -98,6 +97,7 @@ interface IEvent {
     successMetrics?: string[];
   };
 }
+
 
 const Events: React.FC = () => {
   const theme = useTheme();
@@ -123,29 +123,36 @@ const Events: React.FC = () => {
   const [openGenerateReportModal, setOpenGenerateReportModal] =
     useState<boolean>(false);
 
+
   const navigate = useNavigate();
+
 
   const firstEventStartDate = new Date(
     Math.min(...events.map((event) => new Date(event.startDate).getTime()))
   );
 
+
   const lastEventEndDate = new Date(
     Math.max(...events.map((event) => new Date(event.endDate).getTime()))
   );
 
+
   const [selectedPeriod, setSelectedPeriod] = useState("week");
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [fileType, setFileType] = useState("pdf");
+
 
   const handlePeriodChange = (event: any) => {
     setSelectedPeriod(event.target.value);
     setSelectedRange(null);
   };
 
+
   const generateSelectableRanges = () => {
     const ranges = [];
     const start = new Date(firstEventStartDate);
     const end = new Date(lastEventEndDate);
+
 
     if (selectedPeriod === "week") {
       const current = new Date(start);
@@ -196,17 +203,21 @@ const Events: React.FC = () => {
     return ranges;
   };
 
+
   // useEffect(() => {
   //   console.log("Updated startDate: ", startDate);
   // }, [startDate]);
+
 
   // useEffect(() => {
   //   console.log("Updated endDate: ", endDate);
   // }, [endDate]);
 
+
   const handleGenerateReportModalClose = () => {
     setOpenGenerateReportModal(false);
   };
+
 
   const resetForm = () => {
     setName("");
@@ -216,6 +227,7 @@ const Events: React.FC = () => {
     setLocation("");
     setEventType("");
   };
+
 
   const fetchMembers = async () => {
     try {
@@ -242,18 +254,22 @@ const Events: React.FC = () => {
     fetchMembers();
   }, []);
 
+
   const openAssignRolesModal = () => {
     setRolesModalOpen(true);
   };
+
 
   const closeAssignRolesModal = () => {
     setRolesModalOpen(false);
   };
 
+
   const saveAssignedRoles = () => {
     console.log("Roles saved:", assignedRoles);
     closeAssignRolesModal();
   };
+
 
   const handleRoleChange = (participantId: string, newRole: string) => {
     setAssignedRoles((prevRoles: string[]) => ({
@@ -262,9 +278,11 @@ const Events: React.FC = () => {
     }));
   };
 
+
   const handleParticipantsChange = (event: SelectChangeEvent<string[]>) => {
     const { value } = event.target; // value is a string[] now
     setParticipantIds(Array.isArray(value) ? value : [value]);
+
 
     // Update assigned roles based on the selected participants
     setAssignedRoles((prev: Record<string, string> = {}) =>
@@ -277,10 +295,12 @@ const Events: React.FC = () => {
     );
   };
 
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     filterEvents(query, filterStatus, filterType);
   };
+
 
   const handleFilter = (status: string, type: string) => {
     setFilterStatus(status);
@@ -288,9 +308,11 @@ const Events: React.FC = () => {
     filterEvents(searchQuery, status, type);
   };
 
+
   const filterEvents = (query: string, status: string, type: string): void => {
     let filtered = events;
     console.log("f", filtered);
+
 
     if (status !== "All") {
       filtered = filtered.filter((event) => event.status === status);
@@ -306,9 +328,11 @@ const Events: React.FC = () => {
     setFilteredEvents(filtered);
   };
 
+
   const handleDialogOpen = (event: IEvent | null) => {
     setCurrentEvent(event);
     console.log("visual ", event);
+
 
     if (event) {
       setName(event.name);
@@ -331,11 +355,13 @@ const Events: React.FC = () => {
     setDialogOpen(true);
   };
 
+
   const handleDialogClose = () => {
     setDialogOpen(false);
     resetForm();
     setCurrentEvent(null);
   };
+
 
   const handleSaveEvent = async () => {
     if (participantIds?.some((id: string) => !assignedRoles[id])) {
@@ -343,11 +369,13 @@ const Events: React.FC = () => {
       return;
     }
 
+
     try {
       const participantsWithRoles = participantIds?.map((id) => ({
         memberId: id,
         role: assignedRoles[id],
       }));
+
 
       if (currentEvent) {
         console.log(currentEvent._id);
@@ -361,6 +389,7 @@ const Events: React.FC = () => {
           participants: participantsWithRoles,
         });
         console.log(res.data.data);
+
 
         setEvents((prev) =>
           prev.map((event) =>
@@ -386,66 +415,16 @@ const Events: React.FC = () => {
     setDialogOpen(false);
   };
 
+
   const handleNavigation = (id: string) => {
     navigate(`/dashboard/event-details/${id}`);
   };
 
-  const generatePDFReport = async (filteredIds: any[], fileType: string) => {
-    try {
-      const res = await api.post("/event/generate-report", {
-        ids: filteredIds,
-        fileType: fileType,
-        type: "event",
-      });
-      console.log(res.data.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
-  function generateReport(selectedRange: string, fileType: string) {
-    console.log("Selected Range:", selectedRange);
-
-    if (!selectedRange || typeof selectedRange !== "string") {
-      console.error("Invalid date range selected.");
-      return;
-    }
-
-    let from: Date, to: Date;
-
-    if (/^\d{4}$/.test(selectedRange)) {
-      const year = parseInt(selectedRange);
-      from = new Date(year, 0, 1);
-      to = new Date(year, 11, 31, 23, 59, 59, 999);
-    } else {
-      const dateParts = selectedRange.split(" - ");
-      if (dateParts.length !== 2) {
-        console.error("Invalid date format.");
-        return;
-      }
-
-      from = new Date(dateParts[0]);
-      to = new Date(dateParts[1]);
-
-      from.setHours(0, 0, 0, 0);
-      to.setHours(23, 59, 59, 999);
-    }
-
-    const filteredIds = events
-      .filter((e) => {
-        const createdAt = new Date(e.startDate);
-        return createdAt >= from && createdAt <= to;
-      })
-      .map((e) => e._id);
-
-    console.log("Filtered events IDs:", filteredIds);
-    console.log("File Type:", fileType);
-
-    generatePDFReport(filteredIds, fileType);
-
-    setSelectedRange(null);
-    setOpenGenerateReportModal(false);
+  function generateReport(selectedRange: any, fileType: string) {
+    console.log(selectedRange, fileType);
   }
+
 
   return (
     <Box
@@ -458,6 +437,7 @@ const Events: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Event Management
       </Typography>
+
 
       <Box
         display="flex"
@@ -485,6 +465,7 @@ const Events: React.FC = () => {
           </Select>
         </FormControl>
 
+
         <Button
           sx={{
             width: "40%",
@@ -498,6 +479,7 @@ const Events: React.FC = () => {
           Add Event
         </Button>
       </Box>
+
 
       <Grid container spacing={3}>
         {filteredEvents?.map((event) => (
@@ -530,6 +512,7 @@ const Events: React.FC = () => {
                 }}
               />
 
+
               <CardContent
                 sx={{ p: 3, flex: 1, display: "flex", flexDirection: "column" }}
               >
@@ -547,6 +530,7 @@ const Events: React.FC = () => {
                   {event.name}
                 </Typography>
 
+
                 {/* Description with better spacing and line clamping */}
                 <Typography
                   variant="body2"
@@ -562,6 +546,7 @@ const Events: React.FC = () => {
                 >
                   {event.description}
                 </Typography>
+
 
                 {/* Dates section with improved visual hierarchy */}
                 <Box
@@ -596,6 +581,7 @@ const Events: React.FC = () => {
                     </Typography>
                   </Box>
 
+
                   <Box sx={{ display: "flex", alignItems: "center" }}>
                     <EventAvailable
                       sx={{ fontSize: 18, mr: 1, color: "text.secondary" }}
@@ -620,6 +606,7 @@ const Events: React.FC = () => {
                     </Typography>
                   </Box>
                 </Box>
+
 
                 {/* Status badge with improved design */}
                 <Box sx={{ mt: "auto", display: "flex", alignItems: "center" }}>
@@ -648,6 +635,7 @@ const Events: React.FC = () => {
                           ? "#4caf50"
                           : "rgba(255, 152, 0, 0.1)",
 
+
                       border: "1px solid",
                       borderColor:
                         event.status.toLowerCase() === "upcoming"
@@ -668,30 +656,7 @@ const Events: React.FC = () => {
         ))}
       </Grid>
 
-<<<<<<< HEAD
-      {/* <Dialog open={visualModalOpen} onClose={handleCloseVisuals}>
-        <DialogTitle>Event Visual Representation</DialogTitle>
-        <DialogContent>
-          {currentEvent && (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Attendance for {currentEvent.name}
-              </Typography>
-              <Bar data={getEventChartData(currentEvent)} />
-              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                Success Metrics Distribution
-              </Typography>
-              <Pie data={getSuccessMetricsChartData(currentEvent)} />
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseVisuals}>Close</Button>
-        </DialogActions>
-      </Dialog> */}
 
-=======
->>>>>>> ec56afd117091f509a9452c43f4dab5612f4afb2
       <Dialog open={dialogOpen} onClose={handleDialogClose}>
         <DialogTitle
           sx={{
@@ -705,6 +670,7 @@ const Events: React.FC = () => {
             <Close />
           </IconButton>
         </DialogTitle>
+
 
         <DialogContent sx={{ px: 3, py: 2 }}>
           <Grid container spacing={3}>
@@ -724,6 +690,7 @@ const Events: React.FC = () => {
                 Basic Information
               </Typography>
 
+
               <TextField
                 label="Event Name"
                 variant="outlined"
@@ -737,6 +704,7 @@ const Events: React.FC = () => {
                 }}
               />
             </Grid>
+
 
             <Grid item xs={12}>
               <TextField
@@ -755,6 +723,7 @@ const Events: React.FC = () => {
               />
             </Grid>
 
+
             {/* Date and Time Section */}
             <Grid item xs={12}>
               <Typography
@@ -772,6 +741,7 @@ const Events: React.FC = () => {
                 Date and Time
               </Typography>
 
+
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Typography>Start Date</Typography>
@@ -785,10 +755,12 @@ const Events: React.FC = () => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0); // Normalize to the beginning of today
 
+
                       if (selectedDate < today) {
                         alert("Start date cannot be earlier than today.");
                         return;
                       }
+
 
                       setStartDate(e.target.value);
                     }}
@@ -798,6 +770,7 @@ const Events: React.FC = () => {
                     }}
                   />
                 </Grid>
+
 
                 <Grid item xs={12} sm={6}>
                   <Typography>End Date</Typography>
@@ -810,10 +783,12 @@ const Events: React.FC = () => {
                       const selectedEndDate = new Date(e.target.value);
                       const selectedStartDate = new Date(startDate);
 
+
                       if (!startDate) {
                         alert("Please select a start date first.");
                         return;
                       }
+
 
                       if (selectedEndDate < selectedStartDate) {
                         alert(
@@ -821,6 +796,7 @@ const Events: React.FC = () => {
                         );
                         return;
                       }
+
 
                       setEndDate(e.target.value);
                     }}
@@ -832,6 +808,7 @@ const Events: React.FC = () => {
                 </Grid>
               </Grid>
             </Grid>
+
 
             {/* Event Details Section */}
             <Grid item xs={12}>
@@ -849,6 +826,7 @@ const Events: React.FC = () => {
               >
                 Event Details
               </Typography>
+
 
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -870,6 +848,7 @@ const Events: React.FC = () => {
                     }}
                   />
                 </Grid>
+
 
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth>
@@ -942,6 +921,7 @@ const Events: React.FC = () => {
               </Grid>
             </Grid>
 
+
             {/* Participants Section */}
             <Grid item xs={12}>
               <Typography
@@ -958,6 +938,7 @@ const Events: React.FC = () => {
               >
                 Participants & Roles
               </Typography>
+
 
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Participants</InputLabel>
@@ -997,6 +978,7 @@ const Events: React.FC = () => {
                 </Select>
               </FormControl>
 
+
               <Box
                 sx={{
                   display: "flex",
@@ -1032,6 +1014,7 @@ const Events: React.FC = () => {
             </Grid>
           </Grid>
         </DialogContent>
+
 
         <Dialog open={rolesModalOpen} onClose={closeAssignRolesModal}>
           <DialogTitle>Assign Roles to Participants</DialogTitle>
@@ -1089,6 +1072,7 @@ const Events: React.FC = () => {
           </DialogActions>
         </Dialog>
 
+
         <DialogActions>
           <Button onClick={handleDialogClose}>Cancel</Button>
           <Button onClick={handleSaveEvent} variant="contained">
@@ -1096,6 +1080,7 @@ const Events: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
 
       <Dialog
         open={openGenerateReportModal}
@@ -1122,6 +1107,7 @@ const Events: React.FC = () => {
           Generate Report
         </DialogTitle>
 
+
         <DialogContent sx={{ p: 5 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Period Selection */}
@@ -1138,6 +1124,7 @@ const Events: React.FC = () => {
                 <MenuItem value="year">Yearly</MenuItem>
               </Select>
             </FormControl>
+
 
             {/* Range Selection */}
             {selectedPeriod && (
@@ -1157,6 +1144,7 @@ const Events: React.FC = () => {
                 </Select>
               </FormControl>
             )}
+
 
             {/* Report File Type */}
             <FormControl fullWidth variant="outlined">
@@ -1189,6 +1177,7 @@ const Events: React.FC = () => {
             </FormControl>
           </Box>
         </DialogContent>
+
 
         <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
           <Button
@@ -1225,6 +1214,7 @@ const Events: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+
       <div className="text-right">
         <Button
           onClick={() => setOpenGenerateReportModal(true)}
@@ -1244,5 +1234,6 @@ const Events: React.FC = () => {
     </Box>
   );
 };
+
 
 export default Events;

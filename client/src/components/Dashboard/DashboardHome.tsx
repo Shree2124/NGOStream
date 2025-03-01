@@ -40,6 +40,7 @@ import {
   ShowChart,
 } from "@mui/icons-material";
 
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -49,6 +50,7 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
 
 interface FundraisingMetricsData {
   totalDonations: number;
@@ -63,10 +65,12 @@ interface FundraisingMetricsData {
   predicted: number;
 }
 
+
 interface MonthlyTotals {
   month: number;
   amount: number;
 }
+
 
 const DashboardHome: React.FC = () => {
   const theme = useTheme();
@@ -76,6 +80,7 @@ const DashboardHome: React.FC = () => {
   const [adminMetrics, setAdminMetrics] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchFundraisingMetrics = async () => {
@@ -90,6 +95,7 @@ const DashboardHome: React.FC = () => {
       }
     };
 
+
     const fetchAdminMetrics = async () => {
       try {
         const response = await api.get("/admin/metrics");
@@ -99,6 +105,7 @@ const DashboardHome: React.FC = () => {
         console.error("Admin metrics error:", err);
       }
     };
+
 
     // Fetch data concurrently
     Promise.all([fetchFundraisingMetrics(), fetchAdminMetrics()]).finally(() =>
@@ -128,11 +135,13 @@ const DashboardHome: React.FC = () => {
           const monthIndex = (item.month - 1) % 12; // Convert 1-12 to 0-11 index
           const monthName = monthNames[monthIndex];
 
+
           // Assuming item.month might include year information or you have a separate year field
           // If item.month is just 1-12, you'll need to determine the year another way
           const year = new Date().getFullYear(); // Current year as fallback
 
-          return ${monthName} ${year};
+
+          return `${monthName} ${year}`;
         })
       : [],
     datasets: [
@@ -156,6 +165,7 @@ const DashboardHome: React.FC = () => {
       },
     ],
   };
+
 
   const chartOptions = {
     responsive: true,
@@ -216,6 +226,7 @@ const DashboardHome: React.FC = () => {
     },
   };
 
+
   const MetricCard = ({
     title,
     value,
@@ -258,13 +269,14 @@ const DashboardHome: React.FC = () => {
         <Typography
           variant="h4"
           component="div"
-          sx={{ fontWeight: "bold", color: ${color}.main }}
+          sx={{ fontWeight: "bold", color: `${color}.main` }}
         >
           {value}
         </Typography>
       </CardContent>
     </Card>
   );
+
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -289,6 +301,7 @@ const DashboardHome: React.FC = () => {
           Welcome, {user?.username || "Admin"}!
         </Typography>
       </Paper>
+
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 8 }}>
@@ -374,11 +387,13 @@ const DashboardHome: React.FC = () => {
             </Grid>
           </Grid>
 
+
           {/* Fundraising insights */}
           <Card
             sx={{
               mb: 3,
               borderRadius: 2,
+
 
               transition: "box-shadow 0.3s ease",
               backdropFilter: "blur(10px)",
@@ -485,6 +500,7 @@ const DashboardHome: React.FC = () => {
                 </Grid>
               </Grid>
 
+
               <Box sx={{ height: 400, mt: 4 }}>
                 <Typography
                   variant="subtitle1"
@@ -502,5 +518,6 @@ const DashboardHome: React.FC = () => {
     </Container>
   );
 };
+
 
 export default DashboardHome;

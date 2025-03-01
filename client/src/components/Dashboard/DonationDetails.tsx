@@ -1,3 +1,5 @@
+
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import {
@@ -24,6 +26,7 @@ import {
   FormControl,
   InputLabel,
   Button,
+  Grid,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { api } from "../../api/api";
@@ -32,8 +35,10 @@ import {
   Edit,
   PictureAsPdfOutlined,
   TableChartOutlined,
+  AddCircleOutline,
 } from "@mui/icons-material";
 // import { Button } from "../ui/button";
+
 
 interface IDonation {
   _id: string;
@@ -58,9 +63,23 @@ interface IDonation {
   createdAt: Date;
 }
 
+
 interface IDonationDetailsProps {
   type: string;
 }
+
+
+interface ICampaign {
+  _id: string;
+  name: string;
+}
+
+
+interface IEvent {
+  _id: string;
+  name: string;
+}
+
 
 const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   const [search, setSearch] = useState("");
@@ -81,17 +100,44 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   const [selectedValue, setSelectedValue] = useState<string | null>(
     selectedDonation?.inKindDetails?.status || "Pending"
   );
-  const firstDonationStartDate = new Date(
-    Math.min(
-      ...donationData.map((event) => new Date(event.createdAt).getTime())
-    )
-  );
 
-  const lastDonationEndDate = new Date(
-    Math.max(
-      ...donationData.map((event) => new Date(event.createdAt).getTime())
-    )
-  );
+
+  // Manual donation states
+  const [manualDonationModal, setManualDonationModal] =
+    useState<boolean>(false);
+  const [donationTarget, setDonationTarget] = useState<string>("campaign");
+  const [campaigns, setCampaigns] = useState<ICampaign[]>([]);
+  const [events, setEvents] = useState<IEvent[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState<string>("");
+  const [donorName, setDonorName] = useState<string>("");
+  const [donorEmail, setDonorEmail] = useState<string>("");
+  const [donationAmount, setDonationAmount] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
+  const [itemName, setItemName] = useState<string>("");
+  const [itemValue, setItemValue] = useState<string>("");
+  const [itemQuantity, setItemQuantity] = useState<string>("1");
+  const [itemDescription, setItemDescription] = useState<string>("");
+
+
+  const firstDonationStartDate =
+    donationData.length > 0
+      ? new Date(
+          Math.min(
+            ...donationData.map((event) => new Date(event.createdAt).getTime())
+          )
+        )
+      : new Date();
+
+
+  const lastDonationEndDate =
+    donationData.length > 0
+      ? new Date(
+          Math.max(
+            ...donationData.map((event) => new Date(event.createdAt).getTime())
+          )
+        )
+      : new Date();
+
 
   const handleGenerateReportModalClose = () => {
     setOpenGenerateReportModal(false);
@@ -101,67 +147,12 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setSelectedRange(null);
   };
 
-  const generatePDFReport = async (filteredIds, fileType) => {
-    try {
-      const res = await api.post("/event/generate-report", {
-        ids: filteredIds,
-        fileType: fileType,
-        type: "donor",
-      })
-      console.log(res.data.data)
-    } catch (error: any) {
-      console.log(error)
-    }
+
+  function generateReport(selectedRange: any, fileType: string) {
+    console.log(selectedRange, fileType);
   }
 
-  function generateReport(selectedRange: string, fileType: string) {
-    console.log("Selected Range:", selectedRange);
-  
-    if (!selectedRange || typeof selectedRange !== "string") {
-      console.error("Invalid date range selected.");
-      return;
-    }
-  
-    let from: Date, to: Date;
-  
-    if (/^\d{4}$/.test(selectedRange)) {
-      const year = parseInt(selectedRange);
-      from = new Date(year, 0, 1);  
-      to = new Date(year, 11, 31, 23, 59, 59, 999);
-    } else {
-      
-      const dateParts = selectedRange.split(" - ");
-      if (dateParts.length !== 2) {
-        console.error("Invalid date format.");
-        return;
-      }
-  
-      from = new Date(dateParts[0]);
-      to = new Date(dateParts[1]);  
-  
-      
-      from.setHours(0, 0, 0, 0);  
-      to.setHours(23, 59, 59, 999); 
-    }
-  
-    
-    const filteredIds = donationData
-      .filter((donation) => {
-        const createdAt = new Date(donation.createdAt);
-        return createdAt >= from && createdAt <= to;
-      })
-      .map((donation) => donation._id);
-  
-    console.log("Filtered Donation IDs:", filteredIds);
-    console.log("File Type:", fileType);
-  
-    generatePDFReport(filteredIds, fileType);
 
-    setSelectedRange(null);
-    setOpenGenerateReportModal(false);
-  }
-  
-  
   const generateSelectableRanges = () => {
     const ranges = [];
     const start = new Date(firstDonationStartDate);
@@ -169,8 +160,10 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     const end = new Date(lastDonationEndDate);
     console.log(end);
 
+
     if (selectedPeriod === "week") {
       const current = new Date(start);
+
 
       while (current <= end) {
         const weekStart = new Date(current);
@@ -219,6 +212,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     return ranges;
   };
 
+
   const fetchDetails = async () => {
     try {
       const res = await api.get(`/donation/get-donation-info/${type}`);
@@ -228,14 +222,45 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     }
   };
 
+
+  const fetchCampaigns = async () => {
+    try {
+      const res = await api.get("/campaign/get-all-campaigns");
+      setCampaigns(res.data.data);
+    } catch (error) {
+      console.error("Error fetching campaigns:", error);
+    }
+  };
+
+
+  const fetchEvents = async () => {
+    try {
+      const res = await api.get("/event/get-all-events");
+      setEvents(res.data.data);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+
+
   useEffect(() => {
     if (type !== "Monetary" && type !== "In-Kind") {
       setIsValidType(false);
       return;
     }
 
+
     fetchDetails();
   }, [type]);
+
+
+  useEffect(() => {
+    if (manualDonationModal) {
+      fetchCampaigns();
+      fetchEvents();
+    }
+  }, [manualDonationModal]);
+
 
   if (!isValidType) {
     return (
@@ -245,17 +270,20 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     );
   }
 
+
   const filteredDonations = donationData.filter((donation) =>
     type === "Monetary"
       ? donation.amount !== undefined
       : donation.estimatedValue !== undefined
   );
 
+
   const filteredSearchDonations = filteredDonations.filter(
     (donation) =>
       donation?.donorInfo?.name.toLowerCase().includes(search.toLowerCase()) ||
       donation?.goalInfo?.name.toLowerCase().includes(search.toLowerCase())
   );
+
 
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
@@ -265,6 +293,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setPage(newPage);
   };
 
+
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -272,20 +301,24 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setPage(0);
   };
 
+
   const handleEdit = (donation: IDonation) => {
     setSelectedDonation(donation);
     setEditModal(true);
   };
+
 
   const handleCloseEdit = () => {
     setSelectedDonation(null);
     setEditModal(false);
   };
 
+
   const handleSave = async (selectedValue: string) => {
     try {
       console.log(selectedValue);
       console.log(selectedDonation?._id);
+
 
       const res = await api.put(`/donation/update-donation-status`, {
         status: selectedValue,
@@ -297,55 +330,152 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       console.log(e);
     }
 
+
     setEditModal(false);
   };
+
+
+  const handleOpenManualDonation = () => {
+    setManualDonationModal(true);
+  };
+
+
+  const handleCloseManualDonation = () => {
+    setManualDonationModal(false);
+    setDonationTarget("campaign");
+    setSelectedTarget("");
+    setDonorName("");
+    setDonorEmail("");
+    setDonationAmount("");
+    setPaymentMethod("Cash");
+    setItemName("");
+    setItemValue("");
+    setItemQuantity("1");
+    setItemDescription("");
+  };
+
+
+  const handleSubmitManualDonation = async () => {
+    try {
+      const payload = {
+        donorInfo: {
+          name: donorName,
+          email: donorEmail,
+        },
+        donationType: type,
+        goalType: donationTarget === "campaign" ? "Campaign" : "Event",
+        goalId: selectedTarget,
+        ...(type === "Monetary"
+          ? {
+              amount: parseFloat(donationAmount),
+              paymentMethod: paymentMethod,
+              paymentStatus: "Completed",
+              currency: "USD", // Assuming USD as default
+            }
+          : {
+              inKindDetails: {
+                itemName: itemName,
+                quantity: parseInt(itemQuantity),
+                estimatedValue: parseFloat(itemValue),
+                description: itemDescription,
+                status: "Donated",
+              },
+              estimatedValue: parseFloat(itemValue) * parseInt(itemQuantity),
+              status: "Donated",
+            }),
+      };
+
+
+      const res = await api.post("/donation/create-manual-donation", payload);
+      console.log("Manual donation created:", res.data);
+      fetchDetails();
+      handleCloseManualDonation();
+    } catch (error) {
+      console.error("Error creating manual donation:", error);
+      alert("Failed to create donation. Please try again.");
+    }
+  };
+
 
   return (
     <div>
       <Box
         sx={{
-          display: { xs: "flex", md: "none" },
-          justifyContent: "flex-start",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
         }}
       >
-        <IconButton onClick={() => setShowSearch(!showSearch)}>
-          <SearchIcon />
-        </IconButton>
+        <Box sx={{ flex: 1 }}>
+          <Box
+            sx={{
+              display: { xs: "flex", md: "none" },
+              justifyContent: "flex-start",
+            }}
+          >
+            <IconButton onClick={() => setShowSearch(!showSearch)}>
+              <SearchIcon />
+            </IconButton>
+          </Box>
+
+
+          {showSearch && (
+            <TextField
+              label="Search Donations"
+              variant="outlined"
+              fullWidth
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 3, display: { xs: "block", md: "none" } }}
+            />
+          )}
+
+
+          <TextField
+            label="Search Donations"
+            variant="outlined"
+            fullWidth
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 3, display: { xs: "none", md: "block" } }}
+          />
+        </Box>
+
+
+        <Button
+          variant="contained"
+          startIcon={<AddCircleOutline />}
+          sx={{
+            backgroundColor: "#1450ac",
+            color: "#fff",
+            ml: 2,
+            py: 1.5,
+            px: 3,
+            borderRadius: 1,
+            textTransform: "none",
+            fontWeight: 600,
+          }}
+          onClick={handleOpenManualDonation}
+        >
+          Manual Donation
+        </Button>
       </Box>
 
-      {showSearch && (
-        <TextField
-          label="Search Donations"
-          variant="outlined"
-          fullWidth
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3, display: { xs: "block", md: "none" } }}
-        />
-      )}
-
-      <TextField
-        label="Search Donations"
-        variant="outlined"
-        fullWidth
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ mb: 3, display: { xs: "none", md: "block" } }}
-      />
 
       <TableContainer
         component={Paper}
@@ -437,6 +567,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         </Table>
       </TableContainer>
 
+
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
@@ -447,6 +578,8 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
 
+
+      {/* Edit Donation Status Modal */}
       <Dialog open={editModal} onClose={handleCloseEdit}>
         <DialogTitle sx={{ textAlign: "center" }}>Update status</DialogTitle>
         <DialogContent
@@ -497,6 +630,8 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         </DialogActions>
       </Dialog>
 
+
+      {/* Generate Report Modal */}
       <Dialog
         open={openGenerateReportModal}
         onClose={handleGenerateReportModalClose}
@@ -522,6 +657,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
           Generate Report
         </DialogTitle>
 
+
         <DialogContent sx={{ p: 5 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Period Selection */}
@@ -538,6 +674,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                 <MenuItem value="year">Yearly</MenuItem>
               </Select>
             </FormControl>
+
 
             {/* Range Selection */}
             {selectedPeriod && (
@@ -557,6 +694,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                 </Select>
               </FormControl>
             )}
+
 
             {/* Report File Type */}
             <FormControl fullWidth variant="outlined">
@@ -589,6 +727,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
             </FormControl>
           </Box>
         </DialogContent>
+
 
         <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
           <Button
@@ -625,6 +764,261 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         </DialogActions>
       </Dialog>
 
+
+      {/* Manual Donation Modal */}
+      <Dialog
+        open={manualDonationModal}
+        onClose={handleCloseManualDonation}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+            overflow: "hidden",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            pb: 1,
+            pt: 3,
+            px: 3,
+            typography: "h5",
+            fontWeight: 600,
+          }}
+        >
+          Add Manual {type} Donation
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            {/* Donation Target Selection */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight={500}>
+                Donation Target
+              </Typography>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="target-type-label">Donate To</InputLabel>
+                <Select
+                  labelId="target-type-label"
+                  value={donationTarget}
+                  onChange={(e) => {
+                    setDonationTarget(e.target.value);
+                    setSelectedTarget("");
+                  }}
+                  label="Donate To"
+                >
+                  <MenuItem value="campaign">Campaign</MenuItem>
+                  <MenuItem value="event">Event</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+
+            {/* Campaign/Event Selection */}
+            <Grid item xs={12}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="target-selection-label">
+                  Select {donationTarget === "campaign" ? "Campaign" : "Event"}
+                </InputLabel>
+                <Select
+                  labelId="target-selection-label"
+                  value={selectedTarget}
+                  onChange={(e) => setSelectedTarget(e.target.value)}
+                  label={`Select ${
+                    donationTarget === "campaign" ? "Campaign" : "Event"
+                  }`}
+                >
+                  {donationTarget === "campaign"
+                    ? campaigns.map((campaign) => (
+                        <MenuItem key={campaign._id} value={campaign._id}>
+                          {campaign.name}
+                        </MenuItem>
+                      ))
+                    : events.map((event) => (
+                        <MenuItem key={event._id} value={event._id}>
+                          {event.name}
+                        </MenuItem>
+                      ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                fontWeight={500}
+                sx={{ mt: 2 }}
+              >
+                Donor Information
+              </Typography>
+            </Grid>
+
+
+            {/* Donor Information */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Donor Name"
+                variant="outlined"
+                fullWidth
+                value={donorName}
+                onChange={(e) => setDonorName(e.target.value)}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Donor Email"
+                variant="outlined"
+                fullWidth
+                value={donorEmail}
+                onChange={(e) => setDonorEmail(e.target.value)}
+              />
+            </Grid>
+
+
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                fontWeight={500}
+                sx={{ mt: 2 }}
+              >
+                Donation Details
+              </Typography>
+            </Grid>
+
+
+            {/* Donation Type Specific Fields */}
+            {type === "Monetary" ? (
+              <>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Amount"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    value={donationAmount}
+                    onChange={(e) => setDonationAmount(e.target.value)}
+                    required
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="payment-method-label">
+                      Payment Method
+                    </InputLabel>
+                    <Select
+                      labelId="payment-method-label"
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      label="Payment Method"
+                    >
+                      <MenuItem value="Cash">Cash</MenuItem>
+                      <MenuItem value="Check">Check</MenuItem>
+                      <MenuItem value="Credit Card">Credit Card</MenuItem>
+                      <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </>
+            ) : (
+              <>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Item Name"
+                    variant="outlined"
+                    fullWidth
+                    value={itemName}
+                    onChange={(e) => setItemName(e.target.value)}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Estimated Value"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    value={itemValue}
+                    onChange={(e) => setItemValue(e.target.value)}
+                    required
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Quantity"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    value={itemQuantity}
+                    onChange={(e) => setItemQuantity(e.target.value)}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Description"
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={itemDescription}
+                    onChange={(e) => setItemDescription(e.target.value)}
+                  />
+                </Grid>
+              </>
+            )}
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+          <Button
+            onClick={handleCloseManualDonation}
+            sx={{
+              color: "text.secondary",
+              fontWeight: 500,
+              px: 2,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            disableElevation
+            onClick={handleSubmitManualDonation}
+            disabled={
+              !selectedTarget ||
+              !donorName ||
+              (type === "Monetary" ? !donationAmount : !itemName || !itemValue)
+            }
+            sx={{
+              px: 3,
+              py: 1,
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 600,
+            }}
+          >
+            Submit Donation
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
       <div className="text-right">
         <Button
           onClick={() => setOpenGenerateReportModal(true)}
@@ -644,5 +1038,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     </div>
   );
 };
+
 
 export default DonationDetails;
