@@ -25,7 +25,7 @@ const EventDetails: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [isModalOpen, setModalOpen] = useState(false);
-  const [feedbackChartData, setFeedbackChartData] = useState([]);
+  const [feedbackChartData, setFeedbackChartData] = useState({});
 
   const getEventDetails = async () => {
     setLoading(true);
@@ -273,7 +273,7 @@ const EventDetails: React.FC = () => {
               Feedback Overview
             </h2>
             <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
-              {feedbackChartData?.length > 0 ? (
+              {feedbackChartData !== {} ? (
                 <div className="w-full max-w-3xl mx-auto h-64">
                   <PieChart feedbackAnalysis={feedbackChartData} />
                 </div>

@@ -22,6 +22,7 @@ import {
   EventRegistrationForm,
   SidebarProvider,
 } from "./components";
+import ManageAdmin from "./components/ManageAdmins/index";
 import { fetchUser } from "./redux/slices/authSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "./redux/store";
@@ -73,8 +74,8 @@ const App: React.FC = () => {
                         path="/donation-details/monetary"
                         element={<DonationDetailsPage type={"Monetary"} />}
                       />
-                      <Route path="/events/details" element={<EventsPage />} />
-                      <Route path="/events/reports" element={<EventsPage />} />
+                      <Route path="/events" element={<EventsPage />} />
+
                       <Route
                         path="/event-details/:eventId"
                         element={<EventDetailsPage />}
@@ -82,6 +83,7 @@ const App: React.FC = () => {
                       <Route path="/goals" element={<GoalsPage />} />
                       {/* <Route path="/schemes" element={<SchemesPage />} /> */}
                       <Route path="/impact" element={<ImpactPage />} />
+                      <Route path="/manage-admin" element={<ManageAdmin />} />
                     </Routes>
                   </DashboardLayout>
                 </SidebarProvider>

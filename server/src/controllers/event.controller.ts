@@ -4,7 +4,11 @@ import { Member } from "../models/member.model";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ErrorResponse } from "../utils/errorResponse";
 import { SuccessResponse } from "../utils/successResponse";
-import { sendRegistrationMail } from "../utils/sendMail";
+import {
+  sendRegistrationMail,
+  scheduleEventReminders,
+  scheduleFeedbackEmails,
+} from "../utils/sendMail";
 import mongoose, { isValidObjectId } from "mongoose";
 import { IEvent } from "../types/event.types";
 import PDFDocument from "pdfkit";
@@ -90,6 +94,10 @@ const createEvent = asyncHandler(async (req: any, res: Response) => {
     { $push: { participationHistory: event._id } }
   );
 
+  await scheduleEventReminders(event?._id);
+
+  // Schedule feedback emails after the event
+  await scheduleFeedbackEmails(event?._id);
   return res
     .status(201)
     .json(new SuccessResponse(201, event, "Event created successfully"));
@@ -272,6 +280,7 @@ export const registerForEvent = asyncHandler(
     if (!event) {
       return res.status(404).json({ error: "Event not found." });
     }
+
     if (event.status !== "Upcoming") {
       throw new ErrorResponse(
         400,
@@ -279,7 +288,47 @@ export const registerForEvent = asyncHandler(
       );
     }
 
-    const member = await Member.create({
+    // Check if a member with this email already exists
+    const existingMember = await Member.findOne({ email: email });
+
+    if (existingMember) {
+      // Check if this member is already registered for this specific event
+      const isAlreadyRegistered = event.participants.some(
+        (participant) =>
+          participant.memberId.toString() === existingMember._id.toString()
+      );
+
+      if (isAlreadyRegistered) {
+        return res.status(400).json({
+          error: "User with this email is already registered for this event.",
+        });
+      } else {
+        // Member exists but not registered for this event, so register them
+        event.participants.push({
+          memberId: existingMember._id,
+          role: "Attendee",
+        });
+
+        event.kpis.attendance += 1;
+
+        existingMember.participationHistory.push({
+          eventId,
+          role: "Attendee",
+          participationDate: new Date(),
+        });
+
+        await event.save();
+        await existingMember.save();
+        await sendRegistrationMail(existingMember, event);
+
+        return res
+          .status(200)
+          .json(new SuccessResponse(201, "Registration successful"));
+      }
+    }
+
+    // If member doesn't exist, create a new one
+    const newMember = await Member.create({
       gender,
       age,
       fullName,
@@ -289,39 +338,27 @@ export const registerForEvent = asyncHandler(
       role: "Attendee",
     });
 
-    if (!member) {
-      return res.status(404).json({ error: "Member not found." });
+    if (!newMember) {
+      return res.status(404).json({ error: "Failed to create member." });
     }
 
-    const isAlreadyRegistered = event.participants.some(
-      (participant) => participant.memberId.toString() === member._id.toString()
-    );
-
-    if (isAlreadyRegistered) {
-      throw new ErrorResponse(
-        400,
-        "Member is already registered for this event."
-      );
-    }
-
+    // Register the new member for the event
     event.participants.push({
-      memberId: member._id,
+      memberId: newMember._id,
       role: "Attendee",
     });
-    console.log("before", event.kpis.attendance);
 
     event.kpis.attendance += 1;
-    console.log("after", event.kpis.attendance);
 
-    member.participationHistory.push({
+    newMember.participationHistory.push({
       eventId,
       role: "Attendee",
       participationDate: new Date(),
     });
 
     await event.save();
-    await member.save();
-    await sendRegistrationMail(member, event);
+    await newMember.save();
+    await sendRegistrationMail(newMember, event);
 
     return res
       .status(200)
@@ -429,7 +466,7 @@ const getEventById = asyncHandler(async (req: any, res: Response) => {
         createdBy: 1,
         createdAt: 1,
         updatedAt: 1,
-        eventReport: 1, 
+        eventReport: 1,
       },
     },
   ]);

@@ -105,7 +105,6 @@ const DashboardHome: React.FC = () => {
       setLoading(false)
     );
   }, []);
-  console.log("fundrasiing metri cS:", fundraisingMetrics);
 
   const chartData = {
     labels: fundraisingMetrics

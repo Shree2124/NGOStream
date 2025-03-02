@@ -281,7 +281,7 @@ const MemberManagement: React.FC = () => {
   const filteredMembers = members.filter(
     (member) =>
       (filter === "All" || member.role === filter) &&
-      member.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+      member?.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const isFormValid =
@@ -551,7 +551,7 @@ const MemberManagement: React.FC = () => {
                     {selectedMember.bio && (
                       <Grid item xs={12}>
                         <Typography variant="body2" color="text.secondary">
-                          Bio: {selectedMember.bio}
+                          Description: {selectedMember.bio}
                         </Typography>
                       </Grid>
                     )}
@@ -721,13 +721,12 @@ const MemberManagement: React.FC = () => {
                   <MenuItem value="" disabled>
                     Select Role
                   </MenuItem>
-                  <MenuItem value="Admin">Admin</MenuItem>
                   <MenuItem value="Staff">Staff</MenuItem>
                   <MenuItem value="Volunteer">Volunteer</MenuItem>
                 </Select>
                 <TextField
                   fullWidth
-                  label="Bio"
+                  label="Description"
                   value={newUser.bio || ""}
                   onChange={(e) =>
                     setNewUser({ ...newUser, bio: e.target.value })

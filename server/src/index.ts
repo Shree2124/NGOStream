@@ -83,6 +83,7 @@ import adminRouter from "./routes/dashboard.routes";
 import impactRouter from "./routes/impact.routes";
 import schemeRouter from "./routes/scheme.routes";
 import BeneficiaryRouter from "./routes/beneficiary.routes";
+import ManageAdmin from "./routes/admin.routes";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/goals", goalRouter);
@@ -93,3 +94,4 @@ app.use("/api/v1/impact", impactRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/schemes", schemeRouter);
 app.use("/api/v1/beneficiary", BeneficiaryRouter);
+app.use("/api/v1/manage-admin", ManageAdmin);
