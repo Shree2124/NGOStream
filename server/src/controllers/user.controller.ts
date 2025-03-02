@@ -6,6 +6,9 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { Member } from "../models/member.model";
 import uploadOnCloudinary from "../utils/cloudinary";
+import adminModel from "../models/admin.model";
+import bcrypt from "bcrypt";
+import { sendMemberEnrollmentEmail } from "../utils/sendMail";
 
 const options: any = {
   httpOnly: false,
@@ -37,29 +40,66 @@ const generateAccess = (username: string) => {
 
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
   const { username, password } = req.body;
-
+  // Validate input
   if ([username, password].some((value) => value?.trim() === "")) {
     throw new ErrorResponse(400, "All fields are required.");
   }
-
+  // Check if credentials match environment variables first
   if (
-    username !== process.env.PRIVATE_ADMIN_USERNAME ||
-    password !== process.env.PRIVATE_ADMIN_PASSWORD
+    username === process.env.PRIVATE_ADMIN_USERNAME &&
+    password === process.env.PRIVATE_ADMIN_PASSWORD
   ) {
+    // Generate access token for super admin
+    const accessToken = generateAccess(process.env.PRIVATE_ADMIN_USERNAME!);
+    console.log(accessToken);
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .json(
+        new SuccessResponse(
+          200,
+          {
+            accessToken,
+            FetchedUser: {
+              username: process.env.PRIVATE_ADMIN_USERNAME,
+            },
+          },
+          "Super admin logged in successfully!"
+        )
+      );
+  }
+  // If not super admin, check the database
+  const admin = await adminModel.findOne({ email: username });
+  // Check if admin exists in database
+  if (!admin) {
     throw new ErrorResponse(401, "Invalid credentials provided.");
   }
+  // Use the custom method from your schema instead of direct bcrypt.compare
+  console.log("admin: ", admin);
 
-  const accessToken = generateAccess(username);
+  const isPasswordValid = await admin.isPasswordCorrect(password);
+  if (isPasswordValid) {
+    throw new ErrorResponse(401, "Invalid credentials provided.");
+  }
+  // Generate access token with admin's information
+  const accessToken = generateAccess(admin.email);
   console.log(accessToken);
-
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
     .json(
-      new SuccessResponse(200, { accessToken }, "User logged in successfully!")
+      new SuccessResponse(
+        200,
+        {
+          accessToken,
+          FetchedUser: {
+            username: admin.email,
+          },
+        },
+        "Admin logged in successfully!"
+      )
     );
 });
-
 {
   /* Function to logout the user by checking if the person is authenticated or not */
 }
@@ -129,6 +169,13 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
       newUser.avatar = uploadedAvatar?.url;
     }
     const createdUser = await newUser.save();
+
+    try {
+      await sendMemberEnrollmentEmail(createdUser);
+    } catch (emailError) {
+      console.error("Failed to send enrollment email:", emailError);
+      // Continue with the response even if email fails
+    }
     res
       .status(201)
       .json(new SuccessResponse(201, createdUser, "User created successfully"));
@@ -164,7 +211,6 @@ const editUser = asyncHandler(async (req: any, res: Response) => {
   if (bio) user.bio = bio;
 
   console.log(req.file);
-  
 
   if (req.file) {
     const avatarLocalPath = req.file.path;
@@ -179,19 +225,19 @@ const editUser = asyncHandler(async (req: any, res: Response) => {
     .json(new SuccessResponse(200, updatedUser, "User updated successfully"));
 });
 
-const deleteUser = asyncHandler(async (req: any, res: Response)=>{
-  const {userId} = req.params
+const deleteUser = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
 
-  if(!userId) throw new ErrorResponse(400, "User id is required")
+  if (!userId) throw new ErrorResponse(400, "User id is required");
 
-  const user = await Member.findOneAndDelete({_id: userId})
+  const user = await Member.findOneAndDelete({ _id: userId });
 
   console.log(user);
 
-  res.status(200).json(new SuccessResponse(200, null, "user deleted successfully"))
-  
-})
-
+  res
+    .status(200)
+    .json(new SuccessResponse(200, null, "user deleted successfully"));
+});
 
 // {/* Function to fetch the current logged in user */}
 // const getSystemUsers = asyncHandler(async (req: any, res: Response) => {
@@ -269,8 +315,6 @@ const deleteUser = asyncHandler(async (req: any, res: Response)=>{
 //   if (!isPasswordCorrect) {
 //     throw new ErrorResponse(400, "Invalid Password");
 //   }
-
-//   user.password = newPassword;
 
 //   await user.save({ validateBeforeSave: false });
 
@@ -457,4 +501,12 @@ const deleteUser = asyncHandler(async (req: any, res: Response)=>{
 //     .json(new SuccessResponse(201, token, "AccessToken fetched successfully!"));
 // });
 
-export { loginUser, logoutUser, getUser, createUser, getUsers, editUser, deleteUser };
+export {
+  loginUser,
+  logoutUser,
+  getUser,
+  createUser,
+  getUsers,
+  editUser,
+  deleteUser,
+};

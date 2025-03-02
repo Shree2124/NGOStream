@@ -31,6 +31,7 @@ import {
   InputLabel,
   DialogActions,
   Paper,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -400,20 +401,25 @@ const Goals: React.FC = () => {
           </Typography>
         </Paper>
       ) : (
-        <Card>
+        <Card elevation={2}>
           <List sx={{ p: 0 }}>
             {filteredGoals.map((goal, index) => (
               <React.Fragment key={goal._id}>
                 <ListItem
                   sx={{
-                    py: { xs: 1.5, sm: 2 },
-                    px: { xs: 2, sm: 3 },
+                    py: 2.5,
+                    px: 3,
                     display: "flex",
                     flexDirection: { xs: "column", sm: "row" },
                     alignItems: { xs: "flex-start", sm: "center" },
-                    gap: { xs: 1.5, sm: 1 },
+                    gap: 2,
+                    transition: "background-color 0.2s ease-in-out",
+                    "&:hover": {
+                      backgroundColor: "action.hover",
+                    },
                   }}
                 >
+                  {/* Goal Info Section */}
                   <Box
                     sx={{
                       display: "flex",
@@ -427,20 +433,22 @@ const Goals: React.FC = () => {
                       src={goal.image || CampaignImage}
                       alt={goal.name}
                       sx={{
-                        width: { xs: 40, sm: 48 },
-                        height: { xs: 40, sm: 48 },
+                        width: { xs: 56, sm: 64 },
+                        height: { xs: 56, sm: 64 },
                         objectFit: "cover",
-                        borderRadius: 1,
-                        mr: 2,
+                        borderRadius: 2,
+                        mr: 2.5,
                         flexShrink: 0,
+                        boxShadow: 1,
                       }}
                     />
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography
-                        variant={isMobile ? "subtitle2" : "subtitle1"}
+                        variant={isMobile ? "h6" : "h6"}
                         sx={{
-                          fontWeight: 500,
-                          mb: 0.5,
+                          fontWeight: 600,
+                          mb: 0.75,
+                          color: "text.primary",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -448,28 +456,44 @@ const Goals: React.FC = () => {
                       >
                         {goal.name}
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
-                        Status: {goal.status} • Target: $
-                        {goal.targetAmount.toLocaleString()}
-                      </Typography>
+                        <Chip
+                          label={goal.status}
+                          color={
+                            goal.status === "Active"
+                              ? "success"
+                              : goal.status === "Completed"
+                              ? "info"
+                              : "default"
+                          }
+                          size="small"
+                          variant="outlined"
+                        />
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Target: ${goal.targetAmount.toLocaleString()}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
 
+                  {/* Actions Section */}
                   <Stack
-                    direction="row"
-                    spacing={1}
+                    direction={{ xs: "row", md: "row" }}
+                    spacing={1.5}
                     sx={{
-                      width: "100%",
+                      width: { xs: "100%", sm: "auto" },
                       justifyContent: "flex-end",
-                      mt: { xs: 1, sm: 0 },
+                      mt: { xs: 2, sm: 0 },
                     }}
                   >
                     <Button
@@ -477,10 +501,15 @@ const Goals: React.FC = () => {
                       onClick={() => handleViewGoal(goal)}
                       size={isMobile ? "small" : "medium"}
                       variant="outlined"
+                      color="primary"
                       sx={{
-                        minWidth: { xs: 0, sm: 64 },
+                        minWidth: { xs: 0, sm: 100 },
                         flex: { xs: 1, sm: "none" },
-                        px: { xs: 1, sm: 2 },
+                        borderRadius: 1.5,
+                        boxShadow: 0,
+                        "&:hover": {
+                          boxShadow: 1,
+                        },
                       }}
                     >
                       {!isMobile && "View"}
@@ -490,10 +519,15 @@ const Goals: React.FC = () => {
                       onClick={() => handleOpenModal(goal)}
                       size={isMobile ? "small" : "medium"}
                       variant="outlined"
+                      color="secondary"
                       sx={{
-                        minWidth: { xs: 0, sm: 64 },
+                        minWidth: { xs: 0, sm: 100 },
                         flex: { xs: 1, sm: "none" },
-                        px: { xs: 1, sm: 2 },
+                        borderRadius: 1.5,
+                        boxShadow: 0,
+                        "&:hover": {
+                          boxShadow: 1,
+                        },
                       }}
                     >
                       {!isMobile && "Edit"}
@@ -508,16 +542,22 @@ const Goals: React.FC = () => {
                       variant="outlined"
                       color="error"
                       sx={{
-                        minWidth: { xs: 0, sm: 64 },
+                        minWidth: { xs: 0, sm: 100 },
                         flex: { xs: 1, sm: "none" },
-                        px: { xs: 1, sm: 2 },
+                        borderRadius: 1.5,
+                        boxShadow: 0,
+                        "&:hover": {
+                          boxShadow: 1,
+                        },
                       }}
                     >
                       {!isMobile && "Delete"}
                     </Button>
                   </Stack>
                 </ListItem>
-                {index < filteredGoals.length - 1 && <Divider />}
+                {index < filteredGoals.length - 1 && (
+                  <Divider sx={{ opacity: 0.7 }} />
+                )}
               </React.Fragment>
             ))}
           </List>

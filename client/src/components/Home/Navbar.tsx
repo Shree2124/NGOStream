@@ -28,10 +28,10 @@ const Navbar = () => {
 
   const menuItems = [
     { text: "Home", link: "#home" },
-    { text: "Goals", link: "#goals" },
+    { text: "Campaigns", link: "#goals" },
     { text: "Events", link: "/events" },
-    { text: "Vision", link: "/visions" },
-    { text: "Achievements", link: "/achievements" },
+    { text: "Vision", link: "#visions" },
+    { text: "Achievements", link: "#achievements" },
     { text: "Impact", link: "/impact" },
     {
       text: auth ? "Dashboard" : "Admin login",

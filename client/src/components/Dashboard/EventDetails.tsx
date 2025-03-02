@@ -20,13 +20,12 @@ import PieChart from "../constants/PieChart";
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Title);
 
 const EventDetails: React.FC = () => {
-  
   const { eventId } = useParams();
   const [event, setEvent] = useState<IEvent | any>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [isModalOpen, setModalOpen] = useState(false);
-  const [feedbackChartData, setFeedbackChartData] = useState([]);
+  const [feedbackChartData, setFeedbackChartData] = useState({});
 
   const getEventDetails = async () => {
     setLoading(true);
@@ -273,9 +272,9 @@ const EventDetails: React.FC = () => {
             <h2 className="mb-4 font-semibold text-gray-800 text-xl">
               Feedback Overview
             </h2>
-            <div className="bg-gray-50 shadow-sm p-4 rounded-xl">
-              {feedbackChartData?.length > 0 ? (
-                <div className="mx-auto w-full max-w-3xl h-64">
+            <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
+              {feedbackChartData !== {} ? (
+                <div className="w-full max-w-3xl mx-auto h-64">
                   <PieChart feedbackAnalysis={feedbackChartData} />
                 </div>
               ) : (

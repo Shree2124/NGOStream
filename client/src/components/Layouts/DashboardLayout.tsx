@@ -24,6 +24,7 @@ import {
   BackupOutlined,
   ArrowBack,
   Logout,
+  AdminPanelSettings,
 } from "@mui/icons-material";
 import { ReactNode, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
@@ -55,19 +56,16 @@ const navTabs: Tab[] = [
       { name: "Monetary", path: "/monetary" },
     ],
   },
-  {
-    name: "Events",
-    path: "/dashboard/events",
-    icon: <Event />,
-    subTabs: [
-      { name: " Details", path: "/details" },
-      { name: " Reports", path: "/reports" },
-    ],
-  },
+
   { name: "Events", path: "/dashboard/events", icon: <Event /> },
   { name: "Campaign", path: "/dashboard/goals", icon: <Flag /> },
   // { name: "Schemes", path: "/dashboard/schemes", icon: <AccountBalance /> },
   { name: "Impact", path: "/dashboard/impact", icon: <Money /> },
+  {
+    name: "Manage Admin",
+    path: "/dashboard/manage-admin",
+    icon: <AdminPanelSettings />,
+  },
 ];
 
 const Link = styled(RouterLink)(({ theme }) => ({
@@ -147,6 +145,7 @@ const SideBar: React.FC<{ w: string }> = ({ w }) => {
                     textAlign: "left",
                     color: "black",
                     padding: "0.8rem 1rem",
+
                     bgcolor: openTabs[tab.name]
                       ? "rgba(0, 0, 0, 0.1)"
                       : "transparent",
