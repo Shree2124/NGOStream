@@ -25,7 +25,6 @@ import {
   InputLabel,
   Button,
   Grid,
-  Grid,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { api } from "../../api/api";
