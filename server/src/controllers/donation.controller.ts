@@ -274,7 +274,7 @@ export const getDonationInformation = asyncHandler(
   async (req: any, res: Response) => {
     const { type } = req.params;
 
-    console.log(type);
+    // console.log(type);
 
     if (type !== "Monetary" && type !== "In-Kind")
       throw new ErrorResponse(400, "Not a valid type");
@@ -336,7 +336,7 @@ export const getDonationInformation = asyncHandler(
       },
     ]);
 
-    console.log(donationInfo);
+    // console.log(donationInfo);
 
     if (!donationInfo || donationInfo.length === 0)
       throw new ErrorResponse(404, "Donations not found");
@@ -371,3 +371,161 @@ export const updateDonationStatus = asyncHandler(
       .json(new SuccessResponse(200, donation, "Donation status updated"));
   }
 );
+
+
+export const manualDonation = asyncHandler(async (req: Request, res: Response) => {
+  const {
+    donorInfo,
+    donationType,
+    goalType,
+    goalId,
+    amount,
+    paymentMethod,
+    paymentStatus,
+    currency,
+    inKindDetails,
+  } = req.body;
+
+  console.log(req.body);
+
+  // Validate required fields
+  if (!donorInfo || !donorInfo.name || !donorInfo.email || !donorInfo.phone || !donorInfo.address) {
+    throw new ErrorResponse(400, "Donor name, email, phone, and address are required");
+  }
+
+  if (!donationType || (donationType !== "Monetary" && donationType !== "In-Kind")) {
+    throw new ErrorResponse(400, "Invalid donation type");
+  }
+
+  if (donationType === "Monetary") {
+    if (!amount || amount <= 0) {
+      throw new ErrorResponse(400, "Invalid amount for monetary donation");
+    }
+    if (!paymentMethod || !paymentStatus) {
+      throw new ErrorResponse(400, "Payment method and status are required for monetary donations");
+    }
+  } else if (donationType === "In-Kind") {
+    console.log(inKindDetails);
+    if (!inKindDetails["itemName"] || inKindDetails["quantity"] === "" || inKindDetails["quantity"] <= 0) {
+      throw new ErrorResponse(400, "Item name and quantity are required for in-kind donations");
+    }
+  }
+
+  if (!goalType || (goalType !== "Campaign" && goalType !== "Event")) {
+    throw new ErrorResponse(400, "Invalid goal type");
+  }
+
+  if (!goalId || !isValidObjectId(goalId)) {
+    throw new ErrorResponse(400, "Invalid goal ID");
+  }
+
+  // Find or create the donor
+  let donor = await Donor.findOne({ email: donorInfo.email });
+  if (!donor) {
+    donor = await Donor.create({
+      name: donorInfo.name,
+      email: donorInfo.email,
+      phone: donorInfo.phone || "",
+      address: donorInfo.address || "",
+      donations: [],
+    });
+  } else {
+    // Update donor's phone and address if they already exist
+    donor.phone = donorInfo.phone || donor.phone;
+    donor.address = donorInfo.address || donor.address;
+    await donor.save();
+  }
+
+  // Handle image upload for in-kind donations
+  let imageUrl = "";
+  if (donationType === "In-Kind" && req.file) {
+    const imagePath = req.file.path;
+    const uploadResponse = await uploadOnCloudinary(imagePath);
+    if (uploadResponse) {
+      imageUrl = uploadResponse.url;
+    }
+  }
+
+  // Create the donation
+  const donation = await Donation.create({
+    donorId: donor._id,
+    donationType,
+    goalId: goalType === "Campaign" ? goalId : null,
+    eventId: goalType === "Event" ? goalId : null,
+    currency: donationType === "Monetary" ? currency || "USD" : undefined,
+    paymentStatus: donationType === "Monetary" ? paymentStatus : undefined,
+    paymentMethod: donationType === "Monetary" ? paymentMethod : undefined,
+    monetaryDetails:
+      donationType === "Monetary"
+        ? {
+            amount,
+            currency: currency || "USD",
+            paymentMethod,
+            paymentStatus,
+          }
+        : undefined,
+    inKindDetails:
+      donationType === "In-Kind"
+        ? {
+            itemName: inKindDetails.itemName, // Corrected typo: itemNme -> itemName
+            quantity: inKindDetails.quantity,
+            estimatedValue: inKindDetails.estimatedValue,
+            description: inKindDetails.description,
+            status: "Donated", // Default status for manual in-kind donations
+            image: imageUrl, // Add the uploaded image URL
+          }
+        : undefined,
+  });
+
+  // Update the donor's donations array
+  donor.donations.push(donation._id);
+  await donor.save();
+
+  // Update the event or campaign
+  if (goalType === "Campaign") {
+    const campaign: any = await Goal.findById(goalId);
+    if (campaign) {
+      campaign.donations.push(donation._id);
+      if (donationType === "Monetary") {
+        campaign.currentAmount = (campaign.currentAmount || 0) + amount;
+      }
+      await campaign.save();
+    } else {
+      throw new ErrorResponse(404, "Campaign not found");
+    }
+  } else if (goalType === "Event") {
+    const event = await Event.findById(goalId);
+    if (event) {
+      event.donations.push(donation._id);
+      if (donationType === "Monetary") {
+        event.kpis.fundsRaised = (event.kpis.fundsRaised || 0) + amount;
+      }
+      await event.save();
+    } else {
+      throw new ErrorResponse(404, "Event not found");
+    }
+  }
+
+  // Generate and send a receipt (optional)
+  if (donationType === "Monetary" || donationType === "In-Kind") {
+    try {
+      const pdfPath: string | any = await generatePDFReceipt(donation, donor);
+      const uploadResponse = await uploadOnCloudinary(pdfPath);
+  
+      if (uploadResponse) {
+        console.log("Donor:", donor);
+        await sendReceiptEmail(donor, uploadResponse.url, donation);
+        donation.sendReceipt = true;
+        console.log("Receipt sent:", donation.sendReceipt);
+        await donation.save();
+      }
+    } catch (error) {
+      console.error("Error generating PDF or sending email:", error);
+    }
+  }
+
+  // Return the created donation
+  res
+    .status(201)
+    .json(new SuccessResponse(201, donation, "Manual donation created successfully"));
+});

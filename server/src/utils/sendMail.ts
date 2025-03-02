@@ -165,6 +165,22 @@ export const sendReceiptEmail = async (
       },
     });
 
+    // Generate email content based on donation type
+    const donationDetails =
+      donation.donationType === "Monetary"
+        ? `
+          <li><strong>Amount:</strong> ${donation.monetaryDetails.amount} ${donation.monetaryDetails.currency}</li>
+          <li><strong>Payment Method:</strong> ${donation.monetaryDetails.paymentMethod}</li>
+          <li><strong>Payment Status:</strong> ${donation.monetaryDetails.paymentStatus}</li>
+        `
+        : `
+          <li><strong>Item Name:</strong> ${donation.inKindDetails.itemName}</li>
+          <li><strong>Quantity:</strong> ${donation.inKindDetails.quantity}</li>
+          <li><strong>Estimated Value:</strong> ${donation.inKindDetails.estimatedValue} USD</li>
+          <li><strong>Description:</strong> ${donation.inKindDetails.description}</li>
+          <li><strong>Status:</strong> ${donation.inKindDetails.status}</li>
+        `;
+
     const mailOptions = {
       from: process.env.Gmail,
       to: donor.email,
@@ -175,11 +191,7 @@ export const sendReceiptEmail = async (
         <p>Donation Details:</p>
         <ul>
           <li><strong>Type:</strong> ${donation.donationType}</li>
-          <li><strong>Amount:</strong> ${
-            donation.monetaryDetails?.amount
-              ? `${donation.monetaryDetails.amount} ${donation.monetaryDetails.currency}`
-              : "N/A"
-          }</li>
+          ${donationDetails}
           <li><strong>Date:</strong> ${new Date(
             donation.createdAt
           ).toLocaleDateString()}</li>
@@ -200,7 +212,7 @@ export const sendReceiptEmail = async (
     };
 
     const info = await transporter.sendMail(mailOptions);
-    // console.log(`Email sent: ${info.messageId}`);
+    console.log(`Email sent: ${info.messageId}`);
     return "Receipt email sent successfully!";
   } catch (error) {
     console.error("Error sending receipt email:", error);

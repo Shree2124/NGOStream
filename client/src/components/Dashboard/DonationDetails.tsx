@@ -35,7 +35,6 @@ import {
   TableChartOutlined,
   AddCircleOutline,
 } from "@mui/icons-material";
-// import { Button } from "../ui/button";
 
 interface IDonation {
   _id: string;
@@ -101,6 +100,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   );
   const [donationTarget, setDonationTarget] = useState<string>("campaign");
   const [campaigns, setCampaigns] = useState<ICampaign[]>([]);
+  const [selectedTargetName, setSelectedTargetName] = useState<string>("");
   const [events, setEvents] = useState<IEvent[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<string>("");
   const [donorName, setDonorName] = useState<string>("");
@@ -111,6 +111,55 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   const [itemValue, setItemValue] = useState<string>("");
   const [itemQuantity, setItemQuantity] = useState<string>("1");
   const [itemDescription, setItemDescription] = useState<string>("");
+  const [step, setStep] = useState(1);
+  const [selectedTargetId, setSelectedTargetId] = useState<string>("");
+  const [itemImage, setItemImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setItemImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  console.log(type);
+
+  const handleNext = () => {
+    // Validate current step before proceeding
+    if (step === 1 && !donationTarget) {
+      alert("Please select a donation target.");
+      return;
+    }
+    if (step === 2 && !selectedTargetId) {
+      alert(
+        `Please select a ${
+          donationTarget === "campaign" ? "campaign" : "event"
+        }.`
+      );
+      return;
+    }
+    if (step === 4) {
+      if (
+        type === "monetary" &&
+        (!donorName || !donorEmail || !donationAmount)
+      ) {
+        alert("Please fill in all required fields.");
+        return;
+      } else if (
+        type === "inkind" &&
+        (!itemName || !itemValue || !itemQuantity || !itemDescription)
+      ) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+    }
+    setStep((prev) => prev + 1);
+  };
+  const handleBack = () => setStep((prev) => prev - 1);
 
   const firstDonationStartDate =
     donationData.length > 0
@@ -133,9 +182,73 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
   const handleGenerateReportModalClose = () => {
     setOpenGenerateReportModal(false);
   };
+
   const handlePeriodChange = (event: any) => {
     setSelectedPeriod(event.target.value);
     setSelectedRange(null);
+  };
+
+  const generateSelectableRanges = () => {
+    const ranges = [];
+    const start = new Date(firstDonationStartDate);
+    const end = new Date(lastDonationEndDate);
+
+    if (selectedPeriod === "week") {
+      const current = new Date(start);
+      while (current <= end) {
+        const weekStart = new Date(current);
+        let weekEnd = new Date(current);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        if (weekEnd > end) weekEnd = new Date(end);
+        ranges.push({
+          label: `${weekStart.toDateString()} - ${weekEnd.toDateString()}`,
+          value: { from: weekStart, to: weekEnd },
+        });
+        current.setDate(current.getDate() + 7);
+      }
+    } else if (selectedPeriod === "month") {
+      const current = new Date(start);
+      while (current <= end) {
+        const monthStart = new Date(
+          current.getFullYear(),
+          current.getMonth(),
+          1
+        );
+        let monthEnd = new Date(
+          current.getFullYear(),
+          current.getMonth() + 1,
+          0
+        );
+        if (monthEnd > end) monthEnd = new Date(end);
+        ranges.push({
+          label: `${monthStart.toDateString()} - ${monthEnd.toDateString()}`,
+          value: { from: monthStart, to: monthEnd },
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
+    } else if (selectedPeriod === "year") {
+      const current = new Date(start);
+      while (current <= end) {
+        const yearStart = new Date(current.getFullYear(), 0, 1);
+        let yearEnd = new Date(current.getFullYear(), 11, 31);
+        if (yearEnd > end) yearEnd = new Date(end);
+        ranges.push({
+          label: `${yearStart.getFullYear()}`,
+          value: { from: yearStart, to: yearEnd },
+        });
+        current.setFullYear(current.getFullYear() + 1);
+      }
+    }
+    return ranges;
+  };
+
+  const fetchDetails = async () => {
+    try {
+      const res = await api.get(`/donation/get-donation-info/${type}`);
+      setDonationData(res.data.data);
+    } catch (error) {
+      console.error("Error fetching donation data:", error);
+    }
   };
 
   const generatePDFReport = async (filteredIds: any[], fileType: string) => {
@@ -151,9 +264,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     }
   };
 
-  function generateReport(selectedRange: string, fileType: string) {
-    console.log("Selected Range:", selectedRange);
-
+  const generateReport = (selectedRange: string, fileType: string) => {
     if (!selectedRange || typeof selectedRange !== "string") {
       console.error("Invalid date range selected.");
       return;
@@ -186,99 +297,15 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
       })
       .map((donation) => donation._id);
 
-    console.log("Filtered Donation IDs:", filteredIds);
-    console.log("File Type:", fileType);
-
     generatePDFReport(filteredIds, fileType);
 
     setSelectedRange(null);
     setOpenGenerateReportModal(false);
-  }
-
-  function generateSelectableRanges() {
-    const ranges = [];
-    const start = new Date(firstDonationStartDate);
-    const end = new Date(lastDonationEndDate);
-
-    if (selectedPeriod === "week") {
-      const current = new Date(start);
-      // Set current to the start of the week (Sunday)
-      const dayOfWeek = current.getDay();
-      current.setDate(current.getDate() - dayOfWeek);
-
-      while (current <= end) {
-        const weekStart = new Date(current);
-        let weekEnd = new Date(current);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        if (weekEnd > end) weekEnd = new Date(end);
-
-        const formattedWeekStart = weekStart.toDateString(); // e.g. "Sun Oct 27 2024"
-        const formattedWeekEnd = weekEnd.toDateString(); // e.g. "Sat Nov 02 2024"
-        const label = `${formattedWeekStart} - ${formattedWeekEnd}`;
-
-        ranges.push({
-          label: label,
-          value: { from: weekStart, to: weekEnd },
-        });
-        current.setDate(current.getDate() + 7);
-      }
-    } else if (selectedPeriod === "month") {
-      const current = new Date(start);
-      current.setDate(1); // Start from first day of the month
-
-      while (current <= end) {
-        const monthStart = new Date(current);
-        // Last day of the month
-        let monthEnd = new Date(
-          current.getFullYear(),
-          current.getMonth() + 1,
-          0
-        );
-        if (monthEnd > end) monthEnd = new Date(end);
-
-        const formattedMonthStart = monthStart.toDateString();
-        const formattedMonthEnd = monthEnd.toDateString();
-        const label = `${formattedMonthStart} - ${formattedMonthEnd}`;
-
-        ranges.push({
-          label: label,
-          value: { from: monthStart, to: monthEnd },
-        });
-        current.setMonth(current.getMonth() + 1);
-      }
-    } else if (selectedPeriod === "year") {
-      const current = new Date(start);
-      current.setMonth(0, 1); // January 1st
-
-      while (current <= end) {
-        const yearStart = new Date(current.getFullYear(), 0, 1);
-        let yearEnd = new Date(current.getFullYear(), 11, 31);
-        if (yearEnd > end) yearEnd = new Date(end);
-
-        const label = `${yearStart.getFullYear()}`;
-
-        ranges.push({
-          label: label,
-          value: { from: yearStart, to: yearEnd },
-        });
-        current.setFullYear(current.getFullYear() + 1);
-      }
-    }
-    return ranges;
-  }
-
-  const fetchDetails = async () => {
-    try {
-      const res = await api.get(`/donation/get-donation-info/${type}`);
-      setDonationData(res.data.data);
-    } catch (error) {
-      console.error("Error fetching donation data:", error);
-    }
   };
 
   const fetchCampaigns = async () => {
     try {
-      const res = await api.get("/campaign/get-all-campaigns");
+      const res = await api.get("/goals/get-names");
       setCampaigns(res.data.data);
     } catch (error) {
       console.error("Error fetching campaigns:", error);
@@ -287,7 +314,7 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
 
   const fetchEvents = async () => {
     try {
-      const res = await api.get("/event/get-all-events");
+      const res = await api.get("/event/get-event-names");
       setEvents(res.data.data);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -334,7 +361,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number
   ) => {
-    console.log(event?.target);
     setPage(newPage);
   };
 
@@ -357,9 +383,6 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
 
   const handleSave = async (selectedValue: string) => {
     try {
-      console.log(selectedValue);
-      console.log(selectedDonation?._id);
-
       const res = await api.put(`/donation/update-donation-status`, {
         status: selectedValue,
         donationId: selectedDonation?._id,
@@ -379,8 +402,9 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
 
   const handleCloseManualDonation = () => {
     setManualDonationModal(false);
+    setStep(1); // Reset to step 1
     setDonationTarget("campaign");
-    setSelectedTarget("");
+    setSelectedTargetId("");
     setDonorName("");
     setDonorEmail("");
     setDonationAmount("");
@@ -389,39 +413,58 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
     setItemValue("");
     setItemQuantity("1");
     setItemDescription("");
+    setItemImage(null);
+    setAddress("")
+    setPhone("")
   };
 
   const handleSubmitManualDonation = async () => {
     try {
-      const payload = {
-        donorInfo: {
-          name: donorName,
-          email: donorEmail,
+      if (!selectedTargetId) {
+        alert("Please select a campaign or event.");
+        return;
+      }
+  
+      const formData = new FormData();
+  
+      // Append donor info
+      formData.append("donorInfo[name]", donorName);
+      formData.append("donorInfo[email]", donorEmail);
+      formData.append("donorInfo[phone]", phone); // Add phone
+      formData.append("donorInfo[address]", address); // Add address
+  
+      // Append goal details
+      formData.append("donationType", type);
+      formData.append("goalType", donationTarget === "campaign" ? "Campaign" : "Event");
+      formData.append("goalId", selectedTargetId);
+  
+      // Append monetary or in-kind donation details
+      if (type === "Monetary") {
+        formData.append("amount", donationAmount.toString());
+        formData.append("paymentMethod", paymentMethod);
+        formData.append("paymentStatus", "Successful");
+        formData.append("currency", "USD");
+      } else {
+        formData.append("inKindDetails[itemName]", itemName);
+        formData.append("inKindDetails[quantity]", itemQuantity.toString());
+        formData.append("inKindDetails[estimatedValue]", itemValue.toString());
+        formData.append("inKindDetails[description]", itemDescription);
+        formData.append("inKindDetails[status]", "Donated");
+        formData.append("estimatedValue", (parseFloat(itemValue) * parseInt(itemQuantity)).toString());
+        formData.append("status", "Donated");
+  
+        // Append image if available
+        if (itemImage) {
+          formData.append("image", itemImage);
+        }
+      }
+  
+      const res = await api.post("/donation/create-manual-donation", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-        donationType: type,
-        goalType: donationTarget === "campaign" ? "Campaign" : "Event",
-        goalId: selectedTarget,
-        ...(type === "Monetary"
-          ? {
-              amount: parseFloat(donationAmount),
-              paymentMethod: paymentMethod,
-              paymentStatus: "Completed",
-              currency: "USD", // Assuming USD as default
-            }
-          : {
-              inKindDetails: {
-                itemName: itemName,
-                quantity: parseInt(itemQuantity),
-                estimatedValue: parseFloat(itemValue),
-                description: itemDescription,
-                status: "Donated",
-              },
-              estimatedValue: parseFloat(itemValue) * parseInt(itemQuantity),
-              status: "Donated",
-            }),
-      };
-
-      const res = await api.post("/donation/create-manual-donation", payload);
+      });
+  
       console.log("Manual donation created:", res.data);
       fetchDetails();
       handleCloseManualDonation();
@@ -815,128 +858,165 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
         <DialogContent sx={{ p: 3 }}>
           <Grid container spacing={3}>
             {/* Donation Target Selection */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom fontWeight={500}>
-                Donation Target
-              </Typography>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="target-type-label">Donate To</InputLabel>
-                <Select
-                  labelId="target-type-label"
-                  value={donationTarget}
-                  onChange={(e) => {
-                    setDonationTarget(e.target.value);
-                    setSelectedTarget("");
-                  }}
-                  label="Donate To"
-                >
-                  <MenuItem value="campaign">Campaign</MenuItem>
-                  <MenuItem value="event">Event</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+            {step === 1 && (
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom fontWeight={500}>
+                  Select Donation Target
+                </Typography>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Donate To</InputLabel>
+                  <Select
+                    value={donationTarget}
+                    onChange={(e) => {
+                      setDonationTarget(e.target.value);
+                      setSelectedTarget("");
+                    }}
+                    label="Donate To"
+                  >
+                    <MenuItem value="campaign">Campaign</MenuItem>
+                    <MenuItem value="event">Event</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-            {/* Campaign/Event Selection */}
-            <Grid item xs={12}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="target-selection-label">
-                  Select {donationTarget === "campaign" ? "Campaign" : "Event"}
-                </InputLabel>
-                <Select
-                  labelId="target-selection-label"
-                  value={selectedTarget}
-                  onChange={(e) => setSelectedTarget(e.target.value)}
-                  label={`Select ${
-                    donationTarget === "campaign" ? "Campaign" : "Event"
-                  }`}
-                >
-                  {donationTarget === "campaign"
-                    ? campaigns.map((campaign) => (
-                        <MenuItem key={campaign._id} value={campaign._id}>
-                          {campaign.name}
-                        </MenuItem>
-                      ))
-                    : events.map((event) => (
-                        <MenuItem key={event._id} value={event._id}>
-                          {event.name}
-                        </MenuItem>
-                      ))}
-                </Select>
-              </FormControl>
-            </Grid>
+            {/* Step 2: Select Specific Campaign/Event */}
+            {step === 2 && (
+              <Grid item xs={12}>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>
+                    Select{" "}
+                    {donationTarget === "campaign" ? "Campaign" : "Event"}
+                  </InputLabel>
+                  <Select
+                    value={selectedTargetName} // Display the selected target name
+                    onChange={(e) => {
+                      const selectedName = e.target.value;
+                      const selectedItem =
+                        donationTarget === "campaign"
+                          ? campaigns.find(
+                              (campaign) => campaign.name === selectedName
+                            )
+                          : events.find((event) => event.name === selectedName);
 
-            <Grid item xs={12}>
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                fontWeight={500}
-                sx={{ mt: 2 }}
-              >
-                Donor Information
-              </Typography>
-            </Grid>
+                      if (selectedItem) {
+                        setSelectedTargetId(selectedItem.id); // Set the selected target ID
+                        setSelectedTargetName(selectedItem.name); // Set the selected target name
+                      }
+                    }}
+                    label={`Select ${
+                      donationTarget === "campaign" ? "Campaign" : "Event"
+                    }`}
+                  >
+                    {donationTarget === "campaign"
+                      ? campaigns.map((campaign) => (
+                          <MenuItem key={campaign._id} value={campaign.name}>
+                            {campaign.name}
+                          </MenuItem>
+                        ))
+                      : events.map((event) => (
+                          <MenuItem key={event._id} value={event.name}>
+                            {event.name}
+                          </MenuItem>
+                        ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-            {/* Donor Information */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Donor Name"
-                variant="outlined"
-                fullWidth
-                value={donorName}
-                onChange={(e) => setDonorName(e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Donor Email"
-                variant="outlined"
-                fullWidth
-                value={donorEmail}
-                onChange={(e) => setDonorEmail(e.target.value)}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                fontWeight={500}
-                sx={{ mt: 2 }}
-              >
-                Donation Details
-              </Typography>
-            </Grid>
-
-            {/* Donation Type Specific Fields */}
-            {type === "Monetary" ? (
+            {/* Step 3: Donor Information */}
+            {step === 3 && (
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom fontWeight={500}>
+                  Donation Details
+                </Typography>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Donation Type</InputLabel>
+                  <Select value={type} disabled>
+                    <MenuItem value="Monetary">Monetary</MenuItem>
+                    <MenuItem value="In-Kind">In kind</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+            {step === 4 && (
               <>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom fontWeight={500}>
+                    Donor Information
+                  </Typography>
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    label="Amount"
+                    label="Donor Name"
                     variant="outlined"
                     fullWidth
-                    type="number"
-                    value={donationAmount}
-                    onChange={(e) => setDonationAmount(e.target.value)}
+                    value={donorName}
+                    onChange={(e) => setDonorName(e.target.value)}
                     required
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
-                      ),
-                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Donor Email"
+                    variant="outlined"
+                    fullWidth
+                    value={donorEmail}
+                    onChange={(e) => setDonorEmail(e.target.value)}
+                  />
+                </Grid>
+              </>
+            )}
+
+            {/* Step 4: Select Donation Type */}
+
+            {/* Step 5: Enter Donation Details Based on Type */}
+            {step === 5 &&
+              (type === "Monetary" ? (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Amount"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      value={donationAmount}
+                      onChange={(e) => setDonationAmount(e.target.value)}
+                      required
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">$</InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Phone"
+                      variant="outlined"
+                      fullWidth
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Address"
+                      variant="outlined"
+                      fullWidth
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  {/* <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel id="payment-method-label">
-                      Payment Method
-                    </InputLabel>
+                    <InputLabel>Payment Method</InputLabel>
                     <Select
-                      labelId="payment-method-label"
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      label="Payment Method"
                     >
                       <MenuItem value="Cash">Cash</MenuItem>
                       <MenuItem value="Check">Check</MenuItem>
@@ -945,93 +1025,144 @@ const DonationDetails: React.FC<IDonationDetailsProps> = ({ type }) => {
                       <MenuItem value="Other">Other</MenuItem>
                     </Select>
                   </FormControl>
-                </Grid>
-              </>
-            ) : (
-              <>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Item Name"
-                    variant="outlined"
-                    fullWidth
-                    value={itemName}
-                    onChange={(e) => setItemName(e.target.value)}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Estimated Value"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    value={itemValue}
-                    onChange={(e) => setItemValue(e.target.value)}
-                    required
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Quantity"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    value={itemQuantity}
-                    onChange={(e) => setItemQuantity(e.target.value)}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Description"
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    rows={2}
-                    value={itemDescription}
-                    onChange={(e) => setItemDescription(e.target.value)}
-                  />
-                </Grid>
-              </>
-            )}
+                </Grid> */}
+                </>
+              ) : (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Item Name"
+                      variant="outlined"
+                      fullWidth
+                      value={itemName}
+                      onChange={(e) => setItemName(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Estimated Value"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      value={itemValue}
+                      onChange={(e) => setItemValue(e.target.value)}
+                      required
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">$</InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Quantity"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      value={itemQuantity}
+                      onChange={(e) => setItemQuantity(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Description"
+                      variant="outlined"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={itemDescription}
+                      onChange={(e) => setItemDescription(e.target.value)}
+                    />
+                  </Grid>
+                  
+                  
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Phone"
+                      variant="outlined"
+                      fullWidth
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Address"
+                      variant="outlined"
+                      fullWidth
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="subtitle1"
+                      gutterBottom
+                      fontWeight={500}
+                    >
+                      Upload Item Image
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      sx={{ textTransform: "none" }}
+                    >
+                      Select Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={handleFileChange}
+                      />
+                    </Button>
+
+                    {/* Show preview if an image is selected */}
+                    {preview && (
+                      <Box mt={2} display="flex" justifyContent="center">
+                        <img
+                          src={preview}
+                          alt="Preview"
+                          style={{
+                            width: "100%",
+                            maxWidth: "300px",
+                            height: "auto",
+                            borderRadius: 8,
+                            border: "1px solid #ccc",
+                            padding: 4,
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </Grid>
+                </>
+              ))}
           </Grid>
         </DialogContent>
+
         <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
           <Button
             onClick={handleCloseManualDonation}
-            sx={{
-              color: "text.secondary",
-              fontWeight: 500,
-              px: 2,
-            }}
+            sx={{ color: "text.secondary", fontWeight: 500 }}
           >
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disableElevation
-            onClick={handleSubmitManualDonation}
-            disabled={
-              !selectedTarget ||
-              !donorName ||
-              (type === "Monetary" ? !donationAmount : !itemName || !itemValue)
-            }
-            sx={{
-              px: 3,
-              py: 1,
-              borderRadius: 1,
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            Submit Donation
-          </Button>
+          {step > 1 && <Button onClick={handleBack}>Back</Button>}
+          {step < 5 ? (
+            <Button onClick={handleNext}>Next</Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={() => handleSubmitManualDonation()}
+            >
+              Submit
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

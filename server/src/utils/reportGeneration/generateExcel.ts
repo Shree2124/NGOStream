@@ -78,6 +78,79 @@ const generateEventReportExcel = async (data: any[]) => {
     throw new Error("Failed to generate event report.");
   }
 };
+const generateMemberReportExcel = async (data: any[]) => {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Members Report");
+
+  // Define columns
+  sheet.columns = [
+    { header: "Full Name", key: "fullName", width: 25 },
+    { header: "Bio", key: "bio", width: 40 },
+    { header: "Gender", key: "gender", width: 15 },
+    { header: "Age", key: "age", width: 10 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Address", key: "address", width: 40 },
+    { header: "Phone", key: "phone", width: 15 },
+    { header: "Role", key: "role", width: 20 },
+    { header: "Event IDs", key: "eventIds", width: 30 }, // Combine event IDs into one cell
+    { header: "Roles in Events", key: "eventRoles", width: 30 }, // Combine roles into one cell
+  ];
+
+  // Add rows
+  data.forEach((member) => {
+    const eventIds: string[] = [];
+    const eventRoles: string[] = [];
+    const participationDates: string[] = [];
+
+    if (member.participationHistory && member.participationHistory.length > 0) {
+      member.participationHistory.forEach((participation: any) => {
+        eventIds.push(participation.eventId);
+        eventRoles.push(participation.role);
+        participationDates.push(formatDate(participation.participationDate));
+      });
+    }
+
+    // Add a single row for each member
+    sheet.addRow({
+      fullName: member.fullName,
+      bio: member.bio || "N/A",
+      gender: member.gender,
+      age: member.age,
+      email: member.email,
+      address: member.address,
+      phone: member.phone,
+      role: member.role,
+      eventIds: eventIds.join(", "), // Combine event IDs into a single cell
+      eventRoles: eventRoles.join(", "), // Combine roles into a single cell
+      participationDates: participationDates.join(", "), // Combine dates into a single cell
+    });
+  });
+
+  // ✅ Ensure the `public/temp` directory exists
+  const tempDir = path.join(__dirname, "../../../public/temp");
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  // ✅ Define the file path
+  const filePath = path.join(tempDir, `${Date.now()}.xlsx`);
+
+  try {
+    // ✅ Remove existing file if needed
+    if (fs.existsSync(filePath)) {
+      await fs.promises.unlink(filePath);
+    }
+
+    // ✅ Save the workbook to the defined file path
+    await workbook.xlsx.writeFile(filePath);
+    console.log("✅ Excel file created successfully:", filePath);
+
+    return filePath;
+  } catch (error) {
+    console.error("❌ Error generating Excel file:", error);
+    throw new Error("Failed to generate member report.");
+  }
+};
 
 const generateDonorReportExcel = async (data: any[]) => {
   const workbook = new ExcelJS.Workbook();
@@ -177,6 +250,8 @@ export const generateExcel = async (
         generatedFilePath = await generateEventReportExcel(data);
       } else if (reportType === "donor") {
         generatedFilePath = await generateDonorReportExcel(data);
+      } else if (reportType === "member") {
+        generatedFilePath = await generateMemberReportExcel(data);
       } else {
         return reject("Invalid report type.");
       }
