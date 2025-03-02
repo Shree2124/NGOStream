@@ -18,12 +18,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
   Checkbox,
   ListItemText,
   SelectChangeEvent,
   InputAdornment,
-  Modal,
 } from "@mui/material";
 import {
   Add,
@@ -34,11 +32,11 @@ import {
   //  Edit, Delete, BarChart,
   Close,
   DescriptionOutlined,
+  Download,
   EventAvailable,
   FitnessCenter,
   LocationOn,
   MonetizationOn,
-  OtherHousesOutlined,
   People,
   PersonAdd,
   PictureAsPdfOutlined,
@@ -57,10 +55,8 @@ import {
   Legend,
 } from "chart.js";
 import { api } from "../../api/api";
-import { Badge } from "../ui/badge";
 import { useNavigate } from "react-router-dom";
 import { School } from "lucide-react";
-import toast from "react-hot-toast";
 
 ChartJS.register(
   CategoryScale,
@@ -120,8 +116,9 @@ const Events: React.FC = () => {
   const [eventType, setEventType] = useState("");
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
-  const [openGenerateReportModal, setOpenGenerateReportModal] =
-    useState<boolean>(false);
+  const [openGenerateReportModal, setOpenGenerateReportModal] = useState<
+    boolean
+  >(false);
 
   const navigate = useNavigate();
 
@@ -136,6 +133,13 @@ const Events: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("week");
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [fileType, setFileType] = useState("pdf");
+  const [reportLoading, setReportLoading] = useState<boolean>(false);
+  const [reportUrl, setReportUrl] = useState<string | null>(null);
+
+  const handleDownload = () => {
+    setSelectedRange(null);
+    setOpenGenerateReportModal(false);
+  };
 
   const handlePeriodChange = (event: any) => {
     setSelectedPeriod(event.target.value);
@@ -261,6 +265,65 @@ const Events: React.FC = () => {
       [participantId]: newRole,
     }));
   };
+
+  const generatePDFReport = async (filteredIds: any[], fileType: string) => {
+    try {
+      const res = await api.post("/event/generate-report", {
+        ids: filteredIds,
+        fileType: fileType,
+        type: "event",
+      });
+      console.log(res.data.data);
+      if (res.data?.data) {
+        setReportUrl(res.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  function generateReport(selectedRange: string, fileType: string) {
+    console.log("Selected Range:", selectedRange);
+
+    if (!selectedRange || typeof selectedRange !== "string") {
+      console.error("Invalid date range selected.");
+      return;
+    }
+
+    let from: Date, to: Date;
+
+    if (/^\d{4}$/.test(selectedRange)) {
+      const year = parseInt(selectedRange);
+      from = new Date(year, 0, 1);
+      to = new Date(year, 11, 31, 23, 59, 59, 999);
+    } else {
+      const dateParts = selectedRange.split(" - ");
+      if (dateParts.length !== 2) {
+        console.error("Invalid date format.");
+        return;
+      }
+
+      from = new Date(dateParts[0]);
+      to = new Date(dateParts[1]);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+    }
+
+    const filteredIds = events
+      .filter((e) => {
+        const createdAt = new Date(e.startDate);
+        return createdAt >= from && createdAt <= to;
+      })
+      .map((e) => e._id);
+
+    console.log("Filtered events IDs:", filteredIds);
+    console.log("File Type:", fileType);
+
+    generatePDFReport(filteredIds, fileType);
+  }
 
   const handleParticipantsChange = (event: SelectChangeEvent<string[]>) => {
     const { value } = event.target; // value is a string[] now
@@ -389,10 +452,6 @@ const Events: React.FC = () => {
   const handleNavigation = (id: string) => {
     navigate(`/dashboard/event-details/${id}`);
   };
-
-  function generateReport(selectedRange: any, fileType: string) {
-    console.log(selectedRange, fileType);
-  }
 
   return (
     <Box
@@ -1135,6 +1194,7 @@ const Events: React.FC = () => {
               }
               generateReport(selectedRange, fileType);
             }}
+            disabled={reportLoading}
             sx={{
               px: 3,
               py: 1,
@@ -1143,7 +1203,19 @@ const Events: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            Generate Report
+            {!reportUrl && "Generate Report"}
+            {reportUrl && (
+              <a
+                onClick={handleDownload}
+                href={reportUrl}
+                download
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 mt-4 px-4 py-2 rounded-md text-white"
+                target="blank"
+              >
+                <Download />
+                Download Report
+              </a>
+            )}
           </Button>
         </DialogActions>
       </Dialog>

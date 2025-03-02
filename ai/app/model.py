@@ -97,7 +97,9 @@ def predict_donations(db):
     )
     if not donations:
         raise ValueError("No donation data available for prediction.")
+
     df = validate_and_clean_data(donations)
+
     grouped = (
         df.groupby(["year", "month", "donationType"])
         .agg({"amount": "sum"})
@@ -111,11 +113,19 @@ def predict_donations(db):
     if last_row["month"] > 12:
         last_row["month"] = 1
         last_row["year"] += 1
+
     X_pred = pd.DataFrame([last_row.drop("amount")])
     predicted_amount = model.predict(X_pred)[0]
+
+    
+    predicted_amount = max(predicted_amount, 0)
+
     monthly_totals = (
-        grouped.groupby(["year", "month"]).agg({"amount": "sum"}).reset_index()
+        grouped.groupby(["year", "month"])
+        .agg({"amount": "sum"})
+        .reset_index()
     )
+
     avg_donation = monthly_totals["amount"].mean()
 
     return avg_donation, predicted_amount, monthly_totals.to_dict(orient="records")

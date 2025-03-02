@@ -41,9 +41,9 @@ def donation_trends():
 def fundraising_metrics():
     train()
     db = current_app.config['db']
-    print(db)
+    # print(db)
     avg, prediction, monthly_totals = predict_donations(db)
-    print(avg, prediction, monthly_totals)
+    print("dd ",avg, prediction, monthly_totals)
 
     result = [
         {"month": item["month"], "amount": int(item["amount"])}
@@ -52,7 +52,7 @@ def fundraising_metrics():
     return jsonify({
         "average": avg,
         "predicted": prediction,
-        "monthly_totals": result
+        "monthly_totals": monthly_totals
     })
     
 @api.route('/api/train-model', methods=['GET'])

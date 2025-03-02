@@ -56,22 +56,22 @@ const EventDetails: React.FC = () => {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex justify-center items-center h-64">
+        <div className="border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
       </div>
     );
 
   if (error)
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 mx-auto max-w-4xl mt-8">
-        <p className="text-red-600 font-medium text-center">Error: {error}</p>
+      <div className="bg-red-50 mx-auto mt-8 p-6 border border-red-200 rounded-lg max-w-4xl">
+        <p className="font-medium text-red-600 text-center">Error: {error}</p>
       </div>
     );
 
   if (!event)
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mx-auto max-w-4xl mt-8">
-        <p className="text-gray-600 font-medium text-center">
+      <div className="bg-gray-50 mx-auto mt-8 p-6 border border-gray-200 rounded-lg max-w-4xl">
+        <p className="font-medium text-gray-600 text-center">
           Event not found.
         </p>
       </div>
@@ -91,7 +91,7 @@ const EventDetails: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="mx-auto px-4 py-8 max-w-6xl">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -99,16 +99,16 @@ const EventDetails: React.FC = () => {
         className="bg-white shadow-lg rounded-2xl overflow-hidden"
       >
         {/* Header Section */}
-        <div className="relative h-40 bg-gradient-to-r from-blue-600 to-indigo-600">
+        <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 h-40">
           <div className="absolute inset-0 bg-black opacity-20"></div>
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+          <div className="right-0 bottom-0 left-0 absolute p-6 text-white">
             <div className="flex justify-between items-end">
               <div>
                 <motion.h1
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="text-3xl font-bold text-white"
+                  className="font-bold text-white text-3xl"
                 >
                   {event?.name}
                 </motion.h1>
@@ -138,7 +138,7 @@ const EventDetails: React.FC = () => {
                 {event.status === "Upcoming" && (
                   <button
                     onClick={() => setModalOpen(true)}
-                    className="bg-white bg-opacity-90 hover:bg-opacity-100 text-blue-600 p-2 rounded-full transition shadow-md"
+                    className="bg-white bg-opacity-90 hover:bg-opacity-100 shadow-md p-2 rounded-full text-blue-600 transition"
                     aria-label="Edit event"
                   >
                     <Edit />
@@ -158,7 +158,7 @@ const EventDetails: React.FC = () => {
             transition={{ delay: 0.5 }}
             className="mb-8"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+            <h2 className="mb-2 font-semibold text-gray-800 text-lg">
               About this event
             </h2>
             <p className="text-gray-700 leading-relaxed">
@@ -173,16 +173,16 @@ const EventDetails: React.FC = () => {
             transition={{ delay: 0.6 }}
             className="mb-8"
           >
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            <h2 className="mb-4 font-semibold text-gray-800 text-xl">
               Participants
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gray-50 rounded-xl p-4 shadow-sm">
-                <h3 className="font-medium text-gray-700 mb-3 flex items-center">
-                  <span className="bg-blue-100 text-blue-600 p-1 rounded-md mr-2">
+            <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
+              <div className="bg-gray-50 shadow-sm p-4 rounded-xl">
+                <h3 className="flex items-center mb-3 font-medium text-gray-700">
+                  <span className="bg-blue-100 mr-2 p-1 rounded-md text-blue-600">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
+                      className="w-5 h-5"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -219,12 +219,12 @@ const EventDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 shadow-sm">
-                <h3 className="font-medium text-gray-700 mb-3 flex items-center">
-                  <span className="bg-green-100 text-green-600 p-1 rounded-md mr-2">
+              <div className="bg-gray-50 shadow-sm p-4 rounded-xl">
+                <h3 className="flex items-center mb-3 font-medium text-gray-700">
+                  <span className="bg-green-100 mr-2 p-1 rounded-md text-green-600">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
+                      className="w-5 h-5"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -242,7 +242,7 @@ const EventDetails: React.FC = () => {
                             <div className="font-medium text-gray-800">
                               {p.fullName}
                             </div>
-                            <div className="text-gray-500 text-sm flex items-center justify-between">
+                            <div className="flex justify-between items-center text-gray-500 text-sm">
                               <span>{p.ngoRole}</span>
                               <span className="bg-gray-200 px-2 py-0.5 rounded-full text-xs">
                                 {p.eventRole}
@@ -269,7 +269,7 @@ const EventDetails: React.FC = () => {
             transition={{ delay: 0.7 }}
             className="mb-8"
           >
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            <h2 className="mb-4 font-semibold text-gray-800 text-xl">
               Feedback Overview
             </h2>
             <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
@@ -278,7 +278,7 @@ const EventDetails: React.FC = () => {
                   <PieChart feedbackAnalysis={feedbackChartData} />
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-10">
+                <p className="py-10 text-gray-500 text-center">
                   No feedback data available
                 </p>
               )}
@@ -292,10 +292,10 @@ const EventDetails: React.FC = () => {
             transition={{ delay: 0.8 }}
             className="mb-8"
           >
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            <h2 className="mb-4 font-semibold text-gray-800 text-xl">
               Feedback Comments
             </h2>
-            <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
+            <div className="bg-gray-50 shadow-sm p-4 rounded-xl">
               {event?.feedback &&
               event?.feedback?.length > 0 &&
               event?.feedback?.some((fb: any) => Object.keys(fb).length > 0) ? (
@@ -305,13 +305,13 @@ const EventDetails: React.FC = () => {
                     .map((fb: any, index: any) => (
                       <div
                         key={index}
-                        className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
+                        className="bg-white shadow-sm p-4 border border-gray-100 rounded-lg"
                       >
                         <div className="flex items-start">
-                          <div className="mr-3 bg-blue-50 p-2 rounded-full text-blue-500">
+                          <div className="bg-blue-50 mr-3 p-2 rounded-full text-blue-500">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5"
+                              className="w-5 h-5"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -323,7 +323,7 @@ const EventDetails: React.FC = () => {
                             </svg>
                           </div>
                           <div className="flex-1">
-                            <p className="text-gray-700 mb-2">
+                            <p className="mb-2 text-gray-700">
                               "{fb?.feedbackText}"
                             </p>
                             <div className="flex justify-between text-sm">
@@ -346,7 +346,7 @@ const EventDetails: React.FC = () => {
                     ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-10">
+                <p className="py-10 text-gray-500 text-center">
                   No feedback comments available
                 </p>
               )}
@@ -359,11 +359,11 @@ const EventDetails: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
           >
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6 rounded-xl shadow-lg">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg p-6 rounded-xl">
+              <div className="flex md:flex-row flex-col justify-between items-center gap-4">
                 <div className="text-white">
-                  <h3 className="text-xl font-semibold mb-2">Event Report</h3>
-                  <p className="text-gray-300 max-w-md">
+                  <h3 className="mb-2 font-semibold text-xl">Event Report</h3>
+                  <p className="max-w-md text-gray-300">
                     {event?.eventReport
                       ? "Download the generated report or create a new one"
                       : "Generate a comprehensive report for this event"}
@@ -372,9 +372,9 @@ const EventDetails: React.FC = () => {
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={handleReportGeneration}
-                    className="flex items-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition shadow"
+                    className="flex items-center gap-2 bg-white hover:bg-gray-100 shadow px-4 py-2 rounded-lg font-medium text-gray-800 transition"
                   >
-                    <Assessment className="h-5 w-5" />
+                    <Assessment className="w-5 h-5" />
                     {event?.eventReport
                       ? "Generate New Report"
                       : "Generate Report"}
@@ -386,9 +386,9 @@ const EventDetails: React.FC = () => {
                       download
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition shadow"
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow px-4 py-2 rounded-lg font-medium text-white transition"
                     >
-                      <Download className="h-5 w-5" />
+                      <Download className="w-5 h-5" />
                       Download Report
                     </a>
                   )}
